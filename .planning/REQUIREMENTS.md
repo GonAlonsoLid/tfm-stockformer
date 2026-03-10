@@ -11,7 +11,7 @@ Requirements for the thesis milestone. Each maps to a roadmap phase.
 
 - [ ] **INFRA-01**: All hardcoded `/root/autodl-tmp/` paths replaced with config-driven paths so the pipeline runs on any machine
 - [ ] **INFRA-02**: Working `requirements.txt` with pinned versions enabling a clean local install from scratch
-- [ ] **INFRA-03**: Setup documentation that reproduces the environment from a fresh clone
+- [x] **INFRA-03**: Setup documentation that reproduces the environment from a fresh clone
 
 ### Data Pipeline
 
@@ -101,7 +101,7 @@ Deferred to future work. Acknowledged but not in current roadmap.
 |-------------|-------|--------|
 | INFRA-01 | Phase 1 | Pending |
 | INFRA-02 | Phase 1 | Pending |
-| INFRA-03 | Phase 1 | Pending |
+| INFRA-03 | Phase 1 | Complete |
 | DATA-01 | Phase 2 | Pending |
 | DATA-02 | Phase 2 | Pending |
 | DATA-03 | Phase 2 | Pending |

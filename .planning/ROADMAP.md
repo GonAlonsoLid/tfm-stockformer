@@ -12,7 +12,7 @@ Starting from an existing Stockformer codebase trained on Chinese equities, the 
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: Infrastructure** - Make the codebase portable and reproducible on any machine
+- [x] **Phase 1: Infrastructure** - Make the codebase portable and reproducible on any machine (completed 2026-03-10)
 - [ ] **Phase 2: Data Pipeline** - Build the S&P500 OHLCV ingestion, feature engineering, and preprocessing pipeline
 - [ ] **Phase 3: Model Training** - Configure and train the Stockformer on S&P500 data end-to-end
 - [ ] **Phase 4: Evaluation** - Compute IC/ICIR and retain all original metrics on test predictions
@@ -104,7 +104,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Infrastructure | 0/2 | Not started | - |
+| 1. Infrastructure | 2/2 | Complete   | 2026-03-10 |
 | 2. Data Pipeline | 0/TBD | Not started | - |
 | 3. Model Training | 0/TBD | Not started | - |
 | 4. Evaluation | 0/TBD | Not started | - |
