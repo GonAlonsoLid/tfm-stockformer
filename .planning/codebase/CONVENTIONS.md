@@ -39,7 +39,7 @@
 - No auto-formatter detected (no `.prettierrc`, `.black`, `pyproject.toml`, or similar)
 - Mixed indentation style: 4 spaces consistently within files
 - Blank lines used to separate logical blocks inside functions but not strictly between all methods
-- Inline Chinese comments appear throughout for explanations: `# 初始化解析器`, `# 回归任务的度量计算`
+- Inline comments are in English for explanations (e.g. `# Initialize parser`, `# Regression task metric computation`)
 
 **Linting:**
 - No linting configuration detected (no `.flake8`, `.pylintrc`, `setup.cfg`)

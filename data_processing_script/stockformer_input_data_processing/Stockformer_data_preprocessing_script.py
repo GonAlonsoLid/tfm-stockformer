@@ -18,7 +18,7 @@ if not os.path.exists(directory):
 # Reading the data ########
 df = pd.read_csv(f'{directory}/label.csv', index_col=0)
 df.index = pd.to_datetime(df.index)
-# 将nan替换为0
+# Replace nan with 0
 df.fillna(0, inplace=True)
 print('Data read successfully.')
 
@@ -27,7 +27,7 @@ data = df.values
 np.savez(f'{directory}/flow.npz', result=data)
 print('Flow array saved as npz successfully.')
 
-# 将收益率转换为涨跌分类：正收益为1，否则为0
+# Convert returns to up/down classification: positive return = 1, otherwise 0
 trend_indicator = (data > 0).astype(int)
 np.savez(f'{directory}/trend_indicator.npz', result=trend_indicator)
 print('Trend indicator saved as npz successfully.')

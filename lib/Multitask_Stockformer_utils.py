@@ -19,7 +19,7 @@ def log_string(log, string):
 
 def metric(reg_pred, reg_label, class_pred, class_label):
     with np.errstate(divide='ignore', invalid='ignore'):
-        # 回归任务的度量计算
+        # Regression task metric computation
         mask = np.not_equal(reg_label, 0)
         mask = mask.astype(np.float32)
         mask /= np.mean(mask)
@@ -35,7 +35,7 @@ def metric(reg_pred, reg_label, class_pred, class_label):
         mape = np.nan_to_num(mape * mask)
         mape = np.mean(mape)
         
-        # 分类任务的准确率计算
+        # Classification task accuracy computation
         pred_classes = np.argmax(class_pred, axis=-1)
         correct = (pred_classes == class_label).astype(np.float32)
         acc = np.mean(correct)
@@ -43,15 +43,15 @@ def metric(reg_pred, reg_label, class_pred, class_label):
     return acc, mae, rmse, mape
 
 
-# 初始化交叉熵损失函数
+# Initialize cross-entropy loss function
 criterion = torch.nn.CrossEntropyLoss()
 
 def _compute_class_loss(y_true, y_predicted):
-    # 展平 y_predicted 和 y_true
+    # Flatten y_predicted and y_true
     y_predicted_flat = y_predicted.view(-1, y_predicted.size(-1))  # [batch_size * seq_len * num_nodes, num_classes]
-    y_true_flat = y_true.view(-1).long()  # 转换为长整型
+    y_true_flat = y_true.view(-1).long()  # Convert to long type
 
-    # 计算损失
+    # Compute loss
     loss = criterion(y_predicted_flat, y_true_flat)
     return loss
 

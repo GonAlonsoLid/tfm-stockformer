@@ -2,23 +2,23 @@ import os
 import pandas as pd
 
 def filter_date_range(file_path, start_date, end_date):
-    # 读取数据
+    # Read data
     data = pd.read_csv(file_path, index_col=0, parse_dates=True)
-    # 截取特定日期范围的数据
+    # Slice data for the given date range
     filtered_data = data[start_date:end_date]
     return filtered_data
 
 def save_filtered_data(source_dir, target_dir, start_date, end_date):
-    # 创建目标文件夹如果它不存在
+    # Create target folder if it does not exist
     os.makedirs(target_dir, exist_ok=True)
 
-    # 遍历源文件夹中的所有CSV文件
+    # Iterate over all CSV files in the source folder
     for filename in os.listdir(source_dir):
         if filename.endswith('.csv'):
             file_path = os.path.join(source_dir, filename)
-            # 读取并截取特定日期范围的数据
+            # Read and slice data for the given date range
             selected_data = filter_date_range(file_path, start_date, end_date)
-            # 保存到新的目标文件夹
+            # Save to the new target folder
             selected_data.to_csv(os.path.join(target_dir, filename), index=True)
 
 def main(start_date, end_date, label_source_path=None, alpha_source_dir=None, target_base_dir=None):
@@ -29,22 +29,22 @@ def main(start_date, end_date, label_source_path=None, alpha_source_dir=None, ta
     if target_base_dir is None:
         target_base_dir = './data/'
 
-    # 目标文件夹路径
+    # Target folder path
     target_folder_name = f'Stock_CN_{start_date}_{end_date}'
     target_dir = os.path.join(target_base_dir, target_folder_name)
 
-    # 创建顶级目标文件夹
+    # Create top-level target folder
     os.makedirs(target_dir, exist_ok=True)
 
-    # 处理标签文件
+    # Process label file
     label_data = filter_date_range(label_source_path, start_date, end_date)
     label_data.to_csv(os.path.join(target_dir, 'label.csv'), index=True)
 
-    # 创建并保存Alpha 360数据
+    # Create and save Alpha 360 data
     alpha_target_dir = os.path.join(target_dir, f'Alpha_360_{start_date}_{end_date}')
     save_filtered_data(alpha_source_dir, alpha_target_dir, start_date, end_date)
 
-    print(f"所有文件已成功处理并保存至: {target_dir}")
+    print(f"All files have been processed and saved to: {target_dir}")
 
 if __name__ == "__main__":
     import argparse
