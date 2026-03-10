@@ -1,12 +1,17 @@
-# This file may be used to create an environment using:
-# $ conda create --name <env> --file <this file>
-# platform: linux-64
+# Platform-independent requirements for tfm-stockformer
+# Run from project root with: pip install -r requirements.txt
+# For GPU training substitute: torch==2.8.0+cu118 (Linux, CUDA 11.8)
 
-scikit-learn==1.1.2
+torch==2.8.0
+PyWavelets==1.6.0
+tensorboard>=2.14,<3
+scikit-learn>=1.1.2
 numpy==1.24.4
 scipy==1.9.3
 matplotlib==3.7.1
 tqdm==4.62.3
-# torch==2.0.1+cu117
 statsmodels==0.14.0
 pytorch-wavelets==1.3.0
+networkx==3.2.1
+pandas==2.3.3
+pytest>=7.0,<8
