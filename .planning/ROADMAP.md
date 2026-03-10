@@ -44,7 +44,13 @@ Plans:
   2. The output feature matrix contains momentum, RSI, MACD, Bollinger Bands, and volume ratio columns for all configured windows
   3. Training-set normalization statistics are computed first and applied separately to val/test splits (no leakage)
   4. `flow.npz`, `trend_indicator.npz`, and the Struc2Vec graph embedding file exist and have the correct shapes for model ingestion
-**Plans**: TBD
+**Plans**: 5 plans
+Plans:
+- [ ] 02-01-PLAN.md — Test scaffold: Wave 0 stubs + conftest Phase 2 fixtures (DATA-01..DATA-05)
+- [ ] 02-02-PLAN.md — Download + clean S&P500 OHLCV via yfinance → Parquet (DATA-01)
+- [ ] 02-03-PLAN.md — Feature engineering: TA indicators + label.csv (DATA-02)
+- [ ] 02-04-PLAN.md — Normalize/split + serialize flow.npz + trend_indicator.npz (DATA-03, DATA-04, DATA-05)
+- [ ] 02-05-PLAN.md — Graph embedding + orchestrator script + requirements.txt update (DATA-05)
 
 ### Phase 3: Model Training
 **Goal**: The Stockformer trains end-to-end on S&P500 data, saves checkpoints, and produces prediction CSVs on the test period
@@ -105,7 +111,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Infrastructure | 2/2 | Complete   | 2026-03-10 |
-| 2. Data Pipeline | 0/TBD | Not started | - |
+| 2. Data Pipeline | 0/5 | Not started | - |
 | 3. Model Training | 0/TBD | Not started | - |
 | 4. Evaluation | 0/TBD | Not started | - |
 | 5. Portfolio & Backtesting | 0/TBD | Not started | - |
