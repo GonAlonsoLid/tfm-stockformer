@@ -8,7 +8,6 @@ import torch
 import math
 from pytorch_wavelets import DWT1DForward, DWT1DInverse
 import csv
-# sys.path.append('/root/autodl-tmp/Stockformer/Stockformer_run/')
 # from DILATE.loss.dilate_loss import dilate_loss
 from torch.utils.data import Dataset
 
@@ -108,8 +107,7 @@ class StockDataset(Dataset):
         # Load data
         Traffic = np.load(args.traffic_file)['result']
         indicator = np.load(args.indicator_file)['result']
-        # path = '/root/autodl-tmp/Stockformer/Stockformer_run/Stockformer_code/data/Stock_CN_2021-02-01_2023-12-29_Alpha_360/Alpha_360_2021-02-01_2023-12-29'
-        path = '/root/autodl-tmp/Stockformer/Stockformer_run/Stockformer_code/data/Stock_CN_2021-06-04_2024-01-30/Alpha_360_2021-06-04_2024-01-30'
+        path = args.alpha_360_dir
         files = os.listdir(path)
         data_list = []
         for file in files:

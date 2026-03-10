@@ -55,6 +55,9 @@ parser.add_argument('--adj_file', default=config['file']['adj'])
 parser.add_argument('--adjgat_file', default=config['file']['adjgat'])
 parser.add_argument('--model_file', default=config['file']['model'])
 parser.add_argument('--log_file', default=config['file']['log'])
+parser.add_argument('--alpha_360_dir', default=config['file']['alpha_360_dir'])
+parser.add_argument('--output_dir', default=config['file']['output_dir'])
+parser.add_argument('--tensorboard_dir', default=config['file']['tensorboard_dir'])
 
 # 最终解析参数
 args = parser.parse_args()
@@ -85,7 +88,7 @@ print(f"Model file path is ready at {args.model_file}")
 
 device = torch.device(f"cuda:{args.cuda}" if torch.cuda.is_available() else "cpu")
 
-tensorboard_folder = '/root/autodl-tmp/Stockformer/Stockformer_run/Stockformer_code/runs/Multitask_Stockformer/Stock_CN_2021-06-04_2024-01-30'
+tensorboard_folder = args.tensorboard_dir
 
 # Check and create the main TensorBoard folder
 if not os.path.exists(tensorboard_folder):
@@ -237,13 +240,17 @@ def test_res(model, valXL, valXH, valXC, bonus_valX, valTE, valY, valYC, adjgat)
     avg_mape = np.mean(mapes)
     log_string(log, 'average, acc: %.4f, mae: %.4f, rmse: %.4f, mape: %.4f' % (avg_acc, avg_mae, avg_rmse, avg_mape))
     
+    # Create output subdirectories (may not exist on fresh machines)
+    os.makedirs(os.path.join(args.output_dir, 'classification'), exist_ok=True)
+    os.makedirs(os.path.join(args.output_dir, 'regression'), exist_ok=True)
+
     # 保存分类任务的最后一个时间步的预测和标签
-    save_to_csv('/root/autodl-tmp/Stockformer/Stockformer_run/Stockformer_code/output/Multitask_output_2021-06-04_2024-01-30/classification/classification_pred_last_step.csv', pred_class[:, -1, :])
-    save_to_csv('/root/autodl-tmp/Stockformer/Stockformer_run/Stockformer_code/output/Multitask_output_2021-06-04_2024-01-30/classification/classification_label_last_step.csv', label_class[:, -1])
+    save_to_csv(os.path.join(args.output_dir, 'classification', 'classification_pred_last_step.csv'), pred_class[:, -1, :])
+    save_to_csv(os.path.join(args.output_dir, 'classification', 'classification_label_last_step.csv'), label_class[:, -1])
 
     # 保存回归任务的最后一个时间步的预测和标签
-    save_to_csv('/root/autodl-tmp/Stockformer/Stockformer_run/Stockformer_code/output/Multitask_output_2021-06-04_2024-01-30/regression/regression_pred_last_step.csv', pred_regress[:, -1, :])
-    save_to_csv('/root/autodl-tmp/Stockformer/Stockformer_run/Stockformer_code/output/Multitask_output_2021-06-04_2024-01-30/regression/regression_label_last_step.csv', label_regress[:, -1])
+    save_to_csv(os.path.join(args.output_dir, 'regression', 'regression_pred_last_step.csv'), pred_regress[:, -1, :])
+    save_to_csv(os.path.join(args.output_dir, 'regression', 'regression_label_last_step.csv'), label_regress[:, -1])
 
     return avg_acc, avg_mae, avg_rmse, avg_mape
 

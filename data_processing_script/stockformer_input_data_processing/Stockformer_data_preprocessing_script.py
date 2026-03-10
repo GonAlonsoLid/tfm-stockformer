@@ -3,9 +3,14 @@ import numpy as np
 import networkx as nx
 import sys
 import os
+import argparse as _argparse
 
-# Relative directory path
-directory = '/root/autodl-tmp/Stockformer/Stockformer_run/Stockformer_code/data/Stock_CN_2021-06-04_2024-01-30'
+_sparser = _argparse.ArgumentParser()
+_sparser.add_argument('--data_dir', default='./data/Stock_CN_2021-06-04_2024-01-30')
+_sparser.add_argument('--ge_path', default=None, help='Path to GraphEmbedding library if not pip-installed')
+_sargs, _ = _sparser.parse_known_args()
+directory = _sargs.data_dir
+
 if not os.path.exists(directory):
     os.makedirs(directory)
     print("Directory created:", directory)
@@ -50,7 +55,8 @@ with open(f'{directory}/data.edgelist', 'w') as f:
 print('Edge list saved successfully.')
 
 # Adjusted for relative paths for custom libraries
-sys.path.append('/root/autodl-tmp/Stockformer/Stockformer_run/GraphEmbedding')
+if _sargs.ge_path:
+    sys.path.append(_sargs.ge_path)
 from ge.classify import read_node_label, Classifier
 from ge import Struc2Vec
 

@@ -1,6 +1,15 @@
 import pandas as pd
 import numpy as np
 import re
+import os
+import argparse
+
+parser = argparse.ArgumentParser(description='Post-process Stockformer prediction outputs')
+parser.add_argument('--data_dir', default='./data/Stock_CN_2021-06-04_2024-01-30',
+                    help='Directory containing label.csv')
+parser.add_argument('--output_dir', default='./output/Multitask_output_2021-06-04_2024-01-30',
+                    help='Directory containing model output CSVs')
+_args = parser.parse_args()
 
 def load_and_index_data(file_path, index, columns):
     # 加载数据，设置索引和列名
@@ -12,27 +21,27 @@ def load_and_index_data(file_path, index, columns):
 def apply_extraction_and_softmax(data):
     # 提取数字，并将字符串转换为浮点数
     pattern = r'-?\d+\.\d+(?:[eE][+-]?\d+)?|-?\d+'
-    data = data.astype(str).applymap(lambda x: [float(num) for num in re.findall(pattern, x)])
-    
+    data = data.astype(str).map(lambda x: [float(num) for num in re.findall(pattern, x)])
+
     # 计算 softmax 并提取最大索引和类别 '1' 概率
     def softmax(x):
         e_x = np.exp(x - np.max(x))
         return e_x / e_x.sum()
-    
+
     max_indices = {}
     class_1_probabilities = {}
-    
+
     for column in data.columns:
         probabilities = data[column].apply(softmax)
         max_indices[column] = probabilities.apply(np.argmax)
         class_1_probabilities[column] = probabilities.apply(lambda x: x[1])
-    
+
     pred_index = pd.DataFrame(max_indices, index=data.index)
     pred_prob = pd.DataFrame(class_1_probabilities, index=data.index)
     return pred_index, pred_prob
 
 # 使用 detail_data 作为基础数据获取索引和列名
-detail_data = pd.read_csv('/root/autodl-tmp/Stockformer/Stockformer_run/Stockformer_code/data/Stock_CN_2021-06-04_2024-01-30/label.csv', index_col=0)  
+detail_data = pd.read_csv(os.path.join(_args.data_dir, 'label.csv'), index_col=0)
 detail_data.index = pd.to_datetime(detail_data.index)
 index = detail_data.index
 columns = detail_data.columns
@@ -42,8 +51,8 @@ filtered_index = detail_data.loc[start_date:].index
 
 # 文件夹路径
 folder_paths = {
-    'regression': '/root/autodl-tmp/Stockformer/Stockformer_run/Stockformer_code/output/Multitask_output_2021-06-04_2024-01-30/regression/',
-    'classification': '/root/autodl-tmp/Stockformer/Stockformer_run/Stockformer_code/output/Multitask_output_2021-06-04_2024-01-30/classification/'
+    'regression': os.path.join(_args.output_dir, 'regression') + os.sep,
+    'classification': os.path.join(_args.output_dir, 'classification') + os.sep,
 }
 
 # 加载数据并应用索引
