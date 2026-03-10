@@ -30,7 +30,10 @@ Decimal phases appear between their surrounding integers in numeric order.
   1. Running the training script on a machine that has no `/root/autodl-tmp/` directory does not raise a path error
   2. `pip install -r requirements.txt` on a clean Python 3.9+ environment completes without conflicts
   3. A developer following the setup documentation can run a smoke test (import model, load config) within 30 minutes of cloning
-**Plans**: TBD
+**Plans**: 2 plans
+Plans:
+- [ ] 01-01-PLAN.md — Fix hardcoded paths (INFRA-01) + fix requirements.txt and create smoke test (INFRA-02)
+- [ ] 01-02-PLAN.md — Write SETUP.md onboarding guide + human verify smoke test (INFRA-03)
 
 ### Phase 2: Data Pipeline
 **Goal**: Raw S&P500 price-volume data is downloaded, cleaned, feature-engineered, normalized, split, and serialized into the exact array format the model expects
@@ -101,7 +104,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Infrastructure | 0/TBD | Not started | - |
+| 1. Infrastructure | 0/2 | Not started | - |
 | 2. Data Pipeline | 0/TBD | Not started | - |
 | 3. Model Training | 0/TBD | Not started | - |
 | 4. Evaluation | 0/TBD | Not started | - |
