@@ -97,41 +97,39 @@ Deferred to future work. Acknowledged but not in current roadmap.
 
 ## Traceability
 
-Populated during roadmap creation.
-
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| INFRA-01 | — | Pending |
-| INFRA-02 | — | Pending |
-| INFRA-03 | — | Pending |
-| DATA-01 | — | Pending |
-| DATA-02 | — | Pending |
-| DATA-03 | — | Pending |
-| DATA-04 | — | Pending |
-| DATA-05 | — | Pending |
-| MODEL-01 | — | Pending |
-| MODEL-02 | — | Pending |
-| EVAL-01 | — | Pending |
-| EVAL-02 | — | Pending |
-| PORT-01 | — | Pending |
-| PORT-02 | — | Pending |
-| PORT-03 | — | Pending |
-| BACK-01 | — | Pending |
-| BACK-02 | — | Pending |
-| BACK-03 | — | Pending |
-| UI-01 | — | Pending |
-| UI-02 | — | Pending |
-| UI-03 | — | Pending |
-| UI-04 | — | Pending |
-| TEST-01 | — | Pending |
-| TEST-02 | — | Pending |
-| TEST-03 | — | Pending |
+| INFRA-01 | Phase 1 | Pending |
+| INFRA-02 | Phase 1 | Pending |
+| INFRA-03 | Phase 1 | Pending |
+| DATA-01 | Phase 2 | Pending |
+| DATA-02 | Phase 2 | Pending |
+| DATA-03 | Phase 2 | Pending |
+| DATA-04 | Phase 2 | Pending |
+| DATA-05 | Phase 2 | Pending |
+| MODEL-01 | Phase 3 | Pending |
+| MODEL-02 | Phase 3 | Pending |
+| EVAL-01 | Phase 4 | Pending |
+| EVAL-02 | Phase 4 | Pending |
+| PORT-01 | Phase 5 | Pending |
+| PORT-02 | Phase 5 | Pending |
+| PORT-03 | Phase 5 | Pending |
+| BACK-01 | Phase 5 | Pending |
+| BACK-02 | Phase 5 | Pending |
+| BACK-03 | Phase 5 | Pending |
+| UI-01 | Phase 6 | Pending |
+| UI-02 | Phase 6 | Pending |
+| UI-03 | Phase 6 | Pending |
+| UI-04 | Phase 6 | Pending |
+| TEST-01 | Phase 7 | Pending |
+| TEST-02 | Phase 7 | Pending |
+| TEST-03 | Phase 7 | Pending |
 
 **Coverage:**
 - v1 requirements: 25 total
-- Mapped to phases: 0
-- Unmapped: 25 ⚠️
+- Mapped to phases: 25
+- Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-03-10*
-*Last updated: 2026-03-10 after initial definition*
+*Last updated: 2026-03-10 after roadmap creation*
