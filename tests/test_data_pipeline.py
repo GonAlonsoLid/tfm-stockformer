@@ -73,24 +73,50 @@ def test_clean_no_all_nan_rows(sp500_ohlcv_fixture):
 
 # ── DATA-02: Feature engineering ────────────────────────────────────────────
 
-@pytest.mark.xfail(reason="DATA-02 not yet implemented", strict=False)
-def test_feature_columns_present(ohlcv_wide_fixture):
+def test_feature_columns_present(sp500_ohlcv_fixture):
     """Feature matrix contains RSI, MACD, BB, ROC, VOL_ratio for windows 5/10/20/60."""
-    pytest.xfail("DATA-02 stub")
+    pytest.importorskip("pandas_ta")
+    from data_processing_script.sp500_pipeline.feature_engineering import compute_features
+    ticker_df = sp500_ohlcv_fixture['AAPL']
+    features = compute_features(ticker_df)
+    expected_cols = [
+        'ROC_5', 'ROC_10', 'ROC_20', 'ROC_60',
+        'RSI_5', 'RSI_10', 'RSI_20', 'RSI_60',
+        'MACD',
+        'BB_upper_20', 'BB_lower_20', 'BB_width_20',
+        'VOL_ratio_5', 'VOL_ratio_10', 'VOL_ratio_20', 'VOL_ratio_60',
+    ]
+    for col in expected_cols:
+        assert col in features.columns, f"Missing column: {col}"
 
 
-@pytest.mark.xfail(reason="DATA-02 not yet implemented", strict=False)
-def test_feature_no_all_nan_columns(ohlcv_wide_fixture):
+def test_feature_no_all_nan_columns(sp500_ohlcv_fixture):
     """No feature column is entirely NaN after warmup period is dropped."""
-    pytest.xfail("DATA-02 stub")
+    pytest.importorskip("pandas_ta")
+    from data_processing_script.sp500_pipeline.feature_engineering import compute_features
+    features = compute_features(sp500_ohlcv_fixture['AAPL'])
+    assert not features.iloc[60:].isna().all().any(), (
+        "Some feature columns are entirely NaN after the 60-row warmup is dropped"
+    )
 
 
 # ── DATA-03: Cross-sectional normalization ───────────────────────────────────
 
-@pytest.mark.xfail(reason="DATA-03 not yet implemented", strict=False)
-def test_cross_sectional_normalization(feature_matrix_fixture):
+def test_cross_sectional_normalization(tmp_path, ohlcv_wide_fixture):
     """Per-date row has mean≈0 and std≈1 across stocks after normalization."""
-    pytest.xfail("DATA-03 stub")
+    from data_processing_script.sp500_pipeline.feature_engineering import save_feature_csvs
+    # Build synthetic wide DataFrame (dates x tickers) with un-normalized values
+    wide_df = ohlcv_wide_fixture.copy()
+    # Shift values so they are clearly NOT normalized
+    wide_df = wide_df * 100 + 500
+    feature_dict = {'ROC_5': wide_df}
+    save_feature_csvs(feature_dict, str(tmp_path))
+    # Reload and verify normalization was applied
+    saved = pd.read_csv(tmp_path / 'features' / 'ROC_5.csv', index_col=0)
+    row_means = saved.mean(axis=1).abs()
+    row_stds = saved.std(axis=1)
+    assert (row_means < 1e-8).all(), f"Row means not ~0: max={row_means.max()}"
+    assert ((row_stds - 1.0).abs() < 0.05).all(), f"Row stds not ~1"
 
 
 # ── DATA-04: Train/val/test split no leakage ─────────────────────────────────
