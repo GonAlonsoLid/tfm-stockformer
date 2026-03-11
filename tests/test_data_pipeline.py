@@ -74,17 +74,41 @@ def test_clean_no_all_nan_rows(sp500_ohlcv_fixture):
 # ── DATA-02: Feature engineering ────────────────────────────────────────────
 
 def test_feature_columns_present(sp500_ohlcv_fixture):
-    """Feature matrix contains RSI, MACD, BB, ROC, VOL_ratio for windows 5/10/20/60."""
+    """Feature matrix contains all ~69 TA columns (16 original + 53 added in 02-06)."""
     pytest.importorskip("pandas_ta")
     from data_processing_script.sp500_pipeline.feature_engineering import compute_features
     ticker_df = sp500_ohlcv_fixture['AAPL']
     features = compute_features(ticker_df)
     expected_cols = [
+        # Existing 16
         'ROC_5', 'ROC_10', 'ROC_20', 'ROC_60',
         'RSI_5', 'RSI_10', 'RSI_20', 'RSI_60',
         'MACD',
         'BB_upper_20', 'BB_lower_20', 'BB_width_20',
         'VOL_ratio_5', 'VOL_ratio_10', 'VOL_ratio_20', 'VOL_ratio_60',
+        # New in 02-06
+        'MACD_signal', 'MACD_hist',
+        'ATR_5', 'ATR_10', 'ATR_14', 'ATR_20',
+        'OBV',
+        'STOCH_K_5', 'STOCH_D_5', 'STOCH_K_14', 'STOCH_D_14',
+        'WILLR_14', 'WILLR_20',
+        'CCI_14', 'CCI_20',
+        'DC_upper_20', 'DC_lower_20', 'DC_width_20',
+        'DC_upper_60', 'DC_lower_60', 'DC_width_60',
+        'RSI_3', 'RSI_14',
+        'ROC_3', 'ROC_14',
+        'MOM_5', 'MOM_10', 'MOM_20',
+        'BB_upper_5', 'BB_lower_5', 'BB_width_5',
+        'BB_upper_10', 'BB_lower_10', 'BB_width_10',
+        'BB_upper_60', 'BB_lower_60', 'BB_width_60',
+        'VOL_ratio_3', 'VOL_ratio_14',
+        'EMA_5', 'EMA_10', 'EMA_20', 'EMA_50',
+        'SMA_5', 'SMA_10', 'SMA_20', 'SMA_50',
+        'DIST_SMA20', 'DIST_SMA50',
+        'DAILY_RET',
+        'VOL_norm_252',
+        'HL_SPREAD',
+        'CO_RET',
     ]
     for col in expected_cols:
         assert col in features.columns, f"Missing column: {col}"
@@ -97,6 +121,18 @@ def test_feature_no_all_nan_columns(sp500_ohlcv_fixture):
     features = compute_features(sp500_ohlcv_fixture['AAPL'])
     assert not features.iloc[60:].isna().all().any(), (
         "Some feature columns are entirely NaN after the 60-row warmup is dropped"
+    )
+
+
+def test_feature_count_for_phase3(sp500_ohlcv_fixture):
+    """Phase 3 prerequisite: compute_features() must return >= 60 columns."""
+    from data_processing_script.sp500_pipeline.feature_engineering import compute_features
+    ticker_df = sp500_ohlcv_fixture['AAPL']
+    features = compute_features(ticker_df)
+    n = len(features.columns)
+    assert n >= 60, (
+        f"Phase 3 requires >= 60 features to replace Alpha-360; got {n}. "
+        "Add more indicators in feature_engineering.py."
     )
 
 
