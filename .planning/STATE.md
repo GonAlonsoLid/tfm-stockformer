@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: completed
-stopped_at: Completed 01-02-PLAN.md — INFRA-03 human-verified; Phase 1 infrastructure complete
-last_updated: "2026-03-10T16:53:46.591Z"
-last_activity: 2026-03-10 — Plans 01-01 and 01-02 executed; INFRA-01, INFRA-02, INFRA-03 all verified
+status: in_progress
+stopped_at: Completed 02-01-PLAN.md — Phase 2 test scaffold with xfail stubs for DATA-01 through DATA-05
+last_updated: "2026-03-11T09:54:30Z"
+last_activity: 2026-03-11 — Plan 02-01 executed; test scaffold and conftest fixtures created
 progress:
   total_phases: 7
   completed_phases: 1
-  total_plans: 2
-  completed_plans: 2
-  percent: 10
+  total_plans: 3
+  completed_plans: 3
+  percent: 14
 ---
 
 # Project State
@@ -21,33 +21,34 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-09)
 
 **Core value:** A working, reproducible end-to-end pipeline that trains the Stockformer on S&P500 data, generates portfolios, and lets the user interactively explore backtest results.
-**Current focus:** Phase 1 - Infrastructure
+**Current focus:** Phase 2 - Data Pipeline
 
 ## Current Position
 
-Phase: 1 of 7 (Infrastructure)
-Plan: 2 of 3 in current phase
-Status: Phase 1 plans 01-01 and 01-02 complete; ready for Phase 2
-Last activity: 2026-03-10 — Plans 01-01 and 01-02 executed; INFRA-01, INFRA-02, INFRA-03 all verified
+Phase: 2 of 7 (Data Pipeline)
+Plan: 1 of 5 in current phase
+Status: Phase 2 plan 02-01 complete; test scaffold ready for implementation plans
+Last activity: 2026-03-11 — Plan 02-01 executed; DATA-01 through DATA-05 xfail stubs created
 
-Progress: [██░░░░░░░░] 10%
+Progress: [██░░░░░░░░] 14%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 2
-- Average duration: ~5 min
-- Total execution time: ~10 min
+- Total plans completed: 3
+- Average duration: ~4 min
+- Total execution time: ~11 min
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 01-infrastructure | 2 | ~10 min | ~5 min |
+| 02-data-pipeline | 1 | ~1 min | ~1 min |
 
 **Recent Trend:**
-- Last 5 plans: 01-01 (6 min), 01-02 (~5 min)
-- Trend: Fast (infrastructure + docs plans)
+- Last 5 plans: 01-01 (6 min), 01-02 (~5 min), 02-01 (~1 min)
+- Trend: Fast (scaffold + config plans)
 
 *Updated after each plan completion*
 
@@ -65,6 +66,8 @@ Recent decisions affecting current work:
 - [01-01]: scikit-learn pinned as >=1.1.2 (not ==) to support Python 3.9 venv and Python 3.11+ simultaneously
 - [01-01]: .ipynb_checkpoints/ excluded from path-grep test — Jupyter-generated cache, not source code
 - [01-02]: SETUP.md extended to seven sections (beyond plan minimum of four) to include optional test suite, project structure, and troubleshooting
+- [02-01]: xfail stubs use strict=False so suite collects without failing until implementation lands
+- [02-01]: feature_matrix_fixture shape [280, 5] = 300 days minus 20-day warmup for longest TA window
 
 ### Pending Todos
 
@@ -78,6 +81,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-10
-Stopped at: Completed 01-02-PLAN.md — INFRA-03 human-verified; Phase 1 infrastructure complete
+Last session: 2026-03-11
+Stopped at: Completed 02-01-PLAN.md — Phase 2 test scaffold with xfail stubs for DATA-01 through DATA-05
 Resume file: None

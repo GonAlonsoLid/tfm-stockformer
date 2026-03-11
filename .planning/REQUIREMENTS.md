@@ -15,11 +15,11 @@ Requirements for the thesis milestone. Each maps to a roadmap phase.
 
 ### Data Pipeline
 
-- [ ] **DATA-01**: S&P500 OHLCV data downloaded via yfinance and stored as Parquet files
-- [ ] **DATA-02**: Price-volume features computed: momentum (ROC), RSI, MACD, Bollinger Bands, volume ratios across 5/10/20/60-day windows
-- [ ] **DATA-03**: Cross-sectional z-score normalization applied per trading day across the S&P500 universe
-- [ ] **DATA-04**: Train/val/test split by date (no leakage); normalization statistics fit on training set only
-- [ ] **DATA-05**: Pipeline produces `flow.npz`, `trend_indicator.npz`, and Struc2Vec graph embeddings for S&P500
+- [x] **DATA-01**: S&P500 OHLCV data downloaded via yfinance and stored as Parquet files
+- [x] **DATA-02**: Price-volume features computed: momentum (ROC), RSI, MACD, Bollinger Bands, volume ratios across 5/10/20/60-day windows
+- [x] **DATA-03**: Cross-sectional z-score normalization applied per trading day across the S&P500 universe
+- [x] **DATA-04**: Train/val/test split by date (no leakage); normalization statistics fit on training set only
+- [x] **DATA-05**: Pipeline produces `flow.npz`, `trend_indicator.npz`, and Struc2Vec graph embeddings for S&P500
 
 ### Model Training
 
@@ -102,11 +102,11 @@ Deferred to future work. Acknowledged but not in current roadmap.
 | INFRA-01 | Phase 1 | Pending |
 | INFRA-02 | Phase 1 | Pending |
 | INFRA-03 | Phase 1 | Complete |
-| DATA-01 | Phase 2 | Pending |
-| DATA-02 | Phase 2 | Pending |
-| DATA-03 | Phase 2 | Pending |
-| DATA-04 | Phase 2 | Pending |
-| DATA-05 | Phase 2 | Pending |
+| DATA-01 | Phase 2 | Complete |
+| DATA-02 | Phase 2 | Complete |
+| DATA-03 | Phase 2 | Complete |
+| DATA-04 | Phase 2 | Complete |
+| DATA-05 | Phase 2 | Complete |
 | MODEL-01 | Phase 3 | Pending |
 | MODEL-02 | Phase 3 | Pending |
 | EVAL-01 | Phase 4 | Pending |
