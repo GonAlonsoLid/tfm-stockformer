@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: completed
-stopped_at: Completed 02-03-PLAN.md — feature_engineering.py with cross-sectional normalization and DATA-02/DATA-03 tests
-last_updated: "2026-03-11T10:05:15.362Z"
+stopped_at: Completed 02-05-PLAN.md — graph_embedding.py, build_pipeline.py, requirements.txt updated; all DATA-01..DATA-05 tests green
+last_updated: "2026-03-11T14:57:34.401Z"
 last_activity: 2026-03-11 — Plan 02-02 executed; download_ohlcv.py created, DATA-01 tests green
 progress:
   total_phases: 7
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 7
-  completed_plans: 5
+  completed_plans: 7
   percent: 57
 ---
 
@@ -52,6 +52,8 @@ Progress: [██████░░░░] 57%
 
 *Updated after each plan completion*
 | Phase 02-data-pipeline P03 | 6 | 2 tasks | 2 files |
+| Phase 02-data-pipeline P04 | 3 | 2 tasks | 3 files |
+| Phase 02-data-pipeline P05 | 7 | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -73,6 +75,12 @@ Recent decisions affecting current work:
 - [Phase 02-02]: yfinance import guarded with try/except so module imports without yfinance installed (tests run offline)
 - [Phase 02-data-pipeline]: Pure-pandas TA instead of pandas_ta: pandas_ta requires Python >=3.12 but project venv is Python 3.9
 - [Phase 02-data-pipeline]: Normalization wired at save_feature_csvs() — CSVs on disk are pre-normalized per DATA-03 spec
+- [Phase 02-data-pipeline]: normalize_split.py main() writes only split_indices.json — no re-normalization of CSVs (already done in 02-03)
+- [Phase 02-data-pipeline]: flow.npz stores raw (not normalized) forward returns — label is regression signal, normalization would distort it
+- [Phase 02-data-pipeline]: NPZ key 'result' mandatory for StockDataset interface: np.savez(path, result=array)
+- [Phase 02-data-pipeline]: graph_embedding.py calls ge.Struc2Vec directly (not legacy script) to keep correlation threshold consistent between corr_adj.npy and data.edgelist
+- [Phase 02-data-pipeline]: test_graph_embedding_shape validates file-format contract only (shape [N,128]) without requiring ge installed — keeps CI fast
+- [Phase 02-data-pipeline]: build_pipeline.py uses sentinel files for idempotent reruns; --force overrides all sentinels
 
 ### Pending Todos
 
@@ -86,6 +94,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-11T10:05:15.360Z
-Stopped at: Completed 02-03-PLAN.md — feature_engineering.py with cross-sectional normalization and DATA-02/DATA-03 tests
+Last session: 2026-03-11T14:57:34.399Z
+Stopped at: Completed 02-05-PLAN.md — graph_embedding.py, build_pipeline.py, requirements.txt updated; all DATA-01..DATA-05 tests green
 Resume file: None
