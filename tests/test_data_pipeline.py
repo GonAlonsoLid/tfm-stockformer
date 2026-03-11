@@ -6,17 +6,69 @@ import pandas as pd
 
 # ── DATA-01: OHLCV download ─────────────────────────────────────────────────
 
-@pytest.mark.xfail(reason="DATA-01 not yet implemented", strict=False)
 def test_download_parquet_schema(sp500_ohlcv_fixture):
     """Downloaded Parquet files have OHLCV columns and no fully-empty rows."""
-    # Will import and call 01_download_ohlcv.download_ohlcv_batched in real test
-    pytest.xfail("DATA-01 stub")
+    from data_processing_script.sp500_pipeline.download_ohlcv import clean_and_align
+    cleaned = clean_and_align(sp500_ohlcv_fixture, max_missing_pct=0.05)
+    for ticker, df in cleaned.items():
+        assert set(["Open", "High", "Low", "Close", "Volume"]).issubset(df.columns)
+        assert not df.dropna(how="all").empty
 
 
-@pytest.mark.xfail(reason="DATA-01 not yet implemented", strict=False)
 def test_clean_no_all_nan_rows(sp500_ohlcv_fixture):
-    """After cleaning, no stock has >5% missing trading days."""
-    pytest.xfail("DATA-01 stub")
+    """After cleaning, tickers with >5% missing days are dropped; those with <5% are kept."""
+    from data_processing_script.sp500_pipeline.download_ohlcv import clean_and_align
+
+    np.random.seed(0)
+    dates = pd.bdate_range(start="2020-01-02", periods=300)
+
+    # Build fixture extended with two extra tickers
+    ticker_data = dict(sp500_ohlcv_fixture)
+
+    # Ticker with >5% unrecoverable NaN rows — should be dropped.
+    # Use a block of 20 consecutive NaN rows so ffill(limit=5) cannot recover them.
+    bad_ticker = "BAD_STOCK"
+    bad_df = pd.DataFrame(
+        {
+            "Open": np.random.rand(300) * 100,
+            "High": np.random.rand(300) * 110,
+            "Low": np.random.rand(300) * 90,
+            "Close": np.random.rand(300) * 100,
+            "Volume": np.random.randint(1_000_000, 5_000_000, size=300).astype(float),
+        },
+        index=dates,
+    )
+    # 20 consecutive NaN rows at positions 50-69: ffill(limit=5) leaves rows 56-69 (14 rows)
+    # still NaN → ~4.7% > 5%? Let's use 30 consecutive rows 50-79 to be safe (leaving ~25 unfilled ≈ 8%)
+    bad_df.iloc[50:80] = np.nan  # 30 consecutive rows; ffill recovers only first 5 → 25 rows remain NaN (~8.3%)
+    ticker_data[bad_ticker] = bad_df
+
+    # Ticker with 3% NaN rows — should survive after ffill
+    good_ticker = "GOOD_STOCK"
+    good_df = pd.DataFrame(
+        {
+            "Open": np.random.rand(300) * 100,
+            "High": np.random.rand(300) * 110,
+            "Low": np.random.rand(300) * 90,
+            "Close": np.random.rand(300) * 100,
+            "Volume": np.random.randint(1_000_000, 5_000_000, size=300).astype(float),
+        },
+        index=dates,
+    )
+    # Introduce 3% NaN rows (9 rows) — ffill(limit=5) should recover them if isolated
+    # Place them as single isolated NaN rows so ffill can fill them
+    nan_rows_good = np.arange(10, 300, 33)[:9]  # 9 isolated rows
+    good_df.iloc[nan_rows_good] = np.nan
+    ticker_data[good_ticker] = good_df
+
+    cleaned = clean_and_align(ticker_data, max_missing_pct=0.05)
+
+    assert bad_ticker not in cleaned, (
+        f"{bad_ticker} (10% NaN rows) should have been dropped by clean_and_align"
+    )
+    assert good_ticker in cleaned, (
+        f"{good_ticker} (3% NaN rows, isolated) should have survived clean_and_align"
+    )
 
 
 # ── DATA-02: Feature engineering ────────────────────────────────────────────
