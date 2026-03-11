@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: in_progress
-stopped_at: Completed 02-02-PLAN.md — S&P500 OHLCV download pipeline with DATA-01 tests passing
-last_updated: "2026-03-11T09:59:44.776Z"
-last_activity: 2026-03-11 — Plan 02-01 executed; DATA-01 through DATA-05 xfail stubs created
+status: completed
+stopped_at: Completed 02-03-PLAN.md — feature_engineering.py with cross-sectional normalization and DATA-02/DATA-03 tests
+last_updated: "2026-03-11T10:05:15.362Z"
+last_activity: 2026-03-11 — Plan 02-02 executed; download_ohlcv.py created, DATA-01 tests green
 progress:
   total_phases: 7
   completed_phases: 1
   total_plans: 7
-  completed_plans: 4
-  percent: 14
+  completed_plans: 5
+  percent: 57
 ---
 
 # Project State
@@ -51,6 +51,7 @@ Progress: [██████░░░░] 57%
 - Trend: Steady
 
 *Updated after each plan completion*
+| Phase 02-data-pipeline P03 | 6 | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -70,6 +71,8 @@ Recent decisions affecting current work:
 - [02-01]: feature_matrix_fixture shape [280, 5] = 300 days minus 20-day warmup for longest TA window
 - [Phase 02-02]: download_ohlcv.py named without leading digit — Python module names cannot start with a digit
 - [Phase 02-02]: yfinance import guarded with try/except so module imports without yfinance installed (tests run offline)
+- [Phase 02-data-pipeline]: Pure-pandas TA instead of pandas_ta: pandas_ta requires Python >=3.12 but project venv is Python 3.9
+- [Phase 02-data-pipeline]: Normalization wired at save_feature_csvs() — CSVs on disk are pre-normalized per DATA-03 spec
 
 ### Pending Todos
 
@@ -83,6 +86,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-11T09:59:44.774Z
-Stopped at: Completed 02-02-PLAN.md — S&P500 OHLCV download pipeline with DATA-01 tests passing
+Last session: 2026-03-11T10:05:15.360Z
+Stopped at: Completed 02-03-PLAN.md — feature_engineering.py with cross-sectional normalization and DATA-02/DATA-03 tests
 Resume file: None
