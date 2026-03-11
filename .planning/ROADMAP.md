@@ -62,7 +62,12 @@ Plans:
   1. A `.conf` config file for S&P500 exists with correct feature dimensions, date ranges, and path references pointing to Phase 2 outputs
   2. Running the training script completes without error, produces TensorBoard logs, and saves at least one checkpoint
   3. Running the inference script on the saved checkpoint produces a prediction CSV covering the test period
-**Plans**: TBD
+**Plans**: 4 plans
+Plans:
+- [ ] 03-01-PLAN.md — Wave 0 test scaffold: xfail stubs for MODEL-01 and MODEL-02 (MODEL-01, MODEL-02)
+- [ ] 03-02-PLAN.md — Create config/Multitask_Stock_SP500.conf wiring Phase 2 outputs (MODEL-01)
+- [ ] 03-03-PLAN.md — Create scripts/run_inference.py standalone inference script (MODEL-02)
+- [ ] 03-04-PLAN.md — Human verify: training smoke test (2 epochs) + inference CSV confirmation (MODEL-01, MODEL-02)
 
 ### Phase 4: Evaluation
 **Goal**: Model predictions are scored with IC/ICIR in addition to the original MAE/RMSE/accuracy/F1 metrics
@@ -114,7 +119,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 |-------|----------------|--------|-----------|
 | 1. Infrastructure | 2/2 | Complete   | 2026-03-10 |
 | 2. Data Pipeline | 6/6 | Complete   | 2026-03-11 |
-| 3. Model Training | 0/TBD | Not started | - |
+| 3. Model Training | 0/4 | Not started | - |
 | 4. Evaluation | 0/TBD | Not started | - |
 | 5. Portfolio & Backtesting | 0/TBD | Not started | - |
 | 6. Interface | 0/TBD | Not started | - |
