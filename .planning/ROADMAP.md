@@ -48,11 +48,11 @@ Plans:
 **Plans**: 6 plans
 Plans:
 - [x] 02-01-PLAN.md — Test scaffold: Wave 0 stubs + conftest Phase 2 fixtures (DATA-01..DATA-05) (completed 2026-03-11)
-- [ ] 02-02-PLAN.md — Download + clean S&P500 OHLCV via yfinance → Parquet (DATA-01)
-- [ ] 02-03-PLAN.md — Feature engineering: TA indicators + label.csv (DATA-02)
-- [ ] 02-04-PLAN.md — Normalize/split + serialize flow.npz + trend_indicator.npz (DATA-03, DATA-04, DATA-05)
-- [ ] 02-05-PLAN.md — Graph embedding + orchestrator script + requirements.txt update (DATA-05)
-- [ ] 02-06-PLAN.md — Expand TA features from 16 to ~69 (gap closure: Phase 3 prerequisite, DATA-02)
+- [x] 02-02-PLAN.md — Download + clean S&P500 OHLCV via yfinance → Parquet (DATA-01) (completed 2026-03-11)
+- [x] 02-03-PLAN.md — Feature engineering: TA indicators + label.csv (DATA-02) (completed 2026-03-11)
+- [x] 02-04-PLAN.md — Normalize/split + serialize flow.npz + trend_indicator.npz (DATA-03, DATA-04, DATA-05) (completed 2026-03-11)
+- [x] 02-05-PLAN.md — Graph embedding + orchestrator script + requirements.txt update (DATA-05) (completed 2026-03-11)
+- [x] 02-06-PLAN.md — Expand TA features from 16 to ~69 (gap closure: Phase 3 prerequisite, DATA-02) (completed 2026-03-11)
 
 ### Phase 3: Model Training
 **Goal**: The Stockformer trains end-to-end on S&P500 data, saves checkpoints, and produces prediction CSVs on the test period
