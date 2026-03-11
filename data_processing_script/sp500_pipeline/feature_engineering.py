@@ -76,6 +76,58 @@ def _cross_sectional_normalize(df: pd.DataFrame) -> pd.DataFrame:
     return df.sub(row_mean, axis=0).div(row_std, axis=0)
 
 
+def _atr(df: pd.DataFrame, length: int) -> pd.Series:
+    """Average True Range over `length` periods."""
+    high, low, close = df["High"], df["Low"], df["Close"]
+    prev_close = close.shift(1)
+    tr = pd.concat([
+        high - low,
+        (high - prev_close).abs(),
+        (low - prev_close).abs(),
+    ], axis=1).max(axis=1)
+    return tr.rolling(length).mean()
+
+
+def _stochastic(df: pd.DataFrame, k_period: int, d_period: int = 3):
+    """Stochastic Oscillator: returns (%K, %D) as a tuple of Series."""
+    high_roll = df["High"].rolling(k_period).max()
+    low_roll = df["Low"].rolling(k_period).min()
+    denom = (high_roll - low_roll).replace(0, np.nan)
+    k = 100.0 * (df["Close"] - low_roll) / denom
+    d = k.rolling(d_period).mean()
+    return k, d
+
+
+def _williams_r(df: pd.DataFrame, length: int) -> pd.Series:
+    """Williams %R over `length` periods."""
+    high_roll = df["High"].rolling(length).max()
+    low_roll = df["Low"].rolling(length).min()
+    denom = (high_roll - low_roll).replace(0, np.nan)
+    return -100.0 * (high_roll - df["Close"]) / denom
+
+
+def _cci(df: pd.DataFrame, length: int) -> pd.Series:
+    """Commodity Channel Index over `length` periods."""
+    typical = (df["High"] + df["Low"] + df["Close"]) / 3.0
+    sma_tp = typical.rolling(length).mean()
+    mad = typical.rolling(length).apply(lambda x: np.mean(np.abs(x - x.mean())), raw=True)
+    mad_safe = mad.where(mad >= 1e-8, other=1e-8)
+    return (typical - sma_tp) / (0.015 * mad_safe)
+
+
+def _donchian(df: pd.DataFrame, length: int):
+    """Donchian Channel: returns (upper, lower, width) as a tuple of Series."""
+    upper = df["High"].rolling(length).max()
+    lower = df["Low"].rolling(length).min()
+    width = upper - lower
+    return upper, lower, width
+
+
+def _momentum(series: pd.Series, length: int) -> pd.Series:
+    """Price momentum: Close - Close.shift(length)."""
+    return series - series.shift(length)
+
+
 # ── Public API ─────────────────────────────────────────────────────────────────
 
 def compute_features(
@@ -91,7 +143,7 @@ def compute_features(
 
     Returns
     -------
-    DataFrame with 16 feature columns (same DatetimeIndex as input).
+    DataFrame with ~69 feature columns (same DatetimeIndex as input).
     NaN rows from warmup are NOT dropped here — caller handles that.
     """
     close = df_ohlcv["Close"]
@@ -119,6 +171,91 @@ def compute_features(
     for w in windows:
         vol_ma = volume.rolling(w).mean()
         features[f"VOL_ratio_{w}"] = volume / vol_ma.replace(0, np.nan)
+
+    # --- NEW FEATURES (added in plan 02-06 to reach ~69 total) ---
+
+    # MACD signal line and histogram (re-use _macd_line result)
+    macd_line = features["MACD"]
+    macd_signal = macd_line.ewm(span=9, adjust=False).mean()
+    features["MACD_signal"] = macd_signal
+    features["MACD_hist"] = macd_line - macd_signal   # +2 → 18
+
+    # ATR — 4 windows
+    for w in (5, 10, 14, 20):
+        features[f"ATR_{w}"] = _atr(df_ohlcv, w)         # +4 → 22
+
+    # OBV (single)
+    direction = np.sign(df_ohlcv["Close"].diff()).fillna(0)
+    features["OBV"] = (direction * df_ohlcv["Volume"]).cumsum()  # +1 → 23
+
+    # Stochastic %K and %D — 2 period sets
+    for k_p in (5, 14):
+        k_ser, d_ser = _stochastic(df_ohlcv, k_period=k_p)
+        features[f"STOCH_K_{k_p}"] = k_ser
+        features[f"STOCH_D_{k_p}"] = d_ser               # +4 → 27
+
+    # Williams %R — 2 windows
+    for w in (14, 20):
+        features[f"WILLR_{w}"] = _williams_r(df_ohlcv, w)  # +2 → 29
+
+    # CCI — 2 windows
+    for w in (14, 20):
+        features[f"CCI_{w}"] = _cci(df_ohlcv, w)           # +2 → 31
+
+    # Donchian Channel — 2 windows
+    for w in (20, 60):
+        dc_u, dc_l, dc_w = _donchian(df_ohlcv, w)
+        features[f"DC_upper_{w}"] = dc_u
+        features[f"DC_lower_{w}"] = dc_l
+        features[f"DC_width_{w}"] = dc_w                    # +6 → 37
+
+    # Additional RSI windows: 3, 14
+    for w in (3, 14):
+        features[f"RSI_{w}"] = _rsi(close, w)              # +2 → 39
+
+    # Additional ROC windows: 3, 14
+    for w in (3, 14):
+        features[f"ROC_{w}"] = _roc(close, w)              # +2 → 41
+
+    # Momentum (price difference) — 3 windows
+    for w in (5, 10, 20):
+        features[f"MOM_{w}"] = _momentum(close, w)         # +3 → 44
+
+    # Bollinger Bands for additional windows: 5, 10, 60
+    for w in (5, 10, 60):
+        bb_u, bb_l = _bbands(close, length=w)
+        features[f"BB_upper_{w}"] = bb_u
+        features[f"BB_lower_{w}"] = bb_l
+        features[f"BB_width_{w}"] = bb_u - bb_l            # +9 → 53
+
+    # Additional VOL_ratio windows: 3, 14
+    for w in (3, 14):
+        vol_ma = df_ohlcv["Volume"].rolling(w).mean()
+        features[f"VOL_ratio_{w}"] = df_ohlcv["Volume"] / vol_ma.replace(0, np.nan)  # +2 → 55
+
+    # EMA — 4 windows
+    for w in (5, 10, 20, 50):
+        features[f"EMA_{w}"] = close.ewm(span=w, adjust=False).mean()  # +4 → 59
+
+    # SMA — 4 windows
+    for w in (5, 10, 20, 50):
+        features[f"SMA_{w}"] = close.rolling(w).mean()    # +4 → 63
+
+    # Price distance from SMA_20 and SMA_50: (Close - SMA) / SMA
+    features["DIST_SMA20"] = (close - features["SMA_20"]) / features["SMA_20"].replace(0, np.nan)
+    features["DIST_SMA50"] = (close - features["SMA_50"]) / features["SMA_50"].replace(0, np.nan)  # +2 → 65
+
+    # Daily return: Close/Close.shift(1) - 1
+    features["DAILY_RET"] = close / close.shift(1) - 1    # +1 → 66
+
+    # Normalized volume vs 252-day mean
+    features["VOL_norm_252"] = df_ohlcv["Volume"] / df_ohlcv["Volume"].rolling(252).mean().replace(0, np.nan)  # +1 → 67
+
+    # High-Low spread: (High - Low) / Close
+    features["HL_SPREAD"] = (df_ohlcv["High"] - df_ohlcv["Low"]) / close.replace(0, np.nan)  # +1 → 68
+
+    # Close-Open return: (Close - Open) / Open
+    features["CO_RET"] = (close - df_ohlcv["Open"]) / df_ohlcv["Open"].replace(0, np.nan)  # +1 → 69
 
     return pd.DataFrame(features, index=df_ohlcv.index)
 
