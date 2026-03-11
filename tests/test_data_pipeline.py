@@ -121,30 +121,58 @@ def test_cross_sectional_normalization(tmp_path, ohlcv_wide_fixture):
 
 # ── DATA-04: Train/val/test split no leakage ─────────────────────────────────
 
-@pytest.mark.xfail(reason="DATA-04 not yet implemented", strict=False)
-def test_no_normalization_leakage(feature_matrix_fixture):
-    """Val/test normalization does not use statistics from val/test rows."""
-    pytest.xfail("DATA-04 stub")
+def test_no_normalization_leakage():
+    """Cross-sectional normalization is per-row: val/test rows normalized independently are identical."""
+    from data_processing_script.sp500_pipeline.normalize_split import cross_sectional_normalize
+    np.random.seed(0)
+    df = pd.DataFrame(np.random.randn(200, 10))
+    # Normalize full dataset
+    full_normed = cross_sectional_normalize(df)
+    # Normalize just the val/test portion (rows 150:200) independently
+    val_normed_standalone = cross_sectional_normalize(df.iloc[150:])
+    # They should be identical — cross-sectional norm does not use other rows
+    pd.testing.assert_frame_equal(
+        full_normed.iloc[150:].reset_index(drop=True),
+        val_normed_standalone.reset_index(drop=True),
+        atol=1e-10,
+    )
 
 
-@pytest.mark.xfail(reason="DATA-04 not yet implemented", strict=False)
-def test_split_ratios(feature_matrix_fixture):
+def test_split_ratios():
     """Train is 75%, val is 12.5%, test is 12.5% of total time steps."""
-    pytest.xfail("DATA-04 stub")
+    from data_processing_script.sp500_pipeline.normalize_split import split_by_date
+    df = pd.DataFrame(np.random.randn(1000, 5))
+    train, val, test = split_by_date(df, train_ratio=0.75, val_ratio=0.125)
+    assert len(train) == 750
+    assert len(val) == 125
+    assert len(test) == 125
 
 
 # ── DATA-05: NPZ arrays + graph embedding ────────────────────────────────────
 
-@pytest.mark.xfail(reason="DATA-05 not yet implemented", strict=False)
 def test_npz_shapes_no_nan(tmp_path):
     """flow.npz and trend_indicator.npz have shape [T, N] and no NaN values."""
-    pytest.xfail("DATA-05 stub")
+    from data_processing_script.sp500_pipeline.serialize_arrays import save_model_arrays
+    np.random.seed(7)
+    df = pd.DataFrame(np.random.randn(50, 5))
+    save_model_arrays(df, str(tmp_path))
+    flow = np.load(str(tmp_path / "flow.npz"))["result"]
+    trend = np.load(str(tmp_path / "trend_indicator.npz"))["result"]
+    assert flow.shape == (50, 5), f"Expected (50, 5), got {flow.shape}"
+    assert not np.isnan(flow).any(), "flow.npz contains NaN"
+    assert trend.shape == (50, 5), f"Expected (50, 5), got {trend.shape}"
+    assert not np.isnan(trend.astype(float)).any(), "trend_indicator.npz contains NaN"
 
 
-@pytest.mark.xfail(reason="DATA-05 not yet implemented", strict=False)
 def test_trend_indicator_binary(tmp_path):
     """trend_indicator.npz contains only 0 and 1 values."""
-    pytest.xfail("DATA-05 stub")
+    from data_processing_script.sp500_pipeline.serialize_arrays import save_model_arrays
+    np.random.seed(7)
+    df = pd.DataFrame(np.random.randn(50, 5))
+    save_model_arrays(df, str(tmp_path))
+    trend = np.load(str(tmp_path / "trend_indicator.npz"))["result"]
+    unique_vals = np.unique(trend)
+    assert set(unique_vals).issubset({0, 1}), f"Unexpected values in trend: {unique_vals}"
 
 
 @pytest.mark.xfail(reason="DATA-05 not yet implemented", strict=False)
