@@ -47,7 +47,7 @@ Plans:
   5. Feature engineering produces >= 60 universal TA indicators to replace Alpha-360 richness for Phase 3 (gap closure: plan 02-06)
 **Plans**: 6 plans
 Plans:
-- [ ] 02-01-PLAN.md — Test scaffold: Wave 0 stubs + conftest Phase 2 fixtures (DATA-01..DATA-05)
+- [x] 02-01-PLAN.md — Test scaffold: Wave 0 stubs + conftest Phase 2 fixtures (DATA-01..DATA-05) (completed 2026-03-11)
 - [ ] 02-02-PLAN.md — Download + clean S&P500 OHLCV via yfinance → Parquet (DATA-01)
 - [ ] 02-03-PLAN.md — Feature engineering: TA indicators + label.csv (DATA-02)
 - [ ] 02-04-PLAN.md — Normalize/split + serialize flow.npz + trend_indicator.npz (DATA-03, DATA-04, DATA-05)
@@ -113,7 +113,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Infrastructure | 2/2 | Complete   | 2026-03-10 |
-| 2. Data Pipeline | 5/6 | In progress (02-06 gap closure) | 2026-03-11 |
+| 2. Data Pipeline | 6/6 | Complete   | 2026-03-11 |
 | 3. Model Training | 0/TBD | Not started | - |
 | 4. Evaluation | 0/TBD | Not started | - |
 | 5. Portfolio & Backtesting | 0/TBD | Not started | - |
