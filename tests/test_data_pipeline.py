@@ -179,3 +179,43 @@ def test_trend_indicator_binary(tmp_path):
 def test_graph_embedding_shape(tmp_path):
     """Struc2Vec embedding file exists with shape [N, 128]."""
     pytest.xfail("DATA-05 stub")
+
+
+# ── Task 1 TDD: build_correlation_graph and build_pipeline ───────────────────
+
+def test_build_correlation_graph_creates_files(tmp_path):
+    """build_correlation_graph writes corr_adj.npy and data.edgelist, returns edge count."""
+    from data_processing_script.sp500_pipeline.graph_embedding import build_correlation_graph
+    np.random.seed(42)
+    N, T = 5, 100
+    # Create a synthetic label.csv (T rows x N cols)
+    dates = pd.bdate_range(start="2020-01-02", periods=T)
+    data = np.random.randn(T, N)
+    pd.DataFrame(data, index=dates, columns=[f"S{i}" for i in range(N)]).to_csv(
+        str(tmp_path / "label.csv")
+    )
+
+    edge_count = build_correlation_graph(str(tmp_path), threshold=0.0)
+    assert (tmp_path / "corr_adj.npy").exists(), "corr_adj.npy not created"
+    assert (tmp_path / "data.edgelist").exists(), "data.edgelist not created"
+    corr = np.load(str(tmp_path / "corr_adj.npy"))
+    assert corr.shape == (N, N), f"Expected ({N},{N}), got {corr.shape}"
+    assert isinstance(edge_count, int) and edge_count > 0
+
+
+def test_build_correlation_graph_threshold(tmp_path):
+    """build_correlation_graph filters edges by |corr| > threshold."""
+    from data_processing_script.sp500_pipeline.graph_embedding import build_correlation_graph
+    np.random.seed(42)
+    T, N = 200, 5
+    dates = pd.bdate_range(start="2020-01-02", periods=T)
+    data = np.random.randn(T, N)
+    pd.DataFrame(data, index=dates, columns=[f"S{i}" for i in range(N)]).to_csv(
+        str(tmp_path / "label.csv")
+    )
+
+    # With threshold=0 all N*(N-1)/2 pairs should appear
+    count_all = build_correlation_graph(str(tmp_path), threshold=0.0)
+    # With threshold=0.999 almost no edges survive
+    count_strict = build_correlation_graph(str(tmp_path), threshold=0.999)
+    assert count_all >= count_strict, "Higher threshold should yield fewer or equal edges"
