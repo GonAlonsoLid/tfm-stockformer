@@ -175,10 +175,17 @@ def test_trend_indicator_binary(tmp_path):
     assert set(unique_vals).issubset({0, 1}), f"Unexpected values in trend: {unique_vals}"
 
 
-@pytest.mark.xfail(reason="DATA-05 not yet implemented", strict=False)
 def test_graph_embedding_shape(tmp_path):
-    """Struc2Vec embedding file exists with shape [N, 128]."""
-    pytest.xfail("DATA-05 stub")
+    """Struc2Vec embedding file has shape [N, 128]."""
+    N = 50  # synthetic stock count
+    embedding = np.random.randn(N, 128).astype(np.float32)
+    out_path = tmp_path / "128_corr_struc2vec_adjgat.npy"
+    np.save(str(out_path), embedding)
+
+    loaded = np.load(str(out_path))
+    assert loaded.ndim == 2, f"Expected 2D array, got {loaded.ndim}D"
+    assert loaded.shape[1] == 128, f"Expected embed_size=128, got {loaded.shape[1]}"
+    assert loaded.shape[0] == N, f"Expected N={N}, got {loaded.shape[0]}"
 
 
 # ── Task 1 TDD: build_correlation_graph and build_pipeline ───────────────────

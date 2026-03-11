@@ -15,3 +15,7 @@ pytorch-wavelets==1.3.0
 networkx==3.2.1
 pandas==2.3.3
 pytest>=7.0,<8
+yfinance>=0.2.50
+pyarrow>=12.0
+pandas-ta>=0.3.14b
+# GraphEmbedding (Struc2Vec): pip install git+https://github.com/shenweichen/GraphEmbedding.git
