@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: completed
-stopped_at: Completed 02-06-PLAN.md
-last_updated: "2026-03-11T15:35:26.982Z"
+stopped_at: Completed 03-02-PLAN.md
+last_updated: "2026-03-12T10:39:03.008Z"
 last_activity: 2026-03-11 — Plan 02-02 executed; download_ohlcv.py created, DATA-01 tests green
 progress:
   total_phases: 7
   completed_phases: 2
-  total_plans: 8
-  completed_plans: 8
+  total_plans: 12
+  completed_plans: 10
   percent: 57
 ---
 
@@ -55,6 +55,7 @@ Progress: [██████░░░░] 57%
 | Phase 02-data-pipeline P04 | 3 | 2 tasks | 3 files |
 | Phase 02-data-pipeline P05 | 7 | 2 tasks | 4 files |
 | Phase 02-data-pipeline P06 | 2 | 2 tasks | 2 files |
+| Phase 03-model-training P02 | 3 | 1 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -84,6 +85,8 @@ Recent decisions affecting current work:
 - [Phase 02-data-pipeline]: build_pipeline.py uses sentinel files for idempotent reruns; --force overrides all sentinels
 - [Phase 02-data-pipeline]: TA feature expansion to 69 columns: all pure-pandas, no pandas_ta/TA-Lib, satisfies Phase 3 Alpha-360 replacement prereq
 - [Phase 02-data-pipeline]: test_feature_count_for_phase3 added as machine-verifiable Phase 3 gate (>= 60 features)
+- [Phase 03-model-training]: alpha_360_dir points to features/ subdirectory (not parent) to avoid pandas parse errors on .npz/.npy files
+- [Phase 03-model-training]: max_epoch=50 (down from CN config 100) to reduce training wall time for S&P500 run
 
 ### Pending Todos
 
@@ -97,6 +100,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-11T15:35:26.980Z
-Stopped at: Completed 02-06-PLAN.md
+Last session: 2026-03-12T10:39:03.006Z
+Stopped at: Completed 03-02-PLAN.md
 Resume file: None
