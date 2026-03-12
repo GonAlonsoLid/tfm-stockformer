@@ -24,7 +24,7 @@ Requirements for the thesis milestone. Each maps to a roadmap phase.
 ### Model Training
 
 - [x] **MODEL-01**: New `.conf` config file targeting S&P500 data with correct paths, feature dimensions, and date ranges
-- [ ] **MODEL-02**: Model trains end-to-end on S&P500 data and saves checkpoints successfully
+- [x] **MODEL-02**: Model trains end-to-end on S&P500 data and saves checkpoints successfully
 
 ### Evaluation
 
@@ -108,7 +108,7 @@ Deferred to future work. Acknowledged but not in current roadmap.
 | DATA-04 | Phase 2 | Complete |
 | DATA-05 | Phase 2 | Complete |
 | MODEL-01 | Phase 3 | Complete |
-| MODEL-02 | Phase 3 | Pending |
+| MODEL-02 | Phase 3 | Complete |
 | EVAL-01 | Phase 4 | Pending |
 | EVAL-02 | Phase 4 | Pending |
 | PORT-01 | Phase 5 | Pending |

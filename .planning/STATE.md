@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: completed
-stopped_at: Completed 03-02-PLAN.md
-last_updated: "2026-03-12T10:39:03.008Z"
-last_activity: 2026-03-11 — Plan 02-02 executed; download_ohlcv.py created, DATA-01 tests green
+stopped_at: Completed 03-03-PLAN.md
+last_updated: "2026-03-12T10:42:12.000Z"
+last_activity: 2026-03-12 — Plan 03-03 executed; scripts/run_inference.py created, MODEL-02 inference tests green
 progress:
   total_phases: 7
   completed_phases: 2
   total_plans: 12
-  completed_plans: 10
-  percent: 57
+  completed_plans: 11
+  percent: 63
 ---
 
 # Project State
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-09)
 
 **Core value:** A working, reproducible end-to-end pipeline that trains the Stockformer on S&P500 data, generates portfolios, and lets the user interactively explore backtest results.
-**Current focus:** Phase 2 - Data Pipeline
+**Current focus:** Phase 3 - Model Training
 
 ## Current Position
 
-Phase: 2 of 7 (Data Pipeline)
-Plan: 2 of 5 in current phase
-Status: Phase 2 plan 02-02 complete; DATA-01 OHLCV download pipeline implemented and tests passing
-Last activity: 2026-03-11 — Plan 02-02 executed; download_ohlcv.py created, DATA-01 tests green
+Phase: 3 of 7 (Model Training)
+Plan: 3 of 4 in current phase
+Status: Phase 3 plan 03-03 complete; scripts/run_inference.py created, MODEL-02 inference tests green
+Last activity: 2026-03-12 — Plan 03-03 executed; standalone inference script created
 
-Progress: [██████░░░░] 57%
+Progress: [███████░░░] 63%
 
 ## Performance Metrics
 
@@ -56,6 +56,7 @@ Progress: [██████░░░░] 57%
 | Phase 02-data-pipeline P05 | 7 | 2 tasks | 4 files |
 | Phase 02-data-pipeline P06 | 2 | 2 tasks | 2 files |
 | Phase 03-model-training P02 | 3 | 1 tasks | 1 files |
+| Phase 03-model-training P03 | 2 | 1 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -87,6 +88,8 @@ Recent decisions affecting current work:
 - [Phase 02-data-pipeline]: test_feature_count_for_phase3 added as machine-verifiable Phase 3 gate (>= 60 features)
 - [Phase 03-model-training]: alpha_360_dir points to features/ subdirectory (not parent) to avoid pandas parse errors on .npz/.npy files
 - [Phase 03-model-training]: max_epoch=50 (down from CN config 100) to reduce training wall time for S&P500 run
+- [Phase 03-03]: loadGraph() returns adjgat directly (not a tuple) — plan interface docs were outdated; actual lib/graph_utils.py returns only adjgat
+- [Phase 03-03]: Inference loop uses raw numpy arrays from dataset attributes (not DataLoader) — consistent with training script pattern
 
 ### Pending Todos
 
@@ -100,6 +103,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-12T10:39:03.006Z
-Stopped at: Completed 03-02-PLAN.md
+Last session: 2026-03-12T10:42:12.000Z
+Stopped at: Completed 03-03-PLAN.md
 Resume file: None

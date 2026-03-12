@@ -119,7 +119,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 |-------|----------------|--------|-----------|
 | 1. Infrastructure | 2/2 | Complete   | 2026-03-10 |
 | 2. Data Pipeline | 6/6 | Complete   | 2026-03-11 |
-| 3. Model Training | 2/4 | In Progress|  |
+| 3. Model Training | 3/4 | In Progress|  |
 | 4. Evaluation | 0/TBD | Not started | - |
 | 5. Portfolio & Backtesting | 0/TBD | Not started | - |
 | 6. Interface | 0/TBD | Not started | - |
