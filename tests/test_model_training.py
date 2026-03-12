@@ -26,7 +26,10 @@ def test_config_file_exists(project_root):
 
 @pytest.mark.xfail(strict=False, reason="config/Multitask_Stock_SP500.conf not yet created")
 def test_config_fields_present(project_root):
-    """Load Multitask_Stock_SP500.conf and assert all four INI sections and required keys exist."""
+    """Load Multitask_Stock_SP500.conf and assert all four INI sections and required keys exist.
+
+    ConfigParser normalises key names to lowercase, so T1/T2 are stored as t1/t2.
+    """
     config_path = os.path.join(project_root, "config", "Multitask_Stock_SP500.conf")
     cfg = configparser.ConfigParser()
     cfg.read(config_path)
@@ -36,9 +39,11 @@ def test_config_fields_present(project_root):
         assert section in cfg, f"Missing INI section: [{section}]"
 
     required_keys = {
-        "file": ["traffic", "indicator", "adj", "adjgat", "model", "log"],
-        "data": ["alpha_360_dir", "output_dir", "tensorboard_dir", "T1", "T2",
-                 "train_ratio", "val_ratio", "test_ratio"],
+        "file": [
+            "traffic", "indicator", "adj", "adjgat", "model", "log",
+            "alpha_360_dir", "output_dir", "tensorboard_dir",
+        ],
+        "data": ["t1", "t2", "train_ratio", "val_ratio", "test_ratio"],
         "train": ["cuda", "max_epoch", "batch_size", "learning_rate", "seed"],
         "param": ["layers", "heads", "dims", "samples", "wave", "level"],
     }

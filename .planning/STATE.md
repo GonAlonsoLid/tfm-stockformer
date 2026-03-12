@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: completed
-stopped_at: Completed 03-03-PLAN.md
-last_updated: "2026-03-12T10:42:12.000Z"
-last_activity: 2026-03-12 — Plan 03-03 executed; scripts/run_inference.py created, MODEL-02 inference tests green
+stopped_at: Checkpoint 03-04 — awaiting Phase 2 pipeline run and smoke test verification
+last_updated: "2026-03-12T10:46:06.195Z"
+last_activity: 2026-03-12 — Plan 03-03 executed; standalone inference script created
 progress:
   total_phases: 7
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 12
-  completed_plans: 11
+  completed_plans: 12
   percent: 63
 ---
 
@@ -57,6 +57,7 @@ Progress: [███████░░░] 63%
 | Phase 02-data-pipeline P06 | 2 | 2 tasks | 2 files |
 | Phase 03-model-training P02 | 3 | 1 tasks | 1 files |
 | Phase 03-model-training P03 | 2 | 1 tasks | 1 files |
+| Phase 03-model-training P04 | 1 | 1 tasks | 0 files |
 
 ## Accumulated Context
 
@@ -90,6 +91,7 @@ Recent decisions affecting current work:
 - [Phase 03-model-training]: max_epoch=50 (down from CN config 100) to reduce training wall time for S&P500 run
 - [Phase 03-03]: loadGraph() returns adjgat directly (not a tuple) — plan interface docs were outdated; actual lib/graph_utils.py returns only adjgat
 - [Phase 03-03]: Inference loop uses raw numpy arrays from dataset attributes (not DataLoader) — consistent with training script pattern
+- [Phase 03-model-training]: Phase 2 pipeline (build_pipeline.py) must be run before any training smoke test — data/Stock_SP500_2018-2024/ did not exist on this machine
 
 ### Pending Todos
 
@@ -103,6 +105,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-12T10:42:12.000Z
-Stopped at: Completed 03-03-PLAN.md
+Last session: 2026-03-12T10:46:06.193Z
+Stopped at: Checkpoint 03-04 — awaiting Phase 2 pipeline run and smoke test verification
 Resume file: None

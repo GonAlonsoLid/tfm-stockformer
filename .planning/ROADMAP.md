@@ -14,7 +14,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Infrastructure** - Make the codebase portable and reproducible on any machine (completed 2026-03-10)
 - [x] **Phase 2: Data Pipeline** - Build the S&P500 OHLCV ingestion, feature engineering, and preprocessing pipeline (completed 2026-03-11)
-- [ ] **Phase 3: Model Training** - Configure and train the Stockformer on S&P500 data end-to-end
+- [x] **Phase 3: Model Training** - Configure and train the Stockformer on S&P500 data end-to-end (completed 2026-03-12)
 - [ ] **Phase 4: Evaluation** - Compute IC/ICIR and retain all original metrics on test predictions
 - [ ] **Phase 5: Portfolio & Backtesting** - Turn prediction scores into portfolios and compute performance statistics
 - [ ] **Phase 6: Interface** - Streamlit app for interactive exploration of predictions and backtest results
@@ -119,7 +119,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 |-------|----------------|--------|-----------|
 | 1. Infrastructure | 2/2 | Complete   | 2026-03-10 |
 | 2. Data Pipeline | 6/6 | Complete   | 2026-03-11 |
-| 3. Model Training | 3/4 | In Progress|  |
+| 3. Model Training | 4/4 | Complete   | 2026-03-12 |
 | 4. Evaluation | 0/TBD | Not started | - |
 | 5. Portfolio & Backtesting | 0/TBD | Not started | - |
 | 6. Interface | 0/TBD | Not started | - |
