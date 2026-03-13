@@ -116,6 +116,10 @@ class StockDataset(Dataset):
             arr = np.expand_dims(df.values, axis=2)
             data_list.append(arr)
         concatenated_arr = np.concatenate(data_list, axis=2)
+        # Safety net: replace any residual NaN with 0.0 (the cross-sectional mean
+        # for z-score normalized features) so NaN never reaches the model.
+        if np.isnan(concatenated_arr).any():
+            concatenated_arr = np.nan_to_num(concatenated_arr, nan=0.0)
         bonus_all = concatenated_arr
         num_step = Traffic.shape[0]
         train_steps = round(args.train_ratio * num_step)

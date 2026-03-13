@@ -16,22 +16,7 @@ from typing import Dict, Tuple
 import numpy as np
 import pandas as pd
 
-try:
-    import pandas_ta as ta  # noqa: F401
-except ImportError:
-    ta = None  # type: ignore[assignment]
-
-
 # ── Internal helpers ──────────────────────────────────────────────────────────
-
-def _require_pandas_ta() -> None:
-    """Raise ImportError if pandas_ta is not installed."""
-    if ta is None:
-        raise ImportError(
-            "pandas_ta is required but not installed. "
-            "Install it with: pip install pandas-ta"
-        )
-
 
 def _roc(series: pd.Series, length: int) -> pd.Series:
     """Rate of Change: percentage change over `length` periods."""
@@ -283,7 +268,11 @@ def build_feature_matrix(
         df = pd.read_parquet(parquet_path)
         if not isinstance(df.index, pd.DatetimeIndex):
             df.index = pd.to_datetime(df.index)
-        per_ticker[ticker] = compute_features(df)
+        feat_df = compute_features(df)
+        # Fill NaN from rolling warmup and zero-volume gaps: forward-fill then
+        # backward-fill so no NaN reaches the saved CSVs.
+        feat_df = feat_df.ffill().bfill()
+        per_ticker[ticker] = feat_df
 
     if not per_ticker:
         return {}
