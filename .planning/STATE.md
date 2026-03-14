@@ -116,6 +116,12 @@ None yet.
 - pytorch-wavelets 1.3.0 patched and working (no further action needed in Phase 1)
 - `applymap` → `map` pandas 2.x bug fixed in results_data_processing.py (Plan 01-01 — resolved)
 
+### Quick Tasks Completed
+
+| # | Description | Date | Commit | Directory |
+|---|-------------|------|--------|-----------|
+| 1 | Add backtest_positions.csv output to scripts/run_backtest.py | 2026-03-14 | bec131a | [1-add-backtest-positions-csv-output-to-scr](.planning/quick/1-add-backtest-positions-csv-output-to-scr/) |
+
 ## Session Continuity
 
 Last session: 2026-03-14T14:55:17.401Z
