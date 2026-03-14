@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: completed
-stopped_at: Completed 05-portfolio-backtesting 05-01-PLAN.md
-last_updated: "2026-03-14T14:43:30.441Z"
+stopped_at: Completed 05-portfolio-backtesting 05-03-PLAN.md
+last_updated: "2026-03-14T14:55:17.403Z"
 last_activity: 2026-03-14 — Plan 04-02 executed; standalone evaluation script created
 progress:
   total_phases: 7
-  completed_phases: 4
+  completed_phases: 5
   total_plans: 17
-  completed_plans: 15
+  completed_plans: 17
   percent: 67
 ---
 
@@ -61,6 +61,7 @@ Progress: [████████░░] 67%
 | Phase 04-evaluation P01 | 1 | 1 tasks | 1 files |
 | Phase 04-evaluation P02 | 5 | 2 tasks | 1 files |
 | Phase 05-portfolio-backtesting P01 | 1 | 1 tasks | 1 files |
+| Phase 05-portfolio-backtesting P03 | 15 | 2 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -102,6 +103,8 @@ Recent decisions affecting current work:
 - [Phase 04-02]: main() accepts optional output_dir kwarg for programmatic smoke test invocation without spawning subprocess
 - [Phase 04-02]: Pearson IC included as bonus column alongside Spearman — provides thesis reviewers additional correlation context
 - [Phase 05-portfolio-backtesting]: xfail(strict=False) Wave 0 stubs with imports inside test bodies — consistent with Phase 02-01 and 04-01 convention; keeps CI GREEN before scripts/run_backtest.py exists
+- [Phase 05-portfolio-backtesting]: yfinance import guarded with try/except and _YF_AVAILABLE sentinel — pure functions remain importable without yfinance in test environments
+- [Phase 05-portfolio-backtesting]: derive_date_index uses bdate_range first then falls back to label.csv + split_indices.json for US-holiday-aware date alignment
 
 ### Pending Todos
 
@@ -115,6 +118,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-14T14:43:30.438Z
-Stopped at: Completed 05-portfolio-backtesting 05-01-PLAN.md
+Last session: 2026-03-14T14:55:17.401Z
+Stopped at: Completed 05-portfolio-backtesting 05-03-PLAN.md
 Resume file: None
