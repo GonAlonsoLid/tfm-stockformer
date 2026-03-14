@@ -90,7 +90,11 @@ Plans:
   2. The backtest applies equal-weight allocation with daily rebalancing and deducts ~10bps round-trip transaction cost
   3. A cumulative return chart is produced comparing the portfolio to SPY over the test period
   4. A summary table shows annualized return, Sharpe ratio, max drawdown, alpha, and beta vs SPY
-**Plans**: TBD
+**Plans**: 3 plans
+Plans:
+- [ ] 05-01-PLAN.md — Wave 0 test scaffold: xfail stubs for all 6 requirements (PORT-01..BACK-03)
+- [ ] 05-02-PLAN.md — Core backtest functions: top-K selection, portfolio weights, transaction cost, performance metrics (PORT-01, PORT-02, PORT-03, BACK-02, BACK-03)
+- [ ] 05-03-PLAN.md — CLI wiring: yfinance download, backtest loop, equity curve chart, output files + human verify (BACK-01)
 
 ### Phase 6: Interface
 **Goal**: A Streamlit app lets the user select a date range, trigger the pipeline, and explore predictions and backtest results interactively
