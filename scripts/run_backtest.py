@@ -11,6 +11,7 @@ Writes:
     output_dir/equity_curve.png           -- cumulative return chart (Stockformer vs SPY)
     output_dir/backtest_summary.csv       -- one row with performance statistics
     output_dir/backtest_daily_returns.csv -- daily return time series (date, portfolio, SPY)
+    output_dir/backtest_positions.csv     -- daily top-K holdings (date, ticker, weight, predicted_score)
 
 Pure functions (select_top_k, build_portfolio_weights, compute_daily_return,
 compute_performance_metrics) are defined here and imported by tests.
@@ -442,8 +443,9 @@ def save_outputs(
     spy_daily_returns: list,
     metrics: dict,
     top_k_n: int,
+    positions: list,
 ) -> None:
-    """Save equity_curve.png, backtest_summary.csv, backtest_daily_returns.csv.
+    """Save equity_curve.png, backtest_summary.csv, backtest_daily_returns.csv, backtest_positions.csv.
 
     Chart uses RESEARCH.md Pattern 5 exactly:
       - Portfolio line: red #CC2529, solid
@@ -458,6 +460,13 @@ def save_outputs(
         spy_daily_returns: List of daily SPY returns aligned to date_index.
         metrics:          Dict from compute_performance_metrics plus top_k and n_days.
         top_k_n:          K value (used for chart label).
+        positions:        List of dicts with keys date/ticker/weight/predicted_score.
+
+    Writes:
+        output_dir/equity_curve.png           -- cumulative return chart
+        output_dir/backtest_summary.csv       -- one-row performance statistics
+        output_dir/backtest_daily_returns.csv -- daily return time series
+        output_dir/backtest_positions.csv     -- daily holdings (date, ticker, weight, predicted_score)
     """
     os.makedirs(output_dir, exist_ok=True)
 
@@ -515,10 +524,18 @@ def save_outputs(
     daily_path = os.path.join(output_dir, "backtest_daily_returns.csv")
     daily_df.to_csv(daily_path, index=False)
 
+    # --- backtest_positions.csv ---
+    pos_df = pd.DataFrame(positions).sort_values(
+        ["date", "predicted_score"], ascending=[True, False]
+    )
+    pos_path = os.path.join(output_dir, "backtest_positions.csv")
+    pos_df.to_csv(pos_path, index=False)
+
     print(f"\nOutputs saved to: {output_dir}")
     print(f"  equity_curve.png")
     print(f"  backtest_summary.csv")
     print(f"  backtest_daily_returns.csv")
+    print(f"  {pos_path}")
 
 
 def main(output_dir: str = None, top_k: int = None) -> None:
