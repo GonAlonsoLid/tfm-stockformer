@@ -28,8 +28,8 @@ Requirements for the thesis milestone. Each maps to a roadmap phase.
 
 ### Evaluation
 
-- [ ] **EVAL-01**: IC (Information Coefficient) and ICIR computed on test period predictions
-- [ ] **EVAL-02**: Existing MAE, RMSE, accuracy, and F1 metrics retained from original codebase
+- [x] **EVAL-01**: IC (Information Coefficient) and ICIR computed on test period predictions
+- [x] **EVAL-02**: Existing MAE, RMSE, accuracy, and F1 metrics retained from original codebase
 
 ### Portfolio & Backtesting
 
@@ -109,8 +109,8 @@ Deferred to future work. Acknowledged but not in current roadmap.
 | DATA-05 | Phase 2 | Complete |
 | MODEL-01 | Phase 3 | Complete |
 | MODEL-02 | Phase 3 | Complete |
-| EVAL-01 | Phase 4 | Pending |
-| EVAL-02 | Phase 4 | Pending |
+| EVAL-01 | Phase 4 | Complete |
+| EVAL-02 | Phase 4 | Complete |
 | PORT-01 | Phase 5 | Pending |
 | PORT-02 | Phase 5 | Pending |
 | PORT-03 | Phase 5 | Pending |
