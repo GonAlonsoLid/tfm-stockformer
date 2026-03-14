@@ -76,7 +76,10 @@ Plans:
 **Success Criteria** (what must be TRUE):
   1. After inference, a script computes and prints IC (Spearman rank correlation between predicted and realized returns) and ICIR (IC mean / IC std) for the test period
   2. MAE, RMSE, accuracy, and F1 are still computed and reported without regression from the original codebase behavior
-**Plans**: TBD
+**Plans**: 2 plans
+Plans:
+- [ ] 04-01-PLAN.md — Wave 0 test scaffold: unit tests for compute_ic.py functions (EVAL-01, EVAL-02)
+- [ ] 04-02-PLAN.md — Implement scripts/compute_ic.py + human verify (EVAL-01, EVAL-02)
 
 ### Phase 5: Portfolio & Backtesting
 **Goal**: Prediction scores are converted into a daily-rebalanced top-K portfolio and evaluated against the SPY benchmark with full performance statistics
