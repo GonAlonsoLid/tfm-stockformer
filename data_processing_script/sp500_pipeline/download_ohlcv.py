@@ -34,8 +34,12 @@ def get_sp500_tickers() -> List[str]:
     Returns:
         List of ticker symbols with '.' replaced by '-' (e.g., BRK-B).
     """
+    import urllib.request
     url = "https://en.wikipedia.org/wiki/List_of_S%26P_500_companies"
-    table = pd.read_html(url)[0]
+    req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+    with urllib.request.urlopen(req) as resp:
+        html = resp.read()
+    table = pd.read_html(html)[0]
     tickers = table["Symbol"].str.replace(".", "-", regex=False).tolist()
     return tickers
 

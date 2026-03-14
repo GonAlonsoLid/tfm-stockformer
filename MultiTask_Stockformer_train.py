@@ -260,8 +260,8 @@ def train(model, trainXL, trainXH, trainXC, bonus_trainX, trainTE, trainY, train
     best_mae = float('inf')
     optimizer = torch.optim.Adam(model.parameters(),
                                      lr=args.learning_rate)
-    lr_scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.1, patience=20,    
-                                    verbose=False, threshold=0.001, threshold_mode='rel', cooldown=0, min_lr=2e-6, eps=1e-08)
+    lr_scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.1, patience=20,
+                                    threshold=0.001, threshold_mode='rel', cooldown=0, min_lr=2e-6, eps=1e-08)
     
     for epoch in tqdm(range(1,args.max_epoch+1)):
         model.train()

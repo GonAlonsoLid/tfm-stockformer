@@ -75,7 +75,6 @@ def test_clean_no_all_nan_rows(sp500_ohlcv_fixture):
 
 def test_feature_columns_present(sp500_ohlcv_fixture):
     """Feature matrix contains all ~69 TA columns (16 original + 53 added in 02-06)."""
-    pytest.importorskip("pandas_ta")
     from data_processing_script.sp500_pipeline.feature_engineering import compute_features
     ticker_df = sp500_ohlcv_fixture['AAPL']
     features = compute_features(ticker_df)
@@ -116,7 +115,6 @@ def test_feature_columns_present(sp500_ohlcv_fixture):
 
 def test_feature_no_all_nan_columns(sp500_ohlcv_fixture):
     """No feature column is entirely NaN after warmup period is dropped."""
-    pytest.importorskip("pandas_ta")
     from data_processing_script.sp500_pipeline.feature_engineering import compute_features
     features = compute_features(sp500_ohlcv_fixture['AAPL'])
     assert not features.iloc[60:].isna().all().any(), (

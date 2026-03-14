@@ -103,7 +103,7 @@ def run_struc2vec(data_dir: str, embed_size: int = 128, workers: int = 4) -> Non
     embeddings = model.get_embeddings()
 
     # Sort by integer node id to produce a stable [N, embed_size] array
-    n_nodes = len(embeddings)
+    n_nodes = max(int(k) for k in embeddings.keys()) + 1
     embedding_array = np.zeros((n_nodes, embed_size), dtype=np.float32)
     for node_id, vec in embeddings.items():
         embedding_array[int(node_id)] = vec
