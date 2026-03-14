@@ -178,3 +178,36 @@ def test_alpha_beta():
         f"alpha_annualized should be ~{expected_alpha:.6f}, "
         f"got {metrics['alpha_annualized']:.6f}"
     )
+
+
+# ── Positions output ─────────────────────────────────────────────────────────
+
+def test_positions_output():
+    """run_backtest_loop returns positions list with one row per (day, ticker)."""
+    import numpy as np
+    import pandas as pd
+    from scripts.run_backtest import run_backtest_loop
+
+    tickers = ["A", "B", "C", "D", "E"]
+    dates = pd.bdate_range("2023-01-03", periods=3)
+
+    np.random.seed(7)
+    pred_df = pd.DataFrame(
+        np.random.rand(3, 5), index=dates, columns=tickers
+    )
+    price_cols = tickers + ["SPY"]
+    prices = pd.DataFrame(
+        np.ones((3, 6)) * 100 + np.arange(3)[:, None],
+        index=dates,
+        columns=price_cols,
+    )
+
+    _, _, positions = run_backtest_loop(pred_df, prices, tickers, top_k_n=2)
+    pos_df = pd.DataFrame(positions)
+
+    assert len(pos_df) == 6, f"Expected 6 rows, got {len(pos_df)}"
+    assert set(pos_df.columns) == {"date", "ticker", "weight", "predicted_score"}
+    assert (pos_df["weight"] == 0.5).all(), "All weights must equal 0.5 for top_k=2"
+    assert pos_df.notna().all().all(), "No null values expected"
+    for d, grp in pos_df.groupby("date"):
+        assert abs(grp["weight"].sum() - 1.0) < 1e-9, f"Weights don't sum to 1.0 on {d}"
