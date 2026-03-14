@@ -26,3 +26,6 @@ Thumbs.db
 
 # IDE
 .vscode/settings.json
+
+# Temp / scratch
+temp_struc2vec/
