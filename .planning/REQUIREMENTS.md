@@ -33,12 +33,12 @@ Requirements for the thesis milestone. Each maps to a roadmap phase.
 
 ### Portfolio & Backtesting
 
-- [ ] **PORT-01**: Top-K stock selection from predicted return scores with K configurable via parameter
-- [ ] **PORT-02**: Equal-weight allocation with daily rebalancing
-- [ ] **PORT-03**: Transaction cost modeling applied (≈10bps round-trip for US market)
-- [ ] **BACK-01**: Cumulative return curve computed and plotted against SPY benchmark
-- [ ] **BACK-02**: Annualized return, Sharpe ratio, and max drawdown computed
-- [ ] **BACK-03**: Alpha and beta versus SPY benchmark computed
+- [x] **PORT-01**: Top-K stock selection from predicted return scores with K configurable via parameter
+- [x] **PORT-02**: Equal-weight allocation with daily rebalancing
+- [x] **PORT-03**: Transaction cost modeling applied (≈10bps round-trip for US market)
+- [x] **BACK-01**: Cumulative return curve computed and plotted against SPY benchmark
+- [x] **BACK-02**: Annualized return, Sharpe ratio, and max drawdown computed
+- [x] **BACK-03**: Alpha and beta versus SPY benchmark computed
 
 ### Interface
 
@@ -111,12 +111,12 @@ Deferred to future work. Acknowledged but not in current roadmap.
 | MODEL-02 | Phase 3 | Complete |
 | EVAL-01 | Phase 4 | Complete |
 | EVAL-02 | Phase 4 | Complete |
-| PORT-01 | Phase 5 | Pending |
-| PORT-02 | Phase 5 | Pending |
-| PORT-03 | Phase 5 | Pending |
-| BACK-01 | Phase 5 | Pending |
-| BACK-02 | Phase 5 | Pending |
-| BACK-03 | Phase 5 | Pending |
+| PORT-01 | Phase 5 | Complete |
+| PORT-02 | Phase 5 | Complete |
+| PORT-03 | Phase 5 | Complete |
+| BACK-01 | Phase 5 | Complete |
+| BACK-02 | Phase 5 | Complete |
+| BACK-03 | Phase 5 | Complete |
 | UI-01 | Phase 6 | Pending |
 | UI-02 | Phase 6 | Pending |
 | UI-03 | Phase 6 | Pending |

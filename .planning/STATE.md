@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: completed
-stopped_at: Phase 5 context gathered
-last_updated: "2026-03-14T14:25:43.300Z"
+stopped_at: Completed 05-portfolio-backtesting 05-01-PLAN.md
+last_updated: "2026-03-14T14:43:30.441Z"
 last_activity: 2026-03-14 — Plan 04-02 executed; standalone evaluation script created
 progress:
   total_phases: 7
   completed_phases: 4
-  total_plans: 14
-  completed_plans: 14
+  total_plans: 17
+  completed_plans: 15
   percent: 67
 ---
 
@@ -60,6 +60,7 @@ Progress: [████████░░] 67%
 | Phase 03-model-training P04 | 1 | 1 tasks | 0 files |
 | Phase 04-evaluation P01 | 1 | 1 tasks | 1 files |
 | Phase 04-evaluation P02 | 5 | 2 tasks | 1 files |
+| Phase 05-portfolio-backtesting P01 | 1 | 1 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -100,6 +101,7 @@ Recent decisions affecting current work:
 - [Phase 04-02]: f1_score(average="macro") — class distribution 47.6/52.4% nearly balanced; macro is academically conservative
 - [Phase 04-02]: main() accepts optional output_dir kwarg for programmatic smoke test invocation without spawning subprocess
 - [Phase 04-02]: Pearson IC included as bonus column alongside Spearman — provides thesis reviewers additional correlation context
+- [Phase 05-portfolio-backtesting]: xfail(strict=False) Wave 0 stubs with imports inside test bodies — consistent with Phase 02-01 and 04-01 convention; keeps CI GREEN before scripts/run_backtest.py exists
 
 ### Pending Todos
 
@@ -113,6 +115,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-14T14:25:43.298Z
-Stopped at: Phase 5 context gathered
-Resume file: .planning/phases/05-portfolio-backtesting/05-CONTEXT.md
+Last session: 2026-03-14T14:43:30.438Z
+Stopped at: Completed 05-portfolio-backtesting 05-01-PLAN.md
+Resume file: None
