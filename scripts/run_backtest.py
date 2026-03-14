@@ -625,7 +625,7 @@ def main(output_dir: str = None, top_k: int = None) -> None:
 
     # 6. Run backtest loop
     print(f"Running backtest (top_k={top_k_n}, fee=0.001)...")
-    portfolio_returns, spy_daily_returns = run_backtest_loop(
+    portfolio_returns, spy_daily_returns, positions = run_backtest_loop(
         pred_df, prices, tickers, top_k_n
     )
 
@@ -634,7 +634,8 @@ def main(output_dir: str = None, top_k: int = None) -> None:
 
     # 8. Save outputs
     save_outputs(
-        output_dir, date_index, portfolio_returns, spy_daily_returns, metrics, top_k_n
+        output_dir, date_index, portfolio_returns, spy_daily_returns, metrics, top_k_n,
+        positions=positions,
     )
 
     # 9. Console summary block (same style as compute_ic.py)
