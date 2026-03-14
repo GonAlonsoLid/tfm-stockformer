@@ -92,23 +92,89 @@ def test_transaction_cost():
 
 # ── BACK-01: cumulative return ────────────────────────────────────────────────
 
-@pytest.mark.xfail(strict=False, reason="Wave 0 stub — not yet implemented")
 def test_cumulative_return():
-    from scripts.run_backtest import compute_performance_metrics  # noqa: F401
-    pytest.fail("stub")
+    from scripts.run_backtest import compute_performance_metrics
+
+    # Known daily returns
+    daily_returns = [0.01, -0.005, 0.02]
+    spy_returns = [0.005, -0.003, 0.01]
+
+    metrics = compute_performance_metrics(daily_returns, spy_returns)
+
+    # Reconstruct expected cumulative series
+    cum = pd.Series(daily_returns).add(1).cumprod()
+    assert abs(cum.iloc[0] - 1.01) < 1e-9, f"First cum value should be 1.01, got {cum.iloc[0]}"
+    # Last value: 1.01 * (1 - 0.005) * (1 + 0.02) = 1.01 * 0.995 * 1.02
+    expected_last = 1.01 * 0.995 * 1.02
+    assert abs(cum.iloc[-1] - expected_last) < 1e-9, (
+        f"Last cum value should be ~{expected_last:.6f}, got {cum.iloc[-1]:.6f}"
+    )
+    assert len(cum) == 3, "Cumulative series must have same length as input"
+
+    # Also verify metrics dict has required keys
+    required_keys = {"annualized_return", "sharpe_ratio", "max_drawdown",
+                     "alpha_annualized", "beta", "total_return", "n_days"}
+    assert required_keys.issubset(metrics.keys()), (
+        f"Missing keys: {required_keys - metrics.keys()}"
+    )
+    assert metrics["n_days"] == 3
 
 
 # ── BACK-02: performance metrics ─────────────────────────────────────────────
 
-@pytest.mark.xfail(strict=False, reason="Wave 0 stub — not yet implemented")
 def test_performance_metrics():
-    from scripts.run_backtest import compute_performance_metrics  # noqa: F401
-    pytest.fail("stub")
+    from scripts.run_backtest import compute_performance_metrics
+
+    np.random.seed(42)
+    daily_returns = np.random.normal(0.001, 0.01, 252)
+    spy_daily_returns = np.random.normal(0.0005, 0.008, 252)
+
+    metrics = compute_performance_metrics(daily_returns, spy_daily_returns)
+
+    # Required keys
+    required_keys = {"annualized_return", "sharpe_ratio", "max_drawdown",
+                     "alpha_annualized", "beta"}
+    assert required_keys.issubset(metrics.keys()), (
+        f"Missing keys: {required_keys - metrics.keys()}"
+    )
+
+    # max_drawdown must be non-positive
+    assert metrics["max_drawdown"] <= 0, (
+        f"max_drawdown should be <= 0, got {metrics['max_drawdown']}"
+    )
+    # sharpe_ratio must be finite
+    assert np.isfinite(metrics["sharpe_ratio"]), (
+        f"sharpe_ratio must be finite, got {metrics['sharpe_ratio']}"
+    )
+    # beta must be finite
+    assert np.isfinite(metrics["beta"]), (
+        f"beta must be finite, got {metrics['beta']}"
+    )
+    # n_days = 252
+    assert metrics["n_days"] == 252
 
 
 # ── BACK-03: alpha/beta ───────────────────────────────────────────────────────
 
-@pytest.mark.xfail(strict=False, reason="Wave 0 stub — not yet implemented")
 def test_alpha_beta():
-    from scripts.run_backtest import compute_performance_metrics  # noqa: F401
-    pytest.fail("stub")
+    from scripts.run_backtest import compute_performance_metrics
+
+    np.random.seed(99)
+    n = 252
+    spy_daily = np.random.normal(0.0005, 0.01, n)
+    alpha_daily = 0.0002  # known daily alpha
+    # Portfolio perfectly correlated with SPY plus constant alpha (beta=1)
+    portfolio_daily = spy_daily + alpha_daily
+
+    metrics = compute_performance_metrics(portfolio_daily, spy_daily)
+
+    # Beta should be ~1.0 (slope of perfect linear relationship)
+    assert abs(metrics["beta"] - 1.0) < 1e-6, (
+        f"Beta should be ~1.0, got {metrics['beta']}"
+    )
+    # Alpha annualized should be ~0.0002 * 252 within 1e-6 tolerance
+    expected_alpha = alpha_daily * 252
+    assert abs(metrics["alpha_annualized"] - expected_alpha) < 1e-6, (
+        f"alpha_annualized should be ~{expected_alpha:.6f}, "
+        f"got {metrics['alpha_annualized']:.6f}"
+    )
