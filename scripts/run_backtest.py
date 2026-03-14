@@ -376,7 +376,8 @@ def run_backtest_loop(
         top_k_n:  K — number of stocks to select per day.
 
     Returns:
-        (portfolio_returns, spy_daily_returns): two lists of floats, length n_days.
+        (portfolio_returns, spy_daily_returns, positions): two lists of floats
+        (length n_days each) and a list of dicts with keys date/ticker/weight/predicted_score.
     """
     FEE = 0.001  # 10 bps round-trip
 
@@ -384,6 +385,7 @@ def run_backtest_loop(
     spy_daily_returns = []
 
     weight_prev = pd.Series(0.0, index=tickers)
+    positions: list = []
 
     for date in pred_df.index:
         # Daily price returns via pct_change (requires prior-day price)
@@ -413,6 +415,14 @@ def run_backtest_loop(
         # Portfolio construction
         scores = pred_df.loc[date]
         top_k_index = select_top_k(scores, top_k_n)
+        _w = 1.0 / top_k_n
+        for _ticker in top_k_index:
+            positions.append({
+                "date": date.strftime("%Y-%m-%d"),
+                "ticker": _ticker,
+                "weight": _w,
+                "predicted_score": float(scores[_ticker]),
+            })
         weight_now = build_portfolio_weights(top_k_index, tickers, top_k_n)
 
         # Daily portfolio return
@@ -422,7 +432,7 @@ def run_backtest_loop(
 
         weight_prev = weight_now
 
-    return portfolio_returns, spy_daily_returns
+    return portfolio_returns, spy_daily_returns, positions
 
 
 def save_outputs(
