@@ -112,7 +112,8 @@ def compute_ic_metrics(reg_pred: np.ndarray, reg_label: np.ndarray):
 
     ic_per_day = np.empty(n_days)
     for d in range(n_days):
-        ic_per_day[d] = spearmanr(reg_pred[d], reg_label[d]).statistic
+        result = spearmanr(reg_pred[d], reg_label[d])
+        ic_per_day[d] = result.correlation if hasattr(result, "correlation") else result.statistic
 
     # Filter NaN days before computing ICIR
     nan_count = int(np.isnan(ic_per_day).sum())
