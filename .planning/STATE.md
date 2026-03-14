@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: completed
-stopped_at: Completed 04-01-PLAN.md
-last_updated: "2026-03-14T14:02:09.777Z"
-last_activity: 2026-03-12 — Plan 03-03 executed; standalone inference script created
+stopped_at: Completed 04-02-PLAN.md
+last_updated: "2026-03-14T18:00:00.000Z"
+last_activity: 2026-03-14 — Plan 04-02 executed; scripts/compute_ic.py evaluation CLI implemented, all 6 tests xpassing
 progress:
   total_phases: 7
   completed_phases: 3
   total_plans: 14
-  completed_plans: 13
-  percent: 63
+  completed_plans: 14
+  percent: 67
 ---
 
 # Project State
@@ -25,12 +25,12 @@ See: .planning/PROJECT.md (updated 2026-03-09)
 
 ## Current Position
 
-Phase: 3 of 7 (Model Training)
-Plan: 3 of 4 in current phase
-Status: Phase 3 plan 03-03 complete; scripts/run_inference.py created, MODEL-02 inference tests green
-Last activity: 2026-03-12 — Plan 03-03 executed; standalone inference script created
+Phase: 4 of 7 (Evaluation)
+Plan: 2 of 2 in current phase
+Status: Phase 4 plan 04-02 complete; scripts/compute_ic.py implemented, EVAL-01 and EVAL-02 satisfied, all 6 tests xpassing
+Last activity: 2026-03-14 — Plan 04-02 executed; standalone evaluation script created
 
-Progress: [███████░░░] 63%
+Progress: [████████░░] 67%
 
 ## Performance Metrics
 
@@ -59,6 +59,7 @@ Progress: [███████░░░] 63%
 | Phase 03-model-training P03 | 2 | 1 tasks | 1 files |
 | Phase 03-model-training P04 | 1 | 1 tasks | 0 files |
 | Phase 04-evaluation P01 | 1 | 1 tasks | 1 files |
+| Phase 04-evaluation P02 | 5 | 2 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -94,6 +95,11 @@ Recent decisions affecting current work:
 - [Phase 03-03]: Inference loop uses raw numpy arrays from dataset attributes (not DataLoader) — consistent with training script pattern
 - [Phase 03-model-training]: Phase 2 pipeline (build_pipeline.py) must be run before any training smoke test — data/Stock_SP500_2018-2024/ did not exist on this machine
 - [Phase 04-evaluation]: xfail(strict=False) pattern for TDD Red phase tests — consistent with project convention from 02-01; imports inside test bodies prevent module-level ImportError
+- [Phase 04-02]: spearmanr(...).statistic used (not .correlation) — scipy 1.7+ changed return API
+- [Phase 04-02]: np.std(ddof=1) for ICIR denominator — sample std is academically correct for IC time series
+- [Phase 04-02]: f1_score(average="macro") — class distribution 47.6/52.4% nearly balanced; macro is academically conservative
+- [Phase 04-02]: main() accepts optional output_dir kwarg for programmatic smoke test invocation without spawning subprocess
+- [Phase 04-02]: Pearson IC included as bonus column alongside Spearman — provides thesis reviewers additional correlation context
 
 ### Pending Todos
 
@@ -107,6 +113,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-14T14:02:09.775Z
-Stopped at: Completed 04-01-PLAN.md
+Last session: 2026-03-14T18:00:00.000Z
+Stopped at: Completed 04-02-PLAN.md
 Resume file: None
