@@ -24,8 +24,13 @@ import sys
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import yfinance as yf
 from scipy.stats import linregress
+
+try:
+    import yfinance as yf
+    _YF_AVAILABLE = True
+except ImportError:
+    _YF_AVAILABLE = False
 
 
 # ── Portfolio construction ────────────────────────────────────────────────────
@@ -317,6 +322,12 @@ def download_prices(tickers: list, date_index: pd.DatetimeIndex) -> pd.DataFrame
         pd.DataFrame indexed by date_index (reindexed, ffill then fillna(0)),
         with columns = tickers + ["SPY"].
     """
+    if not _YF_AVAILABLE:
+        raise ImportError(
+            "yfinance is required to download prices. "
+            "Install it with: pip install yfinance"
+        )
+
     download_tickers = list(tickers) + ["SPY"]
     start = date_index[0] - pd.Timedelta(days=10)
     end = date_index[-1] + pd.Timedelta(days=5)
