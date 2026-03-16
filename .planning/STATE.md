@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: completed
-stopped_at: Completed 06-01-PLAN.md
-last_updated: "2026-03-16T11:44:51.649Z"
+stopped_at: Completed 06-02-PLAN.md
+last_updated: "2026-03-16T11:50:20.721Z"
 last_activity: 2026-03-14 — Plan 04-02 executed; standalone evaluation script created
 progress:
   total_phases: 7
   completed_phases: 5
   total_plans: 20
-  completed_plans: 18
+  completed_plans: 19
   percent: 67
 ---
 
@@ -63,6 +63,7 @@ Progress: [████████░░] 67%
 | Phase 05-portfolio-backtesting P01 | 1 | 1 tasks | 1 files |
 | Phase 05-portfolio-backtesting P03 | 15 | 2 tasks | 1 files |
 | Phase 06-interface P01 | 5 | 2 tasks | 4 files |
+| Phase 06-interface P02 | 10 | 1 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -108,6 +109,9 @@ Recent decisions affecting current work:
 - [Phase 05-portfolio-backtesting]: derive_date_index uses bdate_range first then falls back to label.csv + split_indices.json for US-holiday-aware date alignment
 - [Phase 06-interface]: xfail(strict=False) with imports inside test bodies for Phase 6 — consistent with Phase 02-01 and 04-01 convention; keeps CI GREEN before app.py exists
 - [Phase 06-interface]: streamlit<=1.50 pinned: last version supporting Python 3.9; plotly>=5.18 ensures go.Heatmap zmid support
+- [Phase 06-interface]: cumprod().shift(1, fill_value=1.0) for equity curve starting at 1.0 — matches test contract and standard equity curve convention
+- [Phase 06-interface]: build_heatmap() slices tickers[:k] internally — allows callers to pass longer list with explicit k; satisfies test_heatmap_top_k_filter
+- [Phase 06-interface]: format_metrics_table() returns numeric DataFrame without fillna to preserve Streamlit NumberColumn formatting
 
 ### Pending Todos
 
@@ -127,6 +131,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-16T11:44:51.647Z
-Stopped at: Completed 06-01-PLAN.md
+Last session: 2026-03-16T11:50:20.719Z
+Stopped at: Completed 06-02-PLAN.md
 Resume file: None
