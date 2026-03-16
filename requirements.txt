@@ -1,21 +1,23 @@
 # Platform-independent requirements for tfm-stockformer
+# Requires Python 3.11 (pytorch-wavelets is not compatible with 3.12)
 # Run from project root with: pip install -r requirements.txt
+#
 # For GPU training (Colab / Linux):
 #   CUDA 11.8: pip install torch==2.7.1+cu118 --index-url https://download.pytorch.org/whl/cu118
 #   CUDA 12.8: pip install torch==2.10.0+cu128 --index-url https://download.pytorch.org/whl/cu128
 
 torch>=2.0
-PyWavelets==1.6.0
+PyWavelets>=1.6
 tensorboard>=2.14,<3
 scikit-learn>=1.1.2
-numpy==1.24.4
-scipy==1.9.3
-matplotlib==3.7.1
-tqdm==4.62.3
-statsmodels==0.14.0
+numpy>=1.26
+scipy>=1.11
+matplotlib>=3.8
+tqdm>=4.62
+statsmodels>=0.14.1
 pytorch-wavelets==1.3.0
-networkx==3.2.1
-pandas==2.3.3
+networkx>=3.2
+pandas>=2.0
 pytest>=7.0,<8
 yfinance>=0.2.50
 pyarrow>=12.0
