@@ -95,8 +95,10 @@ def format_metrics_table(df: pd.DataFrame) -> pd.DataFrame:
             sharpe_ratio, beta, top_k, n_days.
 
     Returns:
-        DataFrame with the same columns (numeric types preserved — do NOT
-        call fillna("—") here as that breaks NumberColumn formatting).
+        DataFrame with the same columns. Percentage columns are multiplied
+        by 100 so they display as e.g. -15.84 with a "%" suffix rather than -0.16.
+        (numeric types preserved — do NOT call fillna("—") here as that breaks
+        NumberColumn formatting).
     """
     required = [
         "annualized_return",
@@ -108,8 +110,13 @@ def format_metrics_table(df: pd.DataFrame) -> pd.DataFrame:
         "top_k",
         "n_days",
     ]
-    # Return only the required columns in required order; fill missing with NaN
     result = df.reindex(columns=required)
+    # Convert decimal ratios → percentage points for display
+    pct_cols = ["annualized_return", "total_return", "max_drawdown", "alpha_annualized"]
+    for col in pct_cols:
+        if col in result.columns:
+            result = result.copy()
+            result[col] = result[col] * 100
     return result
 
 
@@ -260,9 +267,10 @@ def load_results(
     # Extract portfolio tickers from backtest_positions.csv (locked decision:
     # heatmap shows only stocks actually held in the portfolio, not top-K by score).
     portfolio_tickers: list[str] = []
+    positions_df: pd.DataFrame = pd.DataFrame()
     positions_path = os.path.join(output_dir, "backtest_positions.csv")
     if os.path.isfile(positions_path):
-        positions_df = pd.read_csv(positions_path)
+        positions_df = pd.read_csv(positions_path, parse_dates=["date"])
         # Preserve order of first appearance; drop duplicates across dates
         portfolio_tickers = list(dict.fromkeys(
             positions_df["ticker"].dropna().tolist()
@@ -274,6 +282,7 @@ def load_results(
         "pred_df": pred_df,
         "tickers": tickers,
         "portfolio_tickers": portfolio_tickers,
+        "positions_df": positions_df,
         "output_dir": output_dir,
         "top_k": top_k,
         "start_date": start_date,
@@ -284,49 +293,65 @@ def load_results(
 # ── Result rendering ──────────────────────────────────────────────────────────
 
 def render_results(results: dict) -> None:
-    """Render equity curve, metrics table, and heatmap in the main area."""
+    """Render metric cards, equity curve, metrics table, positions table, and heatmap."""
     daily_df = results["daily_returns_df"]
     summary_df = results["summary_df"]
     pred_df = results["pred_df"]
+    all_tickers = results.get("tickers", [])
     portfolio_tickers = results["portfolio_tickers"]
+    positions_df = results.get("positions_df", pd.DataFrame())
     top_k = results["top_k"]
     start_date = results.get("start_date")
     end_date = results.get("end_date")
 
+    # ── Key metric cards ──────────────────────────────────────────────────
+    if not summary_df.empty:
+        metrics = format_metrics_table(summary_df).iloc[0]
+        c1, c2, c3, c4 = st.columns(4)
+        ann_ret = metrics.get("annualized_return", float("nan"))
+        sharpe = metrics.get("sharpe_ratio", float("nan"))
+        drawdown = metrics.get("max_drawdown", float("nan"))
+        alpha = metrics.get("alpha_annualized", float("nan"))
+        c1.metric("Annualized Return", f"{ann_ret:.2f}%",
+                  delta=f"{ann_ret:.2f}%" if not pd.isna(ann_ret) else None,
+                  delta_color="normal")
+        c2.metric("Sharpe Ratio", f"{sharpe:.2f}" if not pd.isna(sharpe) else "—")
+        c3.metric("Max Drawdown", f"{drawdown:.2f}%",
+                  delta=f"{drawdown:.2f}%" if not pd.isna(drawdown) else None,
+                  delta_color="inverse")
+        c4.metric("Alpha (Ann.)", f"{alpha:.2f}%",
+                  delta=f"{alpha:.2f}%" if not pd.isna(alpha) else None,
+                  delta_color="normal")
+
+    st.divider()
+
     # ── Equity curve ──────────────────────────────────────────────────────
-    st.subheader("Equity Curve")
+    st.subheader("Portfolio vs Benchmark")
+    st.caption("Blue = Your Stockformer portfolio   ·   Gray dotted = SPY (buy-and-hold benchmark)")
     if not daily_df.empty:
-        # Filter to selected date window (locked decision: date range controls
-        # the evaluation window displayed in the equity curve chart).
         display_df = daily_df.copy()
         if start_date is not None:
-            display_df = display_df[
-                display_df["date"] >= pd.Timestamp(start_date)
-            ]
+            display_df = display_df[display_df["date"] >= pd.Timestamp(start_date)]
         if end_date is not None:
-            display_df = display_df[
-                display_df["date"] <= pd.Timestamp(end_date)
-            ]
+            display_df = display_df[display_df["date"] <= pd.Timestamp(end_date)]
         if display_df.empty:
-            st.warning(
-                "No data in selected date range. "
-                "Adjust the start/end date in the sidebar."
-            )
+            st.warning("No data in selected date range. Adjust the start/end date in the sidebar.")
         else:
             fig_equity = build_equity_chart(display_df)
             st.plotly_chart(fig_equity, use_container_width=True)
     else:
         st.warning("No daily returns data found.")
 
-    st.markdown("<br>", unsafe_allow_html=True)
+    st.divider()
 
-    # ── Metrics table ─────────────────────────────────────────────────────
+    # ── Performance metrics table ──────────────────────────────────────────
     st.subheader("Performance Metrics")
     if not summary_df.empty:
         display_metrics = format_metrics_table(summary_df)
         st.dataframe(
             display_metrics,
             use_container_width=True,
+            hide_index=True,
             column_config={
                 "annualized_return": st.column_config.NumberColumn(
                     "Ann. Return", format="%.2f %%"
@@ -349,41 +374,75 @@ def render_results(results: dict) -> None:
     else:
         st.info("No metrics found. Run the pipeline first.")
 
-    st.markdown("<br>", unsafe_allow_html=True)
+    st.divider()
 
-    # ── Prediction heatmap ────────────────────────────────────────────────
-    st.subheader("Prediction Heatmap")
-    if not pred_df.empty and len(portfolio_tickers) > 0:
-        k = min(top_k, len(portfolio_tickers))
-        display_tickers = portfolio_tickers[:k]
-        fig_heatmap = build_heatmap(pred_df, display_tickers, k=k)
-
-        # Inject actual dates into x-axis if daily_df has date column
-        if not daily_df.empty and "date" in daily_df.columns:
-            n_pred = pred_df.shape[0]
-            n_dates = len(daily_df)
-            if n_pred == n_dates:
-                date_strs = daily_df["date"].dt.strftime("%Y-%m-%d").tolist()
-                fig_heatmap.data[0].x = date_strs
-
-        st.plotly_chart(fig_heatmap, use_container_width=True)
-    elif pred_df.empty:
-        st.info(
-            "No prediction data found. "
-            "Ensure regression_pred_last_step.csv exists in the output directory."
+    # ── Portfolio holdings ────────────────────────────────────────────────
+    st.subheader(f"Portfolio Holdings — Top-{top_k} Positions")
+    if not positions_df.empty:
+        last_date = positions_df["date"].max()
+        latest = (
+            positions_df[positions_df["date"] == last_date]
+            .sort_values("predicted_score", ascending=False)
+            .reset_index(drop=True)
+        )
+        st.caption(f"As of {last_date.strftime('%Y-%m-%d')} · equal weight {100 / len(latest):.1f}% per stock")
+        display_pos = latest[["ticker", "weight", "predicted_score"]].copy()
+        display_pos["weight"] = display_pos["weight"] * 100
+        st.dataframe(
+            display_pos,
+            use_container_width=True,
+            hide_index=True,
+            column_config={
+                "ticker": st.column_config.TextColumn("Ticker"),
+                "weight": st.column_config.NumberColumn("Weight", format="%.1f %%"),
+                "predicted_score": st.column_config.NumberColumn(
+                    "Predicted Score", format="%.5f"
+                ),
+            },
         )
     else:
-        st.warning(
-            "No portfolio positions found. "
-            "Ensure backtest_positions.csv exists in the output directory."
-        )
+        st.info("No positions data found. Ensure backtest_positions.csv exists in the output directory.")
+
+    st.divider()
+
+    # ── Prediction heatmap ────────────────────────────────────────────────
+    st.subheader("Prediction Scores Heatmap")
+    st.caption("Model output scores per stock per trading day. Green = bullish signal, red = bearish.")
+    if not pred_df.empty and len(portfolio_tickers) > 0:
+        k = min(top_k, len(portfolio_tickers))
+        # Map portfolio tickers to their column indices in the full universe
+        ticker_to_idx = {t: i for i, t in enumerate(all_tickers)}
+        display_tickers = [t for t in portfolio_tickers[:k] if t in ticker_to_idx]
+        if display_tickers:
+            col_indices = [ticker_to_idx[t] for t in display_tickers]
+            filtered_pred = pred_df.iloc[:, col_indices].reset_index(drop=True)
+            fig_heatmap = build_heatmap(filtered_pred, display_tickers, k=len(display_tickers))
+            # Inject actual dates if available
+            if not daily_df.empty and "date" in daily_df.columns:
+                n_pred = pred_df.shape[0]
+                n_dates = len(daily_df)
+                if n_pred == n_dates:
+                    date_strs = daily_df["date"].dt.strftime("%Y-%m-%d").tolist()
+                    fig_heatmap.data[0].x = date_strs
+            st.plotly_chart(fig_heatmap, use_container_width=True)
+        else:
+            st.warning("Portfolio tickers not found in the ticker universe file.")
+    elif pred_df.empty:
+        st.info("No prediction data found. Ensure regression_pred_last_step.csv exists.")
+    else:
+        st.warning("No portfolio positions found. Ensure backtest_positions.csv exists.")
 
 
 # ── Streamlit app layout ──────────────────────────────────────────────────────
 
 def main() -> None:
-    st.set_page_config(page_title="Stockformer Dashboard", layout="wide")
-    st.title("Stockformer S&P500 Dashboard")
+    st.set_page_config(
+        page_title="Stockformer S&P500 Dashboard",
+        page_icon="📈",
+        layout="wide",
+    )
+    st.title("📈 Stockformer S&P500 Dashboard")
+    st.caption("Deep learning portfolio backtesting — equal-weight top-K strategy vs SPY benchmark")
 
     # Session state initialisation
     for key, default in [
@@ -432,6 +491,13 @@ def main() -> None:
                         file_name="backtest_summary.csv",
                         mime="text/csv",
                     )
+
+    # ── Auto-load existing results on first visit ─────────────────────────
+    if not st.session_state["run_complete"] and not st.session_state["running"]:
+        existing = load_results(output_dir, top_k, start_date=start_date, end_date=end_date)
+        if existing is not None:
+            st.session_state["run_complete"] = True
+            st.session_state["results"] = existing
 
     # ── Main area ─────────────────────────────────────────────────────────
     if not st.session_state["run_complete"] and not st.session_state["running"]:
