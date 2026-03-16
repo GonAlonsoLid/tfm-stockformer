@@ -39,12 +39,16 @@ created: 2026-03-16
 | Task ID | Plan | Wave | Requirement | Test Type | Automated Command | File Exists | Status |
 |---------|------|------|-------------|-----------|-------------------|-------------|--------|
 | 6-01-01 | 01 | 0 | UI-01 | unit stub | `python -m pytest tests/test_app.py -x -q` | ❌ W0 | ⬜ pending |
-| 6-01-02 | 01 | 1 | UI-01 | unit | `python -m pytest tests/test_app.py::test_sidebar_defaults -x -q` | ❌ W0 | ⬜ pending |
-| 6-01-03 | 01 | 1 | UI-01 | unit | `python -m pytest tests/test_app.py::test_run_pipeline_subprocess -x -q` | ❌ W0 | ⬜ pending |
-| 6-02-01 | 02 | 1 | UI-02 | unit | `python -m pytest tests/test_app.py::test_equity_curve_chart -x -q` | ❌ W0 | ⬜ pending |
-| 6-02-02 | 02 | 1 | UI-03 | unit | `python -m pytest tests/test_app.py::test_metrics_table -x -q` | ❌ W0 | ⬜ pending |
-| 6-02-03 | 02 | 1 | UI-04 | unit | `python -m pytest tests/test_app.py::test_heatmap_chart -x -q` | ❌ W0 | ⬜ pending |
+| 6-01-02 | 01 | 1 | UI-01 | unit | `python -m pytest tests/test_app.py::test_app_imports -x -q` | ❌ W0 | ⬜ pending |
+| 6-01-03 | 01 | 1 | UI-01 | unit | `python -m pytest tests/test_app.py::test_sidebar_defaults -x -q` | ❌ W0 | ⬜ pending |
+| 6-02-01 | 02 | 1 | UI-02 | unit | `python -m pytest tests/test_app.py::test_equity_chart_shape -x -q` | ❌ W0 | ⬜ pending |
+| 6-02-02 | 02 | 1 | UI-02 | unit | `python -m pytest tests/test_app.py::test_equity_chart_starts_at_one -x -q` | ❌ W0 | ⬜ pending |
+| 6-02-03 | 02 | 1 | UI-03 | unit | `python -m pytest tests/test_app.py::test_metrics_table_columns -x -q` | ❌ W0 | ⬜ pending |
+| 6-02-04 | 02 | 1 | UI-04 | unit | `python -m pytest tests/test_app.py::test_heatmap_zmid -x -q` | ❌ W0 | ⬜ pending |
+| 6-02-05 | 02 | 1 | UI-04 | unit | `python -m pytest tests/test_app.py::test_heatmap_top_k_filter -x -q` | ❌ W0 | ⬜ pending |
 | 6-03-01 | 03 | 2 | UI-01..04 | integration | `python -m pytest tests/test_app.py -q` | ❌ W0 | ⬜ pending |
+
+*Actual test function names (7 total): `test_app_imports`, `test_sidebar_defaults`, `test_equity_chart_shape`, `test_equity_chart_starts_at_one`, `test_metrics_table_columns`, `test_heatmap_zmid`, `test_heatmap_top_k_filter`*
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
 
@@ -64,7 +68,7 @@ created: 2026-03-16
 | Behavior | Requirement | Why Manual | Test Instructions |
 |----------|-------------|------------|-------------------|
 | Live stdout log scrolls during pipeline run | UI-01 | Requires browser interaction + real subprocess | Launch `streamlit run app.py`, click Run, observe scrolling spinner log |
-| Date range picker updates displayed data | UI-01 | Requires browser interaction | Select different date range, verify chart/table updates |
+| Date range picker filters displayed equity curve | UI-01 | Requires browser interaction | Select different date range, verify chart updates to show only the selected window |
 | Empty state shows placeholder instructions | UI-01 | Requires browser render | Launch fresh app, verify main area shows instructions before running |
 
 ---
