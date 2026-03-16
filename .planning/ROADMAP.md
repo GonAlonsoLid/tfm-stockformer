@@ -105,7 +105,11 @@ Plans:
   2. After running, an equity curve chart shows the portfolio vs SPY cumulative returns for the selected period
   3. A metrics table displays annualized return, Sharpe ratio, max drawdown, alpha, and beta on the same page
   4. A heatmap visualization shows model prediction scores per stock per day for the test period
-**Plans**: TBD
+**Plans**: 3 plans
+Plans:
+- [ ] 06-01-PLAN.md — Wave 0: test scaffold (tests/test_app.py stubs), conftest fixtures, .streamlit/config.toml, requirements.txt pins (UI-01..UI-04)
+- [ ] 06-02-PLAN.md — Implement app.py: sidebar, session state, subprocess runner, equity curve, metrics table, heatmap (UI-01..UI-04)
+- [ ] 06-03-PLAN.md — Human verify: launch app, confirm all 4 UI requirements visually (UI-01..UI-04)
 
 ### Phase 7: Testing
 **Goal**: Key components have automated unit tests that catch regressions in metrics, data loading, and model behavior
