@@ -17,18 +17,18 @@ from Stockformermodel.Multitask_Stockformer_models import Stockformer
 import os
 from torch.utils.tensorboard import SummaryWriter
 
-# 初始化解析器
+# Initialize parser
 parser = argparse.ArgumentParser()
 parser.add_argument("--config", type=str, help='configuration file')
 
-# 首次解析，仅获取config文件
-args, unknown = parser.parse_known_args()  # 使用known_args来避免与后续添加的参数冲突
+# First parse: only get config file
+args, unknown = parser.parse_known_args()  # Use known_args to avoid conflict with later-added args
 
-# 读取配置文件
+# Read config file
 config = configparser.ConfigParser()
 config.read(args.config)
 
-# 添加其它配置参数
+# Add other config parameters
 parser.add_argument('--cuda', type=str, default=config['train']['cuda'])
 parser.add_argument('--seed', type=int, default=config['train']['seed'])
 parser.add_argument('--batch_size', type=int, default=config['train']['batch_size'])
@@ -55,11 +55,14 @@ parser.add_argument('--adj_file', default=config['file']['adj'])
 parser.add_argument('--adjgat_file', default=config['file']['adjgat'])
 parser.add_argument('--model_file', default=config['file']['model'])
 parser.add_argument('--log_file', default=config['file']['log'])
+parser.add_argument('--alpha_360_dir', default=config['file']['alpha_360_dir'])
+parser.add_argument('--output_dir', default=config['file']['output_dir'])
+parser.add_argument('--tensorboard_dir', default=config['file']['tensorboard_dir'])
 
-# 最终解析参数
+# Final argument parse
 args = parser.parse_args()
 
-# 检查并创建日志文件目录
+# Check and create log file directory
 log_directory = os.path.dirname(args.log_file)
 if not os.path.exists(log_directory):
     os.makedirs(log_directory)
@@ -67,25 +70,25 @@ if not os.path.exists(log_directory):
     
 log = open(args.log_file, 'w')
 
-# 检查并创建模型文件目录
+# Check and create model file directory
 model_directory = os.path.dirname(args.model_file)
 if not os.path.exists(model_directory):
     os.makedirs(model_directory)
     print(f"Directory created for model file: {model_directory}")
 
 
-# # 现在安全地打开日志文件写入
+# # Safely open log file for writing
 # with open(args.log_file, 'w') as log:
 #     log.write("Logging has started.\n")
 # print(f"Log file is ready to write at {args.log_file}")
 
-# 确认模型文件路径准备就绪（这里仅确认路径，不创建文件）
+# Confirm model file path is ready (path only, no file creation here)
 print(f"Model file path is ready at {args.model_file}")
 
 
 device = torch.device(f"cuda:{args.cuda}" if torch.cuda.is_available() else "cpu")
 
-tensorboard_folder = '/root/autodl-tmp/Stockformer/Stockformer_run/Stockformer_code/runs/Multitask_Stockformer/Stock_CN_2021-06-04_2024-01-30'
+tensorboard_folder = args.tensorboard_dir
 
 # Check and create the main TensorBoard folder
 if not os.path.exists(tensorboard_folder):
@@ -156,7 +159,7 @@ def res(model, valXL, valXH, valXC, bonus_valX, valTE, valY, valYC, adjgat, epoc
     rmses = []
     mapes = []
 
-    # 假设第二维是时间维度
+    # Assume second dimension is time
     for i in range(pred_class.shape[1]):
         acc, mae, rmse, mape = metric(pred_regress[:, i, :], label_regress[:, i, :], pred_class[:, i, :], label_class[:, i, :])
         accs.append(acc)
@@ -208,7 +211,7 @@ def test_res(model, valXL, valXH, valXC, bonus_valX, valTE, valY, valYC, adjgat)
                 hat_y_class, hat_y_l_class, hat_y_regress, hat_y_l_regress = model(xl, xh, te, bonus, xc, adjgat)
 
                 pred_class.append(hat_y_class.cpu().numpy())
-                pred_regress.append(hat_y_regress.cpu().numpy())  # 假设回归任务的输出需要反标准化
+                pred_regress.append(hat_y_regress.cpu().numpy())  # Assume regression output may need denormalization
                 label_class.append(yc)
                 label_regress.append(y)
     
@@ -222,7 +225,7 @@ def test_res(model, valXL, valXH, valXC, bonus_valX, valTE, valY, valYC, adjgat)
     rmses = []
     mapes = []
 
-    for i in range(pred_regress.shape[1]):  # 假设第二维是时间维度
+    for i in range(pred_regress.shape[1]):  # Assume second dimension is time
         acc, mae, rmse, mape = metric(pred_regress[:, i, :], label_regress[:, i, :], pred_class[:, i, :], label_class[:, i, :])
         accs.append(acc)
         maes.append(mae)
@@ -230,20 +233,24 @@ def test_res(model, valXL, valXH, valXC, bonus_valX, valTE, valY, valYC, adjgat)
         mapes.append(mape)
         log_string(log,'step %d, acc: %.4f, mae: %.4f, rmse: %.4f, mape: %.4f' % (i+1, acc, mae, rmse, mape))
     
-    # 计算平均指标
+    # Compute average metrics
     avg_acc = np.mean(accs)
     avg_mae = np.mean(maes)
     avg_rmse = np.mean(rmses)
     avg_mape = np.mean(mapes)
     log_string(log, 'average, acc: %.4f, mae: %.4f, rmse: %.4f, mape: %.4f' % (avg_acc, avg_mae, avg_rmse, avg_mape))
     
-    # 保存分类任务的最后一个时间步的预测和标签
-    save_to_csv('/root/autodl-tmp/Stockformer/Stockformer_run/Stockformer_code/output/Multitask_output_2021-06-04_2024-01-30/classification/classification_pred_last_step.csv', pred_class[:, -1, :])
-    save_to_csv('/root/autodl-tmp/Stockformer/Stockformer_run/Stockformer_code/output/Multitask_output_2021-06-04_2024-01-30/classification/classification_label_last_step.csv', label_class[:, -1])
+    # Create output subdirectories (may not exist on fresh machines)
+    os.makedirs(os.path.join(args.output_dir, 'classification'), exist_ok=True)
+    os.makedirs(os.path.join(args.output_dir, 'regression'), exist_ok=True)
 
-    # 保存回归任务的最后一个时间步的预测和标签
-    save_to_csv('/root/autodl-tmp/Stockformer/Stockformer_run/Stockformer_code/output/Multitask_output_2021-06-04_2024-01-30/regression/regression_pred_last_step.csv', pred_regress[:, -1, :])
-    save_to_csv('/root/autodl-tmp/Stockformer/Stockformer_run/Stockformer_code/output/Multitask_output_2021-06-04_2024-01-30/regression/regression_label_last_step.csv', label_regress[:, -1])
+    # Save classification task last time step predictions and labels
+    save_to_csv(os.path.join(args.output_dir, 'classification', 'classification_pred_last_step.csv'), pred_class[:, -1, :])
+    save_to_csv(os.path.join(args.output_dir, 'classification', 'classification_label_last_step.csv'), label_class[:, -1])
+
+    # Save regression task last time step predictions and labels
+    save_to_csv(os.path.join(args.output_dir, 'regression', 'regression_pred_last_step.csv'), pred_regress[:, -1, :])
+    save_to_csv(os.path.join(args.output_dir, 'regression', 'regression_label_last_step.csv'), label_regress[:, -1])
 
     return avg_acc, avg_mae, avg_rmse, avg_mape
 
@@ -253,8 +260,8 @@ def train(model, trainXL, trainXH, trainXC, bonus_trainX, trainTE, trainY, train
     best_mae = float('inf')
     optimizer = torch.optim.Adam(model.parameters(),
                                      lr=args.learning_rate)
-    lr_scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.1, patience=20,    
-                                    verbose=False, threshold=0.001, threshold_mode='rel', cooldown=0, min_lr=2e-6, eps=1e-08)
+    lr_scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.1, patience=20,
+                                    threshold=0.001, threshold_mode='rel', cooldown=0, min_lr=2e-6, eps=1e-08)
     
     for epoch in tqdm(range(1,args.max_epoch+1)):
         model.train()
@@ -292,25 +299,25 @@ def train(model, trainXL, trainXH, trainXC, bonus_trainX, trainTE, trainY, train
                 loss_regress = _compute_regression_loss(y, hat_y_regress) + _compute_regression_loss(yl, hat_y_l_regress)
                 loss_class = _compute_class_loss(yc, hat_y_class) + _compute_class_loss(yc, hat_y_l_class)
                 
-                # epsilon = 1e-8  # 防止除以零
+                # epsilon = 1e-8  # Prevent division by zero
 
-                # # 计算权重（以损失的反比例为基础）
+                # # Compute weights (inverse of loss)
                 # weight_regress = 1 / (loss_regress.item() + epsilon)
                 # weight_class = 1 / (loss_class.item() + epsilon)
 
-                # # 归一化权重，使得总和为1
+                # # Normalize weights so they sum to 1
                 # weights_sum = weight_regress + weight_class
                 # w1 = weight_regress / weights_sum
                 # w2 = weight_class / weights_sum
 
-                # 应用权重到损失函数
+                # Apply weights to loss
                 # loss = w1*loss_regress + w2*loss_class
                 loss = loss_regress + loss_class
 
 
                 loss.backward()
                 
-                # # 梯度裁剪前打印梯度范围
+                # # Print gradient range before clipping
                 # max_grad = max(p.grad.data.abs().max() for p in model.parameters() if p.grad is not None)
                 # print(f"Max grad before clipping: {max_grad}")
                 
@@ -327,26 +334,26 @@ def train(model, trainXL, trainXH, trainXC, bonus_trainX, trainTE, trainY, train
         tensor_writer.add_scalar('training loss', train_l_sum / batch_count, epoch)
 
         # acc, mae, rmse, mape = res(model, valXL, valXH, valXC, bonus_valX, valTE, valY, valYC, adjgat, epoch, log, tensor_writer)
-        # lr_scheduler.step(acc)  # 根据需要选择适当的指标进行调整
-        # # 检查是否达到了新的最佳综合评分
-        # # 检查是否达到了新的最佳准确率
-        # if acc > best_composite_score:  # 现在我们希望“最高”准确率
-        #     best_composite_score = acc  # 更新最佳综合评分
-        #     # 保存具有最佳综合评分的模型
+        # lr_scheduler.step(acc)  # Choose metric for scheduler as needed
+        # # Check if new best composite score reached
+        # # Check if new best accuracy reached
+        # if acc > best_composite_score:  # We want highest accuracy
+        #     best_composite_score = acc  # Update best composite score
+        #     # Save model with best composite score
         #     torch.save(model.state_dict(), args.model_file)
         #     log_string(log, f'Epoch {epoch}: New best accuracy: {best_composite_score:.4f}, Model saved.')
         
         
-        # 假设你的 res 函数返回准确率（acc），MAE，RMSE 和 MAPE
+        # Assume res returns accuracy (acc), MAE, RMSE and MAPE
         acc, mae, rmse, mape = res(model, valXL, valXH, valXC, bonus_valX, valTE, valY, valYC, adjgat, epoch, log, tensor_writer)
         
-        # 使用 MAE 作为学习率调度器的度量
-        lr_scheduler.step(mae)  # 传递 mae 而不是 acc
+        # Use MAE as metric for learning rate scheduler
+        lr_scheduler.step(mae)  # Pass mae instead of acc
 
-        # 检查是否得到了更低的 MAE，这意味着模型的表现更好了
-        if mae < best_mae:  # 寻找最小 MAE
-            best_mae = mae  # 更新最佳 MAE 记录
-            # 保存具有最佳 mae 的模型状态
+        # Check if we got a lower MAE (better model performance)
+        if mae < best_mae:  # Seek minimum MAE
+            best_mae = mae  # Update best MAE
+            # Save model state with best mae
             torch.save(model.state_dict(), args.model_file)
             log_string(log, f'Epoch {epoch}: New best mae: {best_mae:.4f}, Model saved.')
 

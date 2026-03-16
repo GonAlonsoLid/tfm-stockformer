@@ -8,7 +8,6 @@ import torch
 import math
 from pytorch_wavelets import DWT1DForward, DWT1DInverse
 import csv
-# sys.path.append('/root/autodl-tmp/Stockformer/Stockformer_run/')
 # from DILATE.loss.dilate_loss import dilate_loss
 from torch.utils.data import Dataset
 
@@ -20,7 +19,7 @@ def log_string(log, string):
 
 def metric(reg_pred, reg_label, class_pred, class_label):
     with np.errstate(divide='ignore', invalid='ignore'):
-        # 回归任务的度量计算
+        # Regression task metric computation
         mask = np.not_equal(reg_label, 0)
         mask = mask.astype(np.float32)
         mask /= np.mean(mask)
@@ -36,7 +35,7 @@ def metric(reg_pred, reg_label, class_pred, class_label):
         mape = np.nan_to_num(mape * mask)
         mape = np.mean(mape)
         
-        # 分类任务的准确率计算
+        # Classification task accuracy computation
         pred_classes = np.argmax(class_pred, axis=-1)
         correct = (pred_classes == class_label).astype(np.float32)
         acc = np.mean(correct)
@@ -44,15 +43,15 @@ def metric(reg_pred, reg_label, class_pred, class_label):
     return acc, mae, rmse, mape
 
 
-# 初始化交叉熵损失函数
+# Initialize cross-entropy loss function
 criterion = torch.nn.CrossEntropyLoss()
 
 def _compute_class_loss(y_true, y_predicted):
-    # 展平 y_predicted 和 y_true
+    # Flatten y_predicted and y_true
     y_predicted_flat = y_predicted.view(-1, y_predicted.size(-1))  # [batch_size * seq_len * num_nodes, num_classes]
-    y_true_flat = y_true.view(-1).long()  # 转换为长整型
+    y_true_flat = y_true.view(-1).long()  # Convert to long type
 
-    # 计算损失
+    # Compute loss
     loss = criterion(y_predicted_flat, y_true_flat)
     return loss
 
@@ -108,8 +107,7 @@ class StockDataset(Dataset):
         # Load data
         Traffic = np.load(args.traffic_file)['result']
         indicator = np.load(args.indicator_file)['result']
-        # path = '/root/autodl-tmp/Stockformer/Stockformer_run/Stockformer_code/data/Stock_CN_2021-02-01_2023-12-29_Alpha_360/Alpha_360_2021-02-01_2023-12-29'
-        path = '/root/autodl-tmp/Stockformer/Stockformer_run/Stockformer_code/data/Stock_CN_2021-06-04_2024-01-30/Alpha_360_2021-06-04_2024-01-30'
+        path = args.alpha_360_dir
         files = os.listdir(path)
         data_list = []
         for file in files:
@@ -118,6 +116,10 @@ class StockDataset(Dataset):
             arr = np.expand_dims(df.values, axis=2)
             data_list.append(arr)
         concatenated_arr = np.concatenate(data_list, axis=2)
+        # Safety net: replace any residual NaN with 0.0 (the cross-sectional mean
+        # for z-score normalized features) so NaN never reaches the model.
+        if np.isnan(concatenated_arr).any():
+            concatenated_arr = np.nan_to_num(concatenated_arr, nan=0.0)
         bonus_all = concatenated_arr
         num_step = Traffic.shape[0]
         train_steps = round(args.train_ratio * num_step)

@@ -3,9 +3,14 @@ import numpy as np
 import networkx as nx
 import sys
 import os
+import argparse as _argparse
 
-# Relative directory path
-directory = '/root/autodl-tmp/Stockformer/Stockformer_run/Stockformer_code/data/Stock_CN_2021-06-04_2024-01-30'
+_sparser = _argparse.ArgumentParser()
+_sparser.add_argument('--data_dir', default='./data/Stock_CN_2021-06-04_2024-01-30')
+_sparser.add_argument('--ge_path', default=None, help='Path to GraphEmbedding library if not pip-installed')
+_sargs, _ = _sparser.parse_known_args()
+directory = _sargs.data_dir
+
 if not os.path.exists(directory):
     os.makedirs(directory)
     print("Directory created:", directory)
@@ -13,7 +18,7 @@ if not os.path.exists(directory):
 # Reading the data ########
 df = pd.read_csv(f'{directory}/label.csv', index_col=0)
 df.index = pd.to_datetime(df.index)
-# 将nan替换为0
+# Replace nan with 0
 df.fillna(0, inplace=True)
 print('Data read successfully.')
 
@@ -22,7 +27,7 @@ data = df.values
 np.savez(f'{directory}/flow.npz', result=data)
 print('Flow array saved as npz successfully.')
 
-# 将收益率转换为涨跌分类：正收益为1，否则为0
+# Convert returns to up/down classification: positive return = 1, otherwise 0
 trend_indicator = (data > 0).astype(int)
 np.savez(f'{directory}/trend_indicator.npz', result=trend_indicator)
 print('Trend indicator saved as npz successfully.')
@@ -50,7 +55,8 @@ with open(f'{directory}/data.edgelist', 'w') as f:
 print('Edge list saved successfully.')
 
 # Adjusted for relative paths for custom libraries
-sys.path.append('/root/autodl-tmp/Stockformer/Stockformer_run/GraphEmbedding')
+if _sargs.ge_path:
+    sys.path.append(_sargs.ge_path)
 from ge.classify import read_node_label, Classifier
 from ge import Struc2Vec
 

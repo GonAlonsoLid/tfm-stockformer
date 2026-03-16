@@ -5,10 +5,10 @@ import torch.nn.functional as F
 import math
 
 def maml_init_(module):
-    if isinstance(module, nn.Linear):  # 使用更广泛的线性层初始化
+    if isinstance(module, nn.Linear):  # Broader linear layer initialization
         nn.init.kaiming_uniform_(module.weight, nonlinearity='relu')
         nn.init.constant_(module.bias, 0)
-    elif isinstance(module, nn.LSTM):  # 对RNN类进行初始化
+    elif isinstance(module, nn.LSTM):  # Initialize RNN-like layers
         for name, param in module.named_parameters():
             if 'weight_ih' in name:
                 nn.init.xavier_uniform_(param.data)
@@ -16,13 +16,13 @@ def maml_init_(module):
                 nn.init.orthogonal_(param.data)
             elif 'bias' in name:
                 nn.init.constant_(param.data, 0)
-    elif isinstance(module, nn.Module):  # 对自定义模块进行检查
+    elif isinstance(module, nn.Module):  # Check custom modules
         if hasattr(module, 'end_emb_class'):
             maml_init_(module.end_emb_class)
         if hasattr(module, 'end_emb_regress'):
             maml_init_(module.end_emb_regress)
     else:
-        # 通用初始化
+        # Generic initialization
         if hasattr(module, 'weight') and module.weight is not None:
             nn.init.xavier_uniform_(module.weight, gain=nn.init.calculate_gain('relu'))
         if hasattr(module, 'bias') and module.bias is not None:
@@ -355,20 +355,20 @@ class StockformerOutput(nn.Module):
         super(StockformerOutput, self).__init__()
         global device
         device = dev
-        # 分类任务的输出层，输出维度根据类别数确定
+        # Classification output layer; dimension by number of classes
         self.end_emb_class = FeedForward([outfea, outfea, outfea_class])
-        # 回归任务的输出层，输出维度根据回归目标数确定
+        # Regression output layer; dimension by number of regression targets
         self.end_emb_regress = FeedForward([outfea, outfea, outfea_regress])
         
     def forward(self, hat_y, hat_y_l):
         '''
         x:[B,T,N]
-        hat_y, hat_y_l: 两种不同的特征表示，都将用于分类和回归任务
+        hat_y, hat_y_l: two feature representations, both used for classification and regression
         '''
-        # 分类任务的输出
+        # Classification output
         hat_y_class = self.end_emb_class(hat_y)
         hat_y_l_class = self.end_emb_class(hat_y_l)
-        # 回归任务的输出
+        # Regression output
         hat_y_regress = self.end_emb_regress(hat_y)
         hat_y_l_regress = self.end_emb_regress(hat_y_l)
         
