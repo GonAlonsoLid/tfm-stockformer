@@ -267,29 +267,22 @@ def train(model, trainXL, trainXH, trainXC, bonus_trainX, trainTE, trainY, train
         model.train()
         train_l_sum, batch_count, start = 0.0, 0, time.time()
         permutation = np.random.permutation(num_train)
-        trainXL = trainXL[permutation]
-        trainXH = trainXH[permutation]
-        trainXC = trainXC[permutation]
-        trainTE = trainTE[permutation]
-        trainY = trainY[permutation]
-        trainYL = trainYL[permutation]
-        trainYC = trainYC[permutation]
-        bonus_trainX = bonus_trainX[permutation]
         num_batch = math.ceil(num_train / args.batch_size)
 
         with tqdm(total=num_batch) as pbar:
             for batch_idx in range(num_batch):
                 start_idx = batch_idx * args.batch_size
                 end_idx = min(num_train, (batch_idx + 1) * args.batch_size)
+                batch_perm = permutation[start_idx:end_idx]
 
-                xl = torch.from_numpy(trainXL[start_idx : end_idx]).float().to(device)
-                xh = torch.from_numpy(trainXH[start_idx : end_idx]).float().to(device)
-                xc = torch.from_numpy(trainXC[start_idx : end_idx]).float().to(device)
-                y = torch.from_numpy(trainY[start_idx : end_idx]).float().to(device)
-                yl = torch.from_numpy(trainYL[start_idx : end_idx]).float().to(device)
-                yc = torch.from_numpy(trainYC[start_idx : end_idx]).float().to(device)
-                te = torch.from_numpy(trainTE[start_idx : end_idx]).to(device)
-                bonus = torch.from_numpy(bonus_trainX[start_idx : end_idx]).float().to(device)
+                xl = torch.from_numpy(trainXL[batch_perm]).float().to(device)
+                xh = torch.from_numpy(trainXH[batch_perm]).float().to(device)
+                xc = torch.from_numpy(trainXC[batch_perm]).float().to(device)
+                y = torch.from_numpy(trainY[batch_perm]).float().to(device)
+                yl = torch.from_numpy(trainYL[batch_perm]).float().to(device)
+                yc = torch.from_numpy(trainYC[batch_perm]).float().to(device)
+                te = torch.from_numpy(trainTE[batch_perm]).to(device)
+                bonus = torch.from_numpy(bonus_trainX[batch_perm]).float().to(device)
                 
                 
                 optimizer.zero_grad()
