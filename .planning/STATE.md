@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: completed
-stopped_at: Phase 6 UI-SPEC approved
-last_updated: "2026-03-16T11:12:31.855Z"
+stopped_at: Completed 06-01-PLAN.md
+last_updated: "2026-03-16T11:44:51.649Z"
 last_activity: 2026-03-14 — Plan 04-02 executed; standalone evaluation script created
 progress:
   total_phases: 7
   completed_phases: 5
-  total_plans: 17
-  completed_plans: 17
+  total_plans: 20
+  completed_plans: 18
   percent: 67
 ---
 
@@ -62,6 +62,7 @@ Progress: [████████░░] 67%
 | Phase 04-evaluation P02 | 5 | 2 tasks | 1 files |
 | Phase 05-portfolio-backtesting P01 | 1 | 1 tasks | 1 files |
 | Phase 05-portfolio-backtesting P03 | 15 | 2 tasks | 1 files |
+| Phase 06-interface P01 | 5 | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -105,6 +106,8 @@ Recent decisions affecting current work:
 - [Phase 05-portfolio-backtesting]: xfail(strict=False) Wave 0 stubs with imports inside test bodies — consistent with Phase 02-01 and 04-01 convention; keeps CI GREEN before scripts/run_backtest.py exists
 - [Phase 05-portfolio-backtesting]: yfinance import guarded with try/except and _YF_AVAILABLE sentinel — pure functions remain importable without yfinance in test environments
 - [Phase 05-portfolio-backtesting]: derive_date_index uses bdate_range first then falls back to label.csv + split_indices.json for US-holiday-aware date alignment
+- [Phase 06-interface]: xfail(strict=False) with imports inside test bodies for Phase 6 — consistent with Phase 02-01 and 04-01 convention; keeps CI GREEN before app.py exists
+- [Phase 06-interface]: streamlit<=1.50 pinned: last version supporting Python 3.9; plotly>=5.18 ensures go.Heatmap zmid support
 
 ### Pending Todos
 
@@ -124,6 +127,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-16T11:12:31.852Z
-Stopped at: Phase 6 UI-SPEC approved
-Resume file: .planning/phases/06-interface/06-UI-SPEC.md
+Last session: 2026-03-16T11:44:51.647Z
+Stopped at: Completed 06-01-PLAN.md
+Resume file: None

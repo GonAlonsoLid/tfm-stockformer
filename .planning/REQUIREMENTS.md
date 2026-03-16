@@ -42,10 +42,10 @@ Requirements for the thesis milestone. Each maps to a roadmap phase.
 
 ### Interface
 
-- [ ] **UI-01**: Streamlit app with date range selector and run pipeline button
-- [ ] **UI-02**: Equity curve chart showing portfolio vs SPY cumulative returns
-- [ ] **UI-03**: Metrics summary table (annualized return, Sharpe, max drawdown, alpha, beta)
-- [ ] **UI-04**: Model prediction heatmap (stock × date grid for test period)
+- [x] **UI-01**: Streamlit app with date range selector and run pipeline button
+- [x] **UI-02**: Equity curve chart showing portfolio vs SPY cumulative returns
+- [x] **UI-03**: Metrics summary table (annualized return, Sharpe, max drawdown, alpha, beta)
+- [x] **UI-04**: Model prediction heatmap (stock × date grid for test period)
 
 ### Testing
 
@@ -117,10 +117,10 @@ Deferred to future work. Acknowledged but not in current roadmap.
 | BACK-01 | Phase 5 | Complete |
 | BACK-02 | Phase 5 | Complete |
 | BACK-03 | Phase 5 | Complete |
-| UI-01 | Phase 6 | Pending |
-| UI-02 | Phase 6 | Pending |
-| UI-03 | Phase 6 | Pending |
-| UI-04 | Phase 6 | Pending |
+| UI-01 | Phase 6 | Complete |
+| UI-02 | Phase 6 | Complete |
+| UI-03 | Phase 6 | Complete |
+| UI-04 | Phase 6 | Complete |
 | TEST-01 | Phase 7 | Pending |
 | TEST-02 | Phase 7 | Pending |
 | TEST-03 | Phase 7 | Pending |

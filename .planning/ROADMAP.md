@@ -133,5 +133,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 | 3. Model Training | 4/4 | Complete   | 2026-03-12 |
 | 4. Evaluation | 2/2 | Complete   | 2026-03-14 |
 | 5. Portfolio & Backtesting | 1/3 | In Progress|  |
-| 6. Interface | 0/TBD | Not started | - |
+| 6. Interface | 1/3 | In Progress|  |
 | 7. Testing | 0/TBD | Not started | - |
