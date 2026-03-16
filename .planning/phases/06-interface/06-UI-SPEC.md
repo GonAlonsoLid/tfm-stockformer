@@ -52,10 +52,10 @@ Exceptions: Streamlit's `st.spinner()` overlay uses its own internal padding —
 | Body | 14px | 400 (regular) | 1.5 |
 | Label | 12px | 400 (regular) | 1.4 |
 | Heading | 20px | 600 (semibold) | 1.2 |
-| Display | 28px | 700 (bold) | 1.1 |
+| Display | 28px | 600 (semibold) | 1.1 |
 
 Implementation notes:
-- Page title ("Stockformer S&P500 Dashboard") uses `st.title()` — Streamlit renders as Display (28px equivalent, bold).
+- Page title ("Stockformer S&P500 Dashboard") uses `st.title()` — Streamlit renders as Display (28px equivalent, semibold).
 - Section headings ("Equity Curve", "Performance Metrics", "Prediction Heatmap") use `st.subheader()` — renders as Heading (20px equivalent, semibold).
 - Sidebar section labels ("Pipeline Settings", "Backtest Parameters") use `st.sidebar.markdown("**Label**")` — renders as Body bold.
 - All Plotly chart axis labels and tick text: 12px (Label role), weight 400, color #9CA3AF.
@@ -93,6 +93,10 @@ Accent reserved for: the "Run Pipeline" button and the portfolio line in the equ
 ---
 
 ## Component Inventory
+
+### Focal Point
+
+Primary visual anchor: equity curve chart — rendered first and largest in the main area.
 
 ### Sidebar (all controls)
 
@@ -194,7 +198,7 @@ NaN values in heatmap: pass `zmin` and `zmax` symmetrically (e.g. `zmin=-max_abs
 | Element | Copy |
 |---------|------|
 | Primary CTA | "Run Pipeline" |
-| Initial placeholder heading | "No results yet" |
+| Initial placeholder heading | "Configure settings to run your first analysis" |
 | Initial placeholder body | "Configure your settings in the sidebar, then click Run Pipeline to run inference and backtesting." |
 | Spinner text | "Running inference and backtest — this may take several minutes..." |
 | Error — no checkpoint/data | "No checkpoint or data found for this date range. Ensure the model has been trained on this period before running." |
