@@ -1,9 +1,10 @@
 # Platform-independent requirements for tfm-stockformer
 # Run from project root with: pip install -r requirements.txt
-# For GPU training (Colab / Linux CUDA 11.8):
-#   pip install torch==2.7.1+cu118 --index-url https://download.pytorch.org/whl/cu118
+# For GPU training (Colab / Linux):
+#   CUDA 11.8: pip install torch==2.7.1+cu118 --index-url https://download.pytorch.org/whl/cu118
+#   CUDA 12.8: pip install torch==2.10.0+cu128 --index-url https://download.pytorch.org/whl/cu128
 
-torch>=2.0,<2.8
+torch>=2.0
 PyWavelets==1.6.0
 tensorboard>=2.14,<3
 scikit-learn>=1.1.2
