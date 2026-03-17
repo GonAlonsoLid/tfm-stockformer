@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: completed
-stopped_at: Completed 09-01-PLAN.md
-last_updated: "2026-03-17T11:33:51.959Z"
+stopped_at: Completed 09-02-PLAN.md
+last_updated: "2026-03-17T11:35:39.421Z"
 last_activity: 2026-03-14 — Plan 04-02 executed; standalone evaluation script created
 progress:
   total_phases: 9
   completed_phases: 6
   total_plans: 26
-  completed_plans: 22
+  completed_plans: 23
   percent: 67
 ---
 
@@ -67,6 +67,7 @@ Progress: [████████░░] 67%
 | Phase 08-alpha360-feature-replacement P01 | 2 | 1 tasks | 1 files |
 | Phase 08-alpha360-feature-replacement P02 | 5 | 1 tasks | 1 files |
 | Phase 09-pipeline-cleanup-and-restructuring P01 | 85s | 2 tasks | 2 files |
+| Phase 09-pipeline-cleanup-and-restructuring P02 | 6 | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -121,6 +122,8 @@ Recent decisions affecting current work:
 - [Phase 08-alpha360-feature-replacement]: features_dir cleared after backup before writing 360 new CSVs to ensure exact count of 360
 - [Phase 09-pipeline-cleanup-and-restructuring]: xfail(strict=False) pattern maintained for Wave 0 stubs — consistent with all prior phases
 - [Phase 09-pipeline-cleanup-and-restructuring]: test_download_ohlcv.py imports from scripts.sp500_pipeline (post-move path) so tests go green after Plan 09-02 without modification
+- [Phase 09-pipeline-cleanup-and-restructuring]: scripts/sp500_pipeline/ is now canonical location for pipeline step scripts; data_processing_script/sp500_pipeline/ retained until Plan 09-04 cleanup
+- [Phase 09-pipeline-cleanup-and-restructuring]: download_ohlcv.py ticker fallback reads tickers.txt from args.data_dir before calling Wikipedia scrape; first run still writes the file
 
 ### Roadmap Evolution
 
@@ -145,6 +148,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-17T11:33:51.957Z
-Stopped at: Completed 09-01-PLAN.md
+Last session: 2026-03-17T11:35:39.418Z
+Stopped at: Completed 09-02-PLAN.md
 Resume file: None
