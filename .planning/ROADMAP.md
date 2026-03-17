@@ -152,7 +152,7 @@ Plans:
 **Goal:** Remove legacy data_processing_script/ tree, integrate build_alpha360.py as step 5 in build_pipeline.py with a unified --config interface, add ticker local-file caching to download_ohlcv.py, and update README with a Quick Start reproduction guide.
 **Requirements**: none (structural phase)
 **Depends on:** Phase 8
-**Plans:** 4 plans
+**Plans:** 1/4 plans executed
 
 Plans:
 - [ ] 09-01-PLAN.md — Wave 0 test stubs: test_pipeline.py + test_download_ohlcv.py (xfail)
