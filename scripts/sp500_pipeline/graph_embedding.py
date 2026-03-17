@@ -80,10 +80,21 @@ def run_struc2vec(data_dir: str, embed_size: int = 128, workers: int = 4) -> Non
         Parallel workers for Struc2Vec random walk simulation.
     """
     try:
-        # Import directly from the submodule to bypass ge/__init__.py,
-        # which loads LINE → deepctr (an unneeded dependency).
-        from ge.models.struc2vec import Struc2Vec
-    except ImportError:
+        # Load Struc2Vec directly from its source file to bypass ge/__init__.py,
+        # which imports LINE → deepctr (an unneeded transitive dependency).
+        import importlib.util, sys as _sys
+        _ge_init = importlib.util.find_spec("ge")
+        if _ge_init is None:
+            raise ImportError("ge package not found")
+        import os as _os
+        _ge_dir = _os.path.dirname(_ge_init.origin)
+        _s2v_path = _os.path.join(_ge_dir, "models", "struc2vec.py")
+        _spec = importlib.util.spec_from_file_location("ge.models.struc2vec", _s2v_path)
+        _mod = importlib.util.module_from_spec(_spec)
+        _sys.modules["ge.models.struc2vec"] = _mod
+        _spec.loader.exec_module(_mod)
+        Struc2Vec = _mod.Struc2Vec
+    except (ImportError, AttributeError, FileNotFoundError):
         raise ImportError(
             "GraphEmbedding library not installed. Run:\n"
             "  pip install fastdtw gensim\n"
