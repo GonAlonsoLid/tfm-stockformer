@@ -146,3 +146,16 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 Plans:
 - [ ] 08-01-PLAN.md — Wave 0 test scaffold: 5 xfail stubs covering ALPHA360-01..05 (ALPHA360-01..05)
 - [ ] 08-02-PLAN.md — Implement scripts/build_alpha360.py: 6-field × 60-lag pipeline, backup, validation (ALPHA360-01..05)
+
+### Phase 9: Pipeline cleanup and restructuring
+
+**Goal:** Remove legacy data_processing_script/ tree, integrate build_alpha360.py as step 5 in build_pipeline.py with a unified --config interface, add ticker local-file caching to download_ohlcv.py, and update README with a Quick Start reproduction guide.
+**Requirements**: none (structural phase)
+**Depends on:** Phase 8
+**Plans:** 4 plans
+
+Plans:
+- [ ] 09-01-PLAN.md — Wave 0 test stubs: test_pipeline.py + test_download_ohlcv.py (xfail)
+- [ ] 09-02-PLAN.md — Move sp500_pipeline/ to scripts/, update PIPELINE_DIR, add ticker fallback
+- [ ] 09-03-PLAN.md — Add --config support + Alpha360 step 5 integration to build_pipeline.py
+- [ ] 09-04-PLAN.md — Delete data_processing_script/ tree + rewrite README Quick Start + human verify
