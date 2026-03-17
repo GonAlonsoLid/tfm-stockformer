@@ -173,28 +173,57 @@ def run_step(
     print(f"[DONE] {script_name}  (exit code: {result.returncode})")
 
 
+def _date_range_from_config(config_path: str) -> tuple:
+    """Read date_range from config [DEFAULT] and return (start, end).
+
+    date_range format: 'YYYY-MM-DD_YYYY-MM-DD' (e.g. '2018-01-01_2024-01-01').
+    Returns (None, None) if config has no date_range key.
+    """
+    cfg = configparser.ConfigParser()
+    cfg.read(config_path)
+    date_range = cfg.defaults().get("date_range")
+    if not date_range:
+        return None, None
+    parts = date_range.split("_")
+    return parts[0], parts[1]
+
+
 def main() -> None:
+    # Pre-parse --config so we can read date_range as defaults for --start/--end.
+    # This makes the config the single source of truth: change date_range once,
+    # and both the pipeline (data writing) and training (data reading) align.
+    pre = argparse.ArgumentParser(add_help=False)
+    pre.add_argument("--config", default=None)
+    pre_args, _ = pre.parse_known_args()
+
+    cfg_start, cfg_end = "2018-01-01", "2024-01-01"
+    if pre_args.config:
+        s, e = _date_range_from_config(pre_args.config)
+        if s and e:
+            cfg_start, cfg_end = s, e
+
     parser = argparse.ArgumentParser(
         description="S&P500 data pipeline orchestrator — runs all five steps end-to-end",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-    )
-    parser.add_argument(
-        "--start",
-        default="2018-01-01",
-        help="Start date for OHLCV download",
-    )
-    parser.add_argument(
-        "--end",
-        default="2024-01-01",
-        help="End date for OHLCV download",
     )
     parser.add_argument(
         "--config",
         default=None,
         help=(
             "Path to .conf file (e.g. config/Multitask_Stock_SP500.conf). "
-            "Required to enable step 5 (Alpha360)."
+            "Required to enable step 5 (Alpha360). date_range in the config "
+            "sets the default start/end dates."
         ),
+    )
+    parser.add_argument(
+        "--start",
+        default=cfg_start,
+        help="Start date for OHLCV download (default: read from config date_range)",
+    )
+    parser.add_argument(
+        "--end",
+        default=cfg_end,
+        help="End date for OHLCV download (default: read from config date_range)",
     )
     parser.add_argument(
         "--data_dir",
