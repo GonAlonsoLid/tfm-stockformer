@@ -80,7 +80,9 @@ def run_struc2vec(data_dir: str, embed_size: int = 128, workers: int = 4) -> Non
         Parallel workers for Struc2Vec random walk simulation.
     """
     try:
-        from ge import Struc2Vec
+        # Import directly from the submodule to bypass ge/__init__.py,
+        # which loads LINE → deepctr (an unneeded dependency).
+        from ge.models.struc2vec import Struc2Vec
     except ImportError:
         raise ImportError(
             "GraphEmbedding library not installed. Run:\n"
