@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: completed
-stopped_at: Completed 09-02-PLAN.md
-last_updated: "2026-03-17T11:35:39.421Z"
+stopped_at: Completed 09-04-PLAN.md
+last_updated: "2026-03-17T11:49:57.279Z"
 last_activity: 2026-03-14 — Plan 04-02 executed; standalone evaluation script created
 progress:
   total_phases: 9
-  completed_phases: 6
+  completed_phases: 7
   total_plans: 26
-  completed_plans: 23
+  completed_plans: 25
   percent: 67
 ---
 
@@ -68,6 +68,7 @@ Progress: [████████░░] 67%
 | Phase 08-alpha360-feature-replacement P02 | 5 | 1 tasks | 1 files |
 | Phase 09-pipeline-cleanup-and-restructuring P01 | 85s | 2 tasks | 2 files |
 | Phase 09-pipeline-cleanup-and-restructuring P02 | 6 | 2 tasks | 6 files |
+| Phase 09 P04 | 5 | 3 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -124,6 +125,8 @@ Recent decisions affecting current work:
 - [Phase 09-pipeline-cleanup-and-restructuring]: test_download_ohlcv.py imports from scripts.sp500_pipeline (post-move path) so tests go green after Plan 09-02 without modification
 - [Phase 09-pipeline-cleanup-and-restructuring]: scripts/sp500_pipeline/ is now canonical location for pipeline step scripts; data_processing_script/sp500_pipeline/ retained until Plan 09-04 cleanup
 - [Phase 09-pipeline-cleanup-and-restructuring]: download_ohlcv.py ticker fallback reads tickers.txt from args.data_dir before calling Wikipedia scrape; first run still writes the file
+- [Phase 09]: data_processing_script/ deleted in full — sp500_pipeline/ already moved in 09-02; Chinese-market subdirs fully obsolete
+- [Phase 09]: README.md Quick Start uses 7-step sequence matching CONTEXT.md locked command list with GPU note on training step only
 
 ### Roadmap Evolution
 
@@ -148,6 +151,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-17T11:35:39.418Z
-Stopped at: Completed 09-02-PLAN.md
+Last session: 2026-03-17T11:49:57.276Z
+Stopped at: Completed 09-04-PLAN.md
 Resume file: None
