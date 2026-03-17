@@ -19,6 +19,7 @@ pytorch-wavelets==1.3.0
 setuptools<81  # pytorch-wavelets uses pkg_resources, removed in setuptools>=81
 networkx>=3.2
 pandas>=2.0
+lxml>=4.9          # required by pandas.read_html (S&P500 ticker list from Wikipedia)
 pytest>=7.0,<8
 yfinance>=0.2.50
 pyarrow>=12.0

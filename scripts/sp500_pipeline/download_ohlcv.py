@@ -268,6 +268,21 @@ def main() -> None:
     print(f"Saved {len(saved_tickers)} tickers to {ohlcv_dir}/")
     print(f"Ticker list written to {tickers_txt_path}")
 
+    # Generate label.csv — 1-day forward returns matrix [T × N]
+    # label[t] = Close[t+1] / Close[t] - 1  (the regression target)
+    # Rows = dates, columns = tickers (same order as saved_tickers / tickers.txt).
+    # Last date is dropped (no forward return available).
+    logger.info("Building label.csv (1-day forward returns)...")
+    close_frames = []
+    for ticker in saved_tickers:
+        df_t = pd.read_parquet(os.path.join(ohlcv_dir, f"{ticker}.parquet"))
+        close_frames.append(df_t["Close"].rename(ticker))
+    close_wide = pd.concat(close_frames, axis=1)          # [T+1 × N], date-indexed
+    label_df = close_wide.pct_change().shift(-1).iloc[:-1]  # forward return, drop last row
+    label_path = os.path.join(args.data_dir, "label.csv")
+    label_df.to_csv(label_path)
+    print(f"label.csv written to {label_path} ({label_df.shape[0]} dates × {label_df.shape[1]} tickers)")
+
 
 if __name__ == "__main__":
     main()
