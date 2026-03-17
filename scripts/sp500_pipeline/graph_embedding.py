@@ -80,12 +80,12 @@ def run_struc2vec(data_dir: str, embed_size: int = 128, workers: int = 4) -> Non
         Parallel workers for Struc2Vec random walk simulation.
     """
     try:
-        import ge  # noqa: F401
         from ge import Struc2Vec
     except ImportError:
         raise ImportError(
             "GraphEmbedding library not installed. Run:\n"
-            "  pip install git+https://github.com/shenweichen/GraphEmbedding.git"
+            "  pip install fastdtw gensim\n"
+            "  pip install git+https://github.com/shenweichen/GraphEmbedding.git --no-deps"
         )
 
     import networkx as nx
