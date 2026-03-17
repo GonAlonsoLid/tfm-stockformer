@@ -68,18 +68,17 @@ def test_pytorch_wavelets_importable():
     assert DWT1DForward is not None
 
 
-def test_pandas_applymap_removed(project_root):
-    """results_data_processing.py must not use deprecated .applymap()."""
-    target = os.path.join(
-        project_root,
-        'data_processing_script',
-        'stockformer_input_data_processing',
-        'results_data_processing.py'
+def test_pandas_applymap_removed():
+    """data_processing_script/ was deleted in Phase 09-04; this guard is satisfied by deletion."""
+    # The legacy `data_processing_script/` directory tree was removed as part of the
+    # Phase 9 cleanup (plan 09-04).  The applymap→map fix was validated in plan 01-01
+    # and is now permanently satisfied — the file no longer exists in the repository.
+    import os
+    project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    legacy_dir = os.path.join(project_root, "data_processing_script")
+    assert not os.path.exists(legacy_dir), (
+        "data_processing_script/ still exists — Phase 09-04 deletion not yet complete"
     )
-    with open(target, 'r') as fh:
-        content = fh.read()
-    assert 'applymap' not in content, \
-        "results_data_processing.py still uses deprecated .applymap() — replace with .map()"
 
 
 # --- INFRA-03: Smoke test exists ---

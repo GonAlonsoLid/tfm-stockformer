@@ -7,15 +7,16 @@ Runs steps in order:
   2. normalize_split.py  -- record train/val/test date boundaries (split_indices.json)
   3. serialize_arrays.py -- save flow.npz and trend_indicator.npz from label.csv
   4. graph_embedding.py  -- build Struc2Vec embedding [N, 128] from correlation graph
+  5. build_alpha360.py   -- build 360 Alpha360-style feature CSVs (requires --config)
 
-Note: Alpha360 features are built separately via scripts/build_alpha360.py.
-label.csv must exist in data_dir before running steps 2-4 (produced by the
-initial data setup, not regenerated here).
+Usage (recommended — runs all five steps):
+  python scripts/build_pipeline.py --config config/Multitask_Stock_SP500.conf
 
-Usage:
+Usage (legacy — runs steps 1-4 only):
   python scripts/build_pipeline.py --data_dir ./data/Stock_SP500_2018-01-01_2024-01-01
 
 Options:
+  --config     Path to .conf file; derives data_dir and enables step 5 (Alpha360)
   --data_dir   Output directory (default: ./data/Stock_SP500_2018-01-01_2024-01-01)
   --start      Start date for OHLCV download (default: 2018-01-01)
   --end        End date for OHLCV download (default: 2024-01-01)
@@ -29,13 +30,19 @@ Prerequisites:
   pip install git+https://github.com/shenweichen/GraphEmbedding.git  # for step 4
 """
 import argparse
+import configparser
 import os
 import subprocess
 import sys
+from pathlib import Path
 
 # Resolve path to the sp500_pipeline package relative to this script
 _SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 PIPELINE_DIR = os.path.join(_SCRIPT_DIR, "sp500_pipeline")
+
+# Ensure scripts/ is on sys.path so build_alpha360 can be imported directly
+if _SCRIPT_DIR not in sys.path:
+    sys.path.insert(0, _SCRIPT_DIR)
 
 # (script_name, sentinel_file_relative_to_data_dir)
 # Each step is skipped when its sentinel already exists (unless --force).
@@ -49,6 +56,78 @@ STEPS = [
 
 def _sentinel_exists(data_dir: str, sentinel: str) -> bool:
     return os.path.exists(os.path.join(data_dir, sentinel))
+
+
+def _data_dir_from_config(config_path: str) -> tuple:
+    """Return (data_dir, alpha_360_dir) derived from the .conf file.
+
+    Reads cfg["file"]["traffic"] and cfg["file"]["alpha_360_dir"].
+    data_dir = parent of the traffic file path.
+    alpha_360_dir = alpha_360_dir value resolved to absolute path.
+
+    Parameters
+    ----------
+    config_path : str
+        Path to the .conf file (e.g. config/Multitask_Stock_SP500.conf).
+
+    Returns
+    -------
+    tuple[str, str]
+        (data_dir, alpha_360_dir) as absolute path strings.
+    """
+    cfg = configparser.ConfigParser()
+    cfg.read(config_path)
+    traffic = cfg["file"]["traffic"]
+    data_dir = str(Path(traffic).resolve().parent)
+    alpha_360_dir = str(Path(cfg["file"]["alpha_360_dir"]).resolve())
+    return data_dir, alpha_360_dir
+
+
+def _alpha360_done(features_dir: str) -> bool:
+    """Return True if features/ contains exactly 360 CSV files.
+
+    Used as the sentinel check for step 5 (Alpha360). Unlike steps 1-4
+    whose sentinels are single files, step 5 is complete only when all
+    360 feature CSVs are present.
+
+    Parameters
+    ----------
+    features_dir : str
+        Path to the features/ subdirectory inside data_dir.
+
+    Returns
+    -------
+    bool
+        True if exactly 360 .csv files exist in features_dir.
+    """
+    if not os.path.isdir(features_dir):
+        return False
+    return sum(1 for f in os.listdir(features_dir) if f.endswith(".csv")) == 360
+
+
+def run_alpha360_step(config_path: str, features_dir: str, force: bool = False) -> None:
+    """Execute step 5: build Alpha360 feature CSVs via direct import.
+
+    Calls build_alpha360.main(config_path=...) directly (not subprocess)
+    for cleaner error propagation and to avoid spawning a new Python process.
+    Skips if _alpha360_done(features_dir) is True, unless force=True.
+
+    Parameters
+    ----------
+    config_path : str
+        Path to the .conf file passed through to build_alpha360.main().
+    features_dir : str
+        Path to features/ directory for sentinel check.
+    force : bool
+        When True, run even if sentinel is satisfied.
+    """
+    if not force and _alpha360_done(features_dir):
+        print("[SKIP] build_alpha360  (sentinel: 360 CSVs already in features/)")
+        return
+    print("\n[RUN]  build_alpha360")
+    from build_alpha360 import main as build_alpha360_main  # noqa: PLC0415
+    build_alpha360_main(config_path=config_path)
+    print("[DONE] build_alpha360")
 
 
 def run_step(
@@ -110,9 +189,27 @@ def main() -> None:
         action="store_true",
         help="Re-run all steps even if their sentinel output already exists",
     )
+    parser.add_argument(
+        "--config",
+        default=None,
+        help=(
+            "Path to .conf file (e.g. config/Multitask_Stock_SP500.conf). "
+            "When provided, data_dir is derived from the config and --data_dir is ignored. "
+            "Recommended interface for the S&P500 pipeline."
+        ),
+    )
     args = parser.parse_args()
 
-    os.makedirs(args.data_dir, exist_ok=True)
+    # --config is the primary interface; derive data_dir and alpha_360_dir from it
+    if args.config:
+        data_dir, alpha_360_dir = _data_dir_from_config(args.config)
+        config_path = args.config
+    else:
+        data_dir = args.data_dir
+        alpha_360_dir = None   # not used for steps 1-4
+        config_path = None
+
+    os.makedirs(data_dir, exist_ok=True)
 
     # Extra arguments forwarded only to download_ohlcv.py
     download_extra = ["--start", args.start, "--end", args.end]
@@ -120,11 +217,21 @@ def main() -> None:
     for i, (script_name, sentinel) in enumerate(STEPS, start=1):
         extra = download_extra if script_name == "download_ohlcv.py" else []
         print(f"\n--- Step {i}/{len(STEPS)}: {script_name} ---")
-        run_step(script_name, sentinel, args.data_dir, extra, force=args.force)
+        run_step(script_name, sentinel, data_dir, extra, force=args.force)
+
+    # Step 5: Alpha360 feature builder (requires --config; skipped silently if no config)
+    if config_path:
+        print(f"\n--- Step 5/5: build_alpha360 ---")
+        features_dir = alpha_360_dir if alpha_360_dir else os.path.join(data_dir, "features")
+        run_alpha360_step(config_path=config_path, features_dir=features_dir, force=args.force)
+    else:
+        print("\n[INFO] Skipping step 5 (build_alpha360): pass --config to enable.")
+        print("       Next: python scripts/build_alpha360.py --config config/Multitask_Stock_SP500.conf")
 
     print("\n[COMPLETE] All pipeline steps finished.")
-    print(f"Output directory: {os.path.abspath(args.data_dir)}")
-    print("Next: python scripts/build_alpha360.py --config config/Multitask_Stock_SP500.conf")
+    print(f"Output directory: {os.path.abspath(data_dir)}")
+    if not config_path:
+        print("Next: python scripts/build_alpha360.py --config config/Multitask_Stock_SP500.conf")
 
 
 if __name__ == "__main__":
