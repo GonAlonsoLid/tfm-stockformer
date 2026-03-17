@@ -80,20 +80,29 @@ def run_struc2vec(data_dir: str, embed_size: int = 128, workers: int = 4) -> Non
         Parallel workers for Struc2Vec random walk simulation.
     """
     try:
-        # Load Struc2Vec directly from its source file to bypass ge/__init__.py,
-        # which imports LINE → deepctr (an unneeded transitive dependency).
-        import importlib.util, sys as _sys
-        _ge_init = importlib.util.find_spec("ge")
-        if _ge_init is None:
+        # ge/models/__init__.py imports LINE → deepctr (not needed here).
+        # Patch it in-place before importing so LINE/SDNE failures are silenced.
+        import importlib.util as _ilu
+        _ge_spec = _ilu.find_spec("ge")
+        if _ge_spec is None:
             raise ImportError("ge package not found")
         import os as _os
-        _ge_dir = _os.path.dirname(_ge_init.origin)
-        _s2v_path = _os.path.join(_ge_dir, "models", "struc2vec.py")
-        _spec = importlib.util.spec_from_file_location("ge.models.struc2vec", _s2v_path)
-        _mod = importlib.util.module_from_spec(_spec)
-        _sys.modules["ge.models.struc2vec"] = _mod
-        _spec.loader.exec_module(_mod)
-        Struc2Vec = _mod.Struc2Vec
+        _models_init = _os.path.join(_os.path.dirname(_ge_spec.origin), "models", "__init__.py")
+        _src = open(_models_init).read()
+        if "try:" not in _src:
+            _src = (
+                _src
+                .replace(
+                    "from .line import LINE",
+                    "try:\n    from .line import LINE\nexcept (ImportError, ModuleNotFoundError):\n    pass",
+                )
+                .replace(
+                    "from .sdne import SDNE",
+                    "try:\n    from .sdne import SDNE\nexcept (ImportError, ModuleNotFoundError):\n    pass",
+                )
+            )
+            open(_models_init, "w").write(_src)
+        from ge import Struc2Vec
     except (ImportError, AttributeError, FileNotFoundError):
         raise ImportError(
             "GraphEmbedding library not installed. Run:\n"
