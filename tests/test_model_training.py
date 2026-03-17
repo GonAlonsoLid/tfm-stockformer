@@ -83,7 +83,7 @@ def test_stockformer_forward_pass():
 
     device = torch.device("cpu")
     model = Stockformer(
-        infea=71,
+        infea=362,
         hidden=128,
         outfea_class=2,
         outfea_regress=1,

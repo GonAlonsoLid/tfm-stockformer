@@ -1,13 +1,16 @@
 #!/usr/bin/env python
 """
-End-to-end S&P500 data pipeline orchestrator.
+S&P500 data pipeline orchestrator — static inputs for model training.
 
-Runs all five steps in order:
-  1. download_ohlcv.py      -- fetch daily OHLCV from yfinance for the S&P500 universe
-  2. feature_engineering.py -- compute TA features (RSI, MACD, BB, ROC, VOL) + label.csv
-  3. normalize_split.py     -- cross-sectional normalization and date-based train/val/test split
-  4. serialize_arrays.py    -- save flow.npz and trend_indicator.npz for model training
-  5. graph_embedding.py     -- build Struc2Vec embedding [N, 128] from correlation graph
+Runs steps in order:
+  1. download_ohlcv.py   -- fetch daily OHLCV from yfinance for the S&P500 universe
+  2. normalize_split.py  -- record train/val/test date boundaries (split_indices.json)
+  3. serialize_arrays.py -- save flow.npz and trend_indicator.npz from label.csv
+  4. graph_embedding.py  -- build Struc2Vec embedding [N, 128] from correlation graph
+
+Note: Alpha360 features are built separately via scripts/build_alpha360.py.
+label.csv must exist in data_dir before running steps 2-4 (produced by the
+initial data setup, not regenerated here).
 
 Usage:
   python scripts/build_pipeline.py --data_dir ./data/Stock_SP500_2018-01-01_2024-01-01
@@ -23,7 +26,7 @@ present, making re-runs idempotent. Use --force to override this behaviour.
 
 Prerequisites:
   pip install -r requirements.txt
-  pip install git+https://github.com/shenweichen/GraphEmbedding.git  # for step 5
+  pip install git+https://github.com/shenweichen/GraphEmbedding.git  # for step 4
 """
 import argparse
 import os
@@ -39,11 +42,10 @@ PIPELINE_DIR = os.path.normpath(
 # (script_name, sentinel_file_relative_to_data_dir)
 # Each step is skipped when its sentinel already exists (unless --force).
 STEPS = [
-    ("download_ohlcv.py",      "tickers.txt"),
-    ("feature_engineering.py", "label.csv"),
-    ("normalize_split.py",     "split_indices.json"),
-    ("serialize_arrays.py",    "flow.npz"),
-    ("graph_embedding.py",     "128_corr_struc2vec_adjgat.npy"),
+    ("download_ohlcv.py",   "tickers.txt"),
+    ("normalize_split.py",  "split_indices.json"),
+    ("serialize_arrays.py", "flow.npz"),
+    ("graph_embedding.py",  "128_corr_struc2vec_adjgat.npy"),
 ]
 
 
@@ -124,6 +126,7 @@ def main() -> None:
 
     print("\n[COMPLETE] All pipeline steps finished.")
     print(f"Output directory: {os.path.abspath(args.data_dir)}")
+    print("Next: python scripts/build_alpha360.py --config config/Multitask_Stock_SP500.conf")
 
 
 if __name__ == "__main__":
