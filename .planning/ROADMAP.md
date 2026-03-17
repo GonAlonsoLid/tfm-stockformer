@@ -135,3 +135,14 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 | 5. Portfolio & Backtesting | 1/3 | In Progress|  |
 | 6. Interface | 2/3 | In Progress|  |
 | 7. Testing | 0/TBD | Not started | - |
+
+### Phase 8: Alpha360 Feature Replacement
+
+**Goal:** Replace 69 TA feature CSVs with 360 Alpha360-style price/volume ratio features, restoring cross-sectional predictive signal (current IC = -0.003 → target IC > 0.01 after retraining)
+**Requirements**: ALPHA360-01, ALPHA360-02, ALPHA360-03, ALPHA360-04, ALPHA360-05
+**Depends on:** Phase 7
+**Plans:** 2 plans
+
+Plans:
+- [ ] 08-01-PLAN.md — Wave 0 test scaffold: 5 xfail stubs covering ALPHA360-01..05 (ALPHA360-01..05)
+- [ ] 08-02-PLAN.md — Implement scripts/build_alpha360.py: 6-field × 60-lag pipeline, backup, validation (ALPHA360-01..05)
