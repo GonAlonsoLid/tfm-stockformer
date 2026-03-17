@@ -227,10 +227,20 @@ def main() -> None:
     )
     args = parser.parse_args()
 
-    # Fetch ticker list
-    logger.info("Fetching S&P 500 ticker list from Wikipedia...")
-    tickers = get_sp500_tickers()
-    logger.info("Found %d tickers.", len(tickers))
+    # Fetch ticker list — use local cache if available to skip Wikipedia scrape
+    tickers_txt_path = os.path.join(args.data_dir, "tickers.txt")
+    if os.path.exists(tickers_txt_path):
+        logger.info(
+            "Reading tickers from existing %s (skipping Wikipedia scrape)",
+            tickers_txt_path,
+        )
+        with open(tickers_txt_path) as f:
+            tickers = [line.strip() for line in f if line.strip()]
+        logger.info("Loaded %d tickers from file.", len(tickers))
+    else:
+        logger.info("Fetching S&P 500 ticker list from Wikipedia...")
+        tickers = get_sp500_tickers()
+        logger.info("Found %d tickers.", len(tickers))
 
     # Download OHLCV data
     logger.info("Downloading OHLCV data from %s to %s...", args.start, args.end)
