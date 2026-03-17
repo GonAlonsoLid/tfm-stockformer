@@ -35,9 +35,7 @@ import sys
 
 # Resolve path to the sp500_pipeline package relative to this script
 _SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-PIPELINE_DIR = os.path.normpath(
-    os.path.join(_SCRIPT_DIR, "..", "data_processing_script", "sp500_pipeline")
-)
+PIPELINE_DIR = os.path.join(_SCRIPT_DIR, "sp500_pipeline")
 
 # (script_name, sentinel_file_relative_to_data_dir)
 # Each step is skipped when its sentinel already exists (unless --force).
