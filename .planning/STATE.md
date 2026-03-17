@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: completed
-stopped_at: Completed 06-02-PLAN.md
-last_updated: "2026-03-16T11:50:20.721Z"
+stopped_at: Completed 08-01-PLAN.md
+last_updated: "2026-03-17T00:28:27.854Z"
 last_activity: 2026-03-14 — Plan 04-02 executed; standalone evaluation script created
 progress:
-  total_phases: 7
+  total_phases: 8
   completed_phases: 5
-  total_plans: 20
-  completed_plans: 19
+  total_plans: 22
+  completed_plans: 20
   percent: 67
 ---
 
@@ -64,6 +64,7 @@ Progress: [████████░░] 67%
 | Phase 05-portfolio-backtesting P03 | 15 | 2 tasks | 1 files |
 | Phase 06-interface P01 | 5 | 2 tasks | 4 files |
 | Phase 06-interface P02 | 10 | 1 tasks | 1 files |
+| Phase 08-alpha360-feature-replacement P01 | 2 | 1 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -112,6 +113,12 @@ Recent decisions affecting current work:
 - [Phase 06-interface]: cumprod().shift(1, fill_value=1.0) for equity curve starting at 1.0 — matches test contract and standard equity curve convention
 - [Phase 06-interface]: build_heatmap() slices tickers[:k] internally — allows callers to pass longer list with explicit k; satisfies test_heatmap_top_k_filter
 - [Phase 06-interface]: format_metrics_table() returns numeric DataFrame without fillna to preserve Streamlit NumberColumn formatting
+- [Phase 08-alpha360-feature-replacement]: xfail(strict=False) with imports inside test bodies for Phase 8 Wave 0 — consistent with Phase 02-01, 04-01, 05-01, 06-01 convention; keeps CI GREEN before scripts/build_alpha360.py exists
+- [Phase 08-alpha360-feature-replacement]: build_alpha360.main(config_path, data_dir) interface locked in test file docstring — Plan 02 executor must implement this exact signature
+
+### Roadmap Evolution
+
+- Phase 8 added: Alpha360 Feature Replacement
 
 ### Pending Todos
 
@@ -131,6 +138,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-16T11:50:20.719Z
-Stopped at: Completed 06-02-PLAN.md
+Last session: 2026-03-17T00:28:27.851Z
+Stopped at: Completed 08-01-PLAN.md
 Resume file: None

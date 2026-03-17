@@ -141,7 +141,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 **Goal:** Replace 69 TA feature CSVs with 360 Alpha360-style price/volume ratio features, restoring cross-sectional predictive signal (current IC = -0.003 → target IC > 0.01 after retraining)
 **Requirements**: ALPHA360-01, ALPHA360-02, ALPHA360-03, ALPHA360-04, ALPHA360-05
 **Depends on:** Phase 7
-**Plans:** 2 plans
+**Plans:** 1/2 plans executed
 
 Plans:
 - [ ] 08-01-PLAN.md — Wave 0 test scaffold: 5 xfail stubs covering ALPHA360-01..05 (ALPHA360-01..05)
