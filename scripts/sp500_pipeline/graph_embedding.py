@@ -8,7 +8,7 @@ Wraps the existing Stockformer preprocessing pipeline by:
      128_corr_struc2vec_adjgat.npy with shape [N, embed_size].
 
 Usage:
-  python data_processing_script/sp500_pipeline/graph_embedding.py \
+  python scripts/sp500_pipeline/graph_embedding.py \
       --data_dir ./data/Stock_SP500_2018-01-01_2024-01-01
 
 Install GraphEmbedding before running:

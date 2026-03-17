@@ -6,7 +6,7 @@ a master trading calendar, drops tickers with excessive missing data, and
 saves one Parquet file per ticker.
 
 Usage:
-    python data_processing_script/sp500_pipeline/download_ohlcv.py \
+    python scripts/sp500_pipeline/download_ohlcv.py \
         --data_dir ./data/Stock_SP500_2018-01-01_2024-01-01 \
         --start 2018-01-01 \
         --end 2024-01-01
