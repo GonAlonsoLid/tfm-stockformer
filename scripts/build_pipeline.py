@@ -9,17 +9,26 @@ Runs steps in order:
   4. graph_embedding.py  -- build Struc2Vec embedding [N, 128] from correlation graph
   5. build_alpha360.py   -- build 360 Alpha360-style feature CSVs (requires --config)
 
-Usage (recommended — runs all five steps):
-  python scripts/build_pipeline.py --config config/Multitask_Stock_SP500.conf
+The data directory is always derived from --start/--end dates:
+  ./data/Stock_SP500_{start}_{end}/
 
-Usage (legacy — runs steps 1-4 only):
-  python scripts/build_pipeline.py --data_dir ./data/Stock_SP500_2018-01-01_2024-01-01
+This means different date ranges automatically use different directories — no --force
+needed when changing dates. Steps are skipped only when data for the exact same
+date range already exists.
+
+Usage (recommended — runs all five steps):
+  python scripts/build_pipeline.py --config config/Multitask_Stock_SP500.conf \\
+      --start 2018-01-01 --end 2024-01-01
+
+Usage (different date range — runs fresh, no conflict with existing data):
+  python scripts/build_pipeline.py --config config/Multitask_Stock_SP500.conf \\
+      --start 2018-01-01 --end 2026-03-16
 
 Options:
-  --config     Path to .conf file; derives data_dir and enables step 5 (Alpha360)
-  --data_dir   Output directory (default: ./data/Stock_SP500_2018-01-01_2024-01-01)
+  --config     Path to .conf file; enables step 5 (Alpha360)
   --start      Start date for OHLCV download (default: 2018-01-01)
   --end        End date for OHLCV download (default: 2024-01-01)
+  --data_dir   Override the auto-derived directory (advanced use only)
   --force      Re-run all steps even if their output already exists
 
 Each step checks for its sentinel output file and skips itself if the file is already
@@ -126,7 +135,7 @@ def run_alpha360_step(config_path: str, features_dir: str, force: bool = False) 
         return
     print("\n[RUN]  build_alpha360")
     from build_alpha360 import main as build_alpha360_main  # noqa: PLC0415
-    build_alpha360_main(config_path=config_path)
+    build_alpha360_main(config_path=config_path, data_dir=os.path.dirname(features_dir))
     print("[DONE] build_alpha360")
 
 
@@ -170,44 +179,47 @@ def main() -> None:
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     parser.add_argument(
-        "--data_dir",
-        default="./data/Stock_SP500_2018-01-01_2024-01-01",
-        help="Root directory for all pipeline inputs and outputs",
-    )
-    parser.add_argument(
         "--start",
         default="2018-01-01",
-        help="Start date for OHLCV download (passed to download_ohlcv.py)",
+        help="Start date for OHLCV download",
     )
     parser.add_argument(
         "--end",
         default="2024-01-01",
-        help="End date for OHLCV download (passed to download_ohlcv.py)",
-    )
-    parser.add_argument(
-        "--force",
-        action="store_true",
-        help="Re-run all steps even if their sentinel output already exists",
+        help="End date for OHLCV download",
     )
     parser.add_argument(
         "--config",
         default=None,
         help=(
             "Path to .conf file (e.g. config/Multitask_Stock_SP500.conf). "
-            "When provided, data_dir is derived from the config and --data_dir is ignored. "
-            "Recommended interface for the S&P500 pipeline."
+            "Required to enable step 5 (Alpha360)."
         ),
+    )
+    parser.add_argument(
+        "--data_dir",
+        default=None,
+        help=(
+            "Override the data directory. If omitted, derived automatically from "
+            "--start/--end as ./data/Stock_SP500_{start}_{end}/ (recommended)."
+        ),
+    )
+    parser.add_argument(
+        "--force",
+        action="store_true",
+        help="Re-run all steps even if their sentinel output already exists",
     )
     args = parser.parse_args()
 
-    # --config is the primary interface; derive data_dir and alpha_360_dir from it
-    if args.config:
-        data_dir, alpha_360_dir = _data_dir_from_config(args.config)
-        config_path = args.config
-    else:
+    # data_dir is derived from dates so different date ranges use different directories.
+    # --data_dir overrides this only when explicitly provided.
+    if args.data_dir:
         data_dir = args.data_dir
-        alpha_360_dir = None   # not used for steps 1-4
-        config_path = None
+    else:
+        data_dir = os.path.join(".", "data", f"Stock_SP500_{args.start}_{args.end}")
+
+    config_path = args.config
+    alpha_360_dir = os.path.join(data_dir, "features")
 
     os.makedirs(data_dir, exist_ok=True)
 
@@ -222,8 +234,7 @@ def main() -> None:
     # Step 5: Alpha360 feature builder (requires --config; skipped silently if no config)
     if config_path:
         print(f"\n--- Step 5/5: build_alpha360 ---")
-        features_dir = alpha_360_dir if alpha_360_dir else os.path.join(data_dir, "features")
-        run_alpha360_step(config_path=config_path, features_dir=features_dir, force=args.force)
+        run_alpha360_step(config_path=config_path, features_dir=alpha_360_dir, force=args.force)
     else:
         print("\n[INFO] Skipping step 5 (build_alpha360): pass --config to enable.")
         print("       Next: python scripts/build_alpha360.py --config config/Multitask_Stock_SP500.conf")

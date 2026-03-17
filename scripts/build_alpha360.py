@@ -148,9 +148,12 @@ def main(config_path: str, data_dir: str = None) -> None:
     if data_dir is None:
         data_dir = str(Path(alpha_360_dir).parent)
     else:
+        # data_dir explicitly provided (e.g. different date range): derive features_dir
+        # from data_dir so output goes to the correct directory, not the config's path.
         data_dir = str(Path(data_dir).resolve())
+        alpha_360_dir = os.path.join(data_dir, "features")
     ohlcv_dir = os.path.join(data_dir, "ohlcv")
-    features_dir = alpha_360_dir  # output dir (from config, already resolved above)
+    features_dir = alpha_360_dir
 
     print(f"[config] alpha_360_dir = {features_dir}")
     print(f"[config] ohlcv_dir     = {ohlcv_dir}")
