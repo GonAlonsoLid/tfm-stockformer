@@ -10,7 +10,8 @@ import math
 import csv
 import random
 from pytorch_wavelets import DWT1DForward, DWT1DInverse
-from lib.Multitask_Stockformer_utils import log_string, _compute_regression_loss, _compute_class_loss, metric, save_to_csv, StockDataset
+from scipy.stats import spearmanr
+from lib.Multitask_Stockformer_utils import log_string, _compute_regression_loss, _compute_class_loss, combined_ranking_loss, metric, save_to_csv, StockDataset
 from lib.graph_utils import loadGraph
 from Stockformermodel.Multitask_Stockformer_models import Stockformer
 
@@ -164,26 +165,39 @@ def _evaluate(model, dataXL, dataXH, dataXC, bonus_dataX, dataTE, dataY, dataYC,
     avg_mae = np.mean(maes)
     avg_rmse = np.mean(rmses)
     avg_mape = np.mean(mapes)
-    log_string(log, f'average, acc: {avg_acc:.4f}, mae: {avg_mae:.4f}, rmse: {avg_rmse:.4f}, mape: {avg_mape:.4f}')
 
-    return pred_class, pred_regress, label_class, label_regress, avg_acc, avg_mae, avg_rmse, avg_mape
+    # Compute cross-sectional IC (Spearman) on last time step
+    ic_values = []
+    for b in range(pred_regress.shape[0]):
+        pred_slice = pred_regress[b, -1, :]
+        label_slice = label_regress[b, -1, :]
+        if np.std(pred_slice) > 1e-10 and np.std(label_slice) > 1e-10:
+            corr, _ = spearmanr(pred_slice, label_slice)
+            if not np.isnan(corr):
+                ic_values.append(corr)
+    avg_ic = np.mean(ic_values) if ic_values else 0.0
+
+    log_string(log, f'average, acc: {avg_acc:.4f}, mae: {avg_mae:.4f}, rmse: {avg_rmse:.4f}, mape: {avg_mape:.4f}, IC: {avg_ic:.6f}')
+
+    return pred_class, pred_regress, label_class, label_regress, avg_acc, avg_mae, avg_rmse, avg_mape, avg_ic
 
 
 def validate_epoch(model, valXL, valXH, valXC, bonus_valX, valTE, valY, valYC, adjgat, epoch, log, tensor_writer):
     """Validate model on the validation split and log metrics to TensorBoard."""
-    _, _, _, _, avg_acc, avg_mae, avg_rmse, avg_mape = _evaluate(
+    _, _, _, _, avg_acc, avg_mae, avg_rmse, avg_mape, avg_ic = _evaluate(
         model, valXL, valXH, valXC, bonus_valX, valTE, valY, valYC, adjgat
     )
     tensor_writer.add_scalar('Val/Average_Accuracy', avg_acc, epoch)
     tensor_writer.add_scalar('Val/Average_MAE', avg_mae, epoch)
     tensor_writer.add_scalar('Val/Average_RMSE', avg_rmse, epoch)
     tensor_writer.add_scalar('Val/Average_MAPE', avg_mape, epoch)
-    return avg_acc, avg_mae, avg_rmse, avg_mape
+    tensor_writer.add_scalar('Val/IC_Spearman', avg_ic, epoch)
+    return avg_acc, avg_mae, avg_rmse, avg_mape, avg_ic
 
 
 def evaluate_test(model, testXL, testXH, testXC, bonus_testX, testTE, testY, testYC, adjgat):
     """Evaluate model on the test split and save prediction CSVs."""
-    pred_class, pred_regress, label_class, label_regress, avg_acc, avg_mae, avg_rmse, avg_mape = _evaluate(
+    pred_class, pred_regress, label_class, label_regress, avg_acc, avg_mae, avg_rmse, avg_mape, avg_ic = _evaluate(
         model, testXL, testXH, testXC, bonus_testX, testTE, testY, testYC, adjgat
     )
 
@@ -195,17 +209,18 @@ def evaluate_test(model, testXL, testXH, testXC, bonus_testX, testTE, testY, tes
     save_to_csv(os.path.join(args.output_dir, 'regression', 'regression_pred_last_step.csv'), pred_regress[:, -1, :])
     save_to_csv(os.path.join(args.output_dir, 'regression', 'regression_label_last_step.csv'), label_regress[:, -1])
 
-    return avg_acc, avg_mae, avg_rmse, avg_mape
+    return avg_acc, avg_mae, avg_rmse, avg_mape, avg_ic
 
 def train(model, trainXL, trainXH, trainXC, bonus_trainX, trainTE, trainY, trainYL, trainYC, valXL, valXH, valXC, bonus_valX, valTE, valY, valYC, adjgat):
     num_train = trainXL.shape[0]
-    best_mae = float('inf')
-    optimizer = torch.optim.Adam(model.parameters(),
-                                     lr=args.learning_rate)
-    lr_scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.1, patience=20,
-                                    threshold=0.001, threshold_mode='rel', cooldown=0, min_lr=2e-6, eps=1e-08)
-    
-    for epoch in tqdm(range(1,args.max_epoch+1)):
+    best_ic = -float('inf')
+    optimizer = torch.optim.Adam(model.parameters(), lr=args.learning_rate)
+    lr_scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
+        optimizer, mode='max', factor=0.1, patience=20,
+        threshold=0.001, threshold_mode='rel', cooldown=0, min_lr=2e-6, eps=1e-08
+    )
+
+    for epoch in tqdm(range(1, args.max_epoch + 1)):
         model.train()
         train_l_sum, batch_count, start = 0.0, 0, time.time()
         permutation = np.random.permutation(num_train)
@@ -225,21 +240,20 @@ def train(model, trainXL, trainXH, trainXC, bonus_trainX, trainTE, trainY, train
                 yc = torch.from_numpy(trainYC[batch_perm]).float().to(device)
                 te = torch.from_numpy(trainTE[batch_perm]).to(device)
                 bonus = torch.from_numpy(bonus_trainX[batch_perm]).float().to(device)
-                
-                
+
                 optimizer.zero_grad()
 
                 hat_y_class, hat_y_l_class, hat_y_regress, hat_y_l_regress = model(xl, xh, te, bonus, xc, adjgat)
 
-                loss_regress = _compute_regression_loss(y, hat_y_regress) + _compute_regression_loss(yl, hat_y_l_regress)
+                # Ranking loss (ListNet + IC + MAE) replaces pure MAE for regression
+                loss_ranking = combined_ranking_loss(hat_y_regress, y)
                 loss_class = _compute_class_loss(yc, hat_y_class) + _compute_class_loss(yc, hat_y_l_class)
-
-                loss = loss_regress + loss_class
+                loss = loss_ranking + 0.5 * loss_class
 
                 loss.backward()
                 nn.utils.clip_grad_norm_(model.parameters(), 0.5)
                 optimizer.step()
-                
+
                 train_l_sum += loss.cpu().item()
                 batch_count += 1
                 pbar.update(1)
@@ -249,14 +263,14 @@ def train(model, trainXL, trainXH, trainXC, bonus_trainX, trainTE, trainY, train
 
         tensor_writer.add_scalar('training loss', train_l_sum / batch_count, epoch)
 
-        acc, mae, rmse, mape = validate_epoch(model, valXL, valXH, valXC, bonus_valX, valTE, valY, valYC, adjgat, epoch, log, tensor_writer)
+        acc, mae, rmse, mape, ic = validate_epoch(model, valXL, valXH, valXC, bonus_valX, valTE, valY, valYC, adjgat, epoch, log, tensor_writer)
 
-        lr_scheduler.step(mae)
+        lr_scheduler.step(ic)  # Maximize IC instead of minimizing MAE
 
-        if mae < best_mae:
-            best_mae = mae
+        if ic > best_ic:
+            best_ic = ic
             torch.save(model.state_dict(), args.model_file)
-            log_string(log, f'Epoch {epoch}: New best mae: {best_mae:.4f}, Model saved.')
+            log_string(log, f'Epoch {epoch}: New best IC: {best_ic:.6f}, Model saved.')
 
 
 def test(model, valXL, valXH, valXC, bonus_valX, valTE, valY, valYC, adjgat):

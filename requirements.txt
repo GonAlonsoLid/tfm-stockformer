@@ -29,5 +29,6 @@ fastdtw>=0.3.4          # required by GraphEmbedding Struc2Vec
 #   pip install git+https://github.com/shenweichen/GraphEmbedding.git --no-deps
 # After install, patch ge/models/__init__.py — wrap LINE/SDNE imports in try/except
 # (they require tensorflow/deepctr which we don't use)
+lightgbm>=4.0
 streamlit>=1.35,<=1.50
 plotly>=5.18,<7

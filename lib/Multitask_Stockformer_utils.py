@@ -69,6 +69,102 @@ def masked_mae(preds, labels, null_val=np.nan):
     return torch.mean(loss)
 
 
+# ── Ranking Loss Functions ────────────────────────────────────────────────────
+# These losses optimize cross-sectional ranking (IC) rather than point-wise error.
+# Research shows ranking losses dramatically improve stock prediction on S&P 500
+# (Kwiatkowski & Chudziak, arXiv:2510.14156, 2025).
+
+def listnet_loss(y_pred, y_true, temperature=1.0):
+    """ListNet listwise ranking loss.
+
+    Computes KL divergence between softmax distributions of predictions and labels
+    across the stock dimension. Optimizes the full ranking distribution.
+
+    Parameters
+    ----------
+    y_pred : torch.Tensor
+        Predicted returns, shape [B, T, N] or [B, N].
+    y_true : torch.Tensor
+        Actual returns, shape [B, T, N] or [B, N].
+    temperature : float
+        Softmax temperature. Lower = sharper distribution.
+
+    Returns
+    -------
+    torch.Tensor
+        Scalar loss value.
+    """
+    # Use last time step if 3D
+    if y_pred.dim() == 3:
+        y_pred = y_pred[:, -1, :]  # [B, N]
+        y_true = y_true[:, -1, :]
+    # Softmax over stock dimension (cross-sectional ranking)
+    p_true = torch.softmax(y_true / temperature, dim=-1)
+    p_pred = torch.log_softmax(y_pred / temperature, dim=-1)
+    # KL divergence: sum over stocks, mean over batch
+    loss = -torch.sum(p_true * p_pred, dim=-1)
+    return torch.mean(loss)
+
+
+def ic_loss(y_pred, y_true, eps=1e-8):
+    """Differentiable Information Coefficient (Pearson correlation) loss.
+
+    Computes 1 - Pearson correlation between predictions and labels
+    across the stock dimension. Directly optimizes cross-sectional IC.
+
+    Parameters
+    ----------
+    y_pred : torch.Tensor
+        Predicted returns, shape [B, T, N] or [B, N].
+    y_true : torch.Tensor
+        Actual returns, shape [B, T, N] or [B, N].
+
+    Returns
+    -------
+    torch.Tensor
+        Scalar loss = 1 - mean(IC), so minimizing this maximizes IC.
+    """
+    if y_pred.dim() == 3:
+        y_pred = y_pred[:, -1, :]
+        y_true = y_true[:, -1, :]
+    # Center
+    pred_mean = y_pred.mean(dim=-1, keepdim=True)
+    true_mean = y_true.mean(dim=-1, keepdim=True)
+    pred_centered = y_pred - pred_mean
+    true_centered = y_true - true_mean
+    # Pearson correlation per batch element
+    cov = (pred_centered * true_centered).sum(dim=-1)
+    pred_std = torch.sqrt((pred_centered ** 2).sum(dim=-1) + eps)
+    true_std = torch.sqrt((true_centered ** 2).sum(dim=-1) + eps)
+    corr = cov / (pred_std * true_std)
+    return 1.0 - corr.mean()
+
+
+def combined_ranking_loss(y_pred, y_true, alpha=0.5, beta=0.3, gamma=0.2):
+    """Combined ranking loss: ListNet + IC + MAE.
+
+    Parameters
+    ----------
+    y_pred, y_true : torch.Tensor
+        Shape [B, T, N] or [B, N].
+    alpha : float
+        Weight for ListNet loss.
+    beta : float
+        Weight for IC loss.
+    gamma : float
+        Weight for MAE loss.
+
+    Returns
+    -------
+    torch.Tensor
+        Weighted combination of ranking and regression losses.
+    """
+    l_listnet = listnet_loss(y_pred, y_true)
+    l_ic = ic_loss(y_pred, y_true)
+    l_mae = _compute_regression_loss(y_true, y_pred)
+    return alpha * l_listnet + beta * l_ic + gamma * l_mae
+
+
 def disentangle(data, w, j):
     # Disentangle
     dwt = DWT1DForward(wave=w, J=j)
