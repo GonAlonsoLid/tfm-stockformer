@@ -268,7 +268,19 @@ class StockDataset(Dataset):
         if np.isnan(concatenated_arr).any():
             concatenated_arr = np.nan_to_num(concatenated_arr, nan=0.0)
         bonus_all = concatenated_arr
-        num_step = Traffic.shape[0]
+
+        # CRITICAL: Align Traffic/indicator (T_lab rows from d_0) with
+        # bonus_all (T_feat rows from d_LAG_BUFFER). Without this, features
+        # from future dates get paired with past labels → catastrophic leakage.
+        T_lab = Traffic.shape[0]
+        T_feat = bonus_all.shape[0]
+        LAG_BUFFER = T_lab - T_feat  # typically 59 (2059 - 2000)
+        if LAG_BUFFER > 0:
+            Traffic = Traffic[LAG_BUFFER:]      # trim labels to match feature dates
+            indicator = indicator[LAG_BUFFER:]
+            print(f"[StockDataset] Aligned labels to features (skipped first {LAG_BUFFER} label rows)")
+
+        num_step = Traffic.shape[0]  # now matches bonus_all
         train_steps = round(args.train_ratio * num_step)
         test_steps = round(args.test_ratio * num_step)
         val_steps = num_step - train_steps - test_steps
