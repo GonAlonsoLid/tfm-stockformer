@@ -236,8 +236,19 @@ class StockDataset(Dataset):
         self.bonus_all = bonus_all[data_slice]
         self.TE = TE[data_slice]
         self.X, self.Y = self.seq2instance(self.data, args.T1, args.T2)
-        self.XL, self.XH = disentangle(self.X, args.w, args.j)
-        self.YL, self.YH = disentangle(self.Y, args.w, args.j)
+        decomp = getattr(args, 'decomposition', 'dwt')
+        if decomp == 'stl':
+            from lib.decomposition import stl_decompose_batch
+            stl_period = getattr(args, 'stl_period', 5)
+            self.XL, self.XH = stl_decompose_batch(self.X, period=stl_period)
+            self.YL, self.YH = stl_decompose_batch(self.Y, period=stl_period)
+        elif decomp == 'vmd':
+            from lib.decomposition import sliding_vmd_batch
+            self.XL, self.XH = sliding_vmd_batch(self.X)
+            self.YL, self.YH = sliding_vmd_batch(self.Y)
+        else:  # default: dwt
+            self.XL, self.XH = disentangle(self.X, args.w, args.j)
+            self.YL, self.YH = disentangle(self.Y, args.w, args.j)
         self.indicator_X, self.indicator_Y = self.seq2instance(self.indicator, args.T1, args.T2)
         self.bonus_X, self.bonus_Y = self.bonus_seq2instance(self.bonus_all, args.T1, args.T2)
         self.TE = self.seq2instance(self.TE, args.T1, args.T2)
