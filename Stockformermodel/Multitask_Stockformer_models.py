@@ -278,6 +278,8 @@ class StockformerBackbone(nn.Module):
     def __init__(self, infea, outfea, L, h, d, s, T1, T2, dev, noise_std=0.01):
         super(StockformerBackbone, self).__init__()
         self.noise_std = noise_std
+        self.outfea = outfea
+        self.adjgat_proj = None  # lazy init when adjgat dim != outfea
         self.start_emb_l = FeedForward([infea, outfea, outfea])
         self.start_emb_h = FeedForward([infea, outfea, outfea])
         self.te_emb = temporalEmbedding(outfea)
@@ -289,6 +291,11 @@ class StockformerBackbone(nn.Module):
         self.pre_h = nn.Conv2d(T1, T2, (1,1))
 
     def forward(self, xl, xh, te, bonus, indicator, adjgat):
+        # Project adjgat to model dimension if needed
+        if adjgat.shape[-1] != self.outfea:
+            if self.adjgat_proj is None or self.adjgat_proj.in_features != adjgat.shape[-1]:
+                self.adjgat_proj = nn.Linear(adjgat.shape[-1], self.outfea, bias=False).to(adjgat.device)
+            adjgat = self.adjgat_proj(adjgat)
         '''
         x:[B,T,N]
         indicator:[B,T,N]
