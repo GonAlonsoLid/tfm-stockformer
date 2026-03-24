@@ -200,6 +200,41 @@ def generate_temporal_embeddings(num_step, args):
         startt = (startt + 1) % TRADING_DAYS_PER_MONTH
     return TE
 
+def _estimate_max_features(n_files, path, T1, T2, ram_fraction=0.6):
+    """Estimate how many features fit in available RAM.
+
+    Calculates memory needed for 3 splits of bonus_seq2instance arrays
+    plus overhead for XL, XH, indicators, labels, etc.
+    """
+    import psutil
+    available = psutil.virtual_memory().available
+
+    # Read one CSV to get T and N dimensions
+    sample_file = sorted(f for f in os.listdir(path) if f.endswith('.csv'))[0]
+    sample = pd.read_csv(os.path.join(path, sample_file), index_col=0)
+    T, N = sample.shape
+
+    # Sliding window samples
+    num_samples = T - T1 - T2 + 1
+
+    # Memory per feature per split: num_samples × T1 × N × 4 bytes (float32)
+    # × 2 (bonus_X + bonus_Y) × 3 splits (train/val/test)
+    bytes_per_feature = num_samples * T1 * N * 4 * 2
+    total_per_feature = bytes_per_feature * 3  # 3 splits loaded simultaneously
+
+    # Overhead: XL, XH, X, Y, indicator, TE arrays ≈ 2× base data
+    overhead_bytes = num_samples * T1 * N * 4 * 6 * 3
+
+    usable = available * ram_fraction - overhead_bytes
+    max_f = max(10, int(usable / total_per_feature))
+    max_f = min(max_f, n_files)  # don't exceed available files
+
+    print(f"[StockDataset] RAM available: {available / 1e9:.1f} GB, "
+          f"usable ({ram_fraction:.0%}): {usable / 1e9:.1f} GB, "
+          f"estimated max features: {max_f}")
+    return max_f
+
+
 class StockDataset(Dataset):
     def __init__(self, args, mode='train'):
         self.mode = mode
@@ -209,13 +244,18 @@ class StockDataset(Dataset):
         path = args.alpha_360_dir
         files = sorted(f for f in os.listdir(path) if f.endswith('.csv'))
         max_features = getattr(args, 'max_features', 0)
+        if max_features <= 0:
+            # Auto-detect: estimate max features that fit in available RAM
+            max_features = _estimate_max_features(
+                n_files=len(files), path=path, T1=args.T1, T2=args.T2,
+                ram_fraction=0.6,  # use at most 60% of available RAM
+            )
         if max_features > 0 and len(files) > max_features:
-            # Prioritize Alpha360 core features, then Alpha158, then MACRO
             core = [f for f in files if not f.startswith('MACRO_') and not f.startswith(('RSI_', 'BBANDS_', 'MACD_', 'ATR_', 'ROC_', 'RVOL_'))]
             extra = [f for f in files if f not in core]
             files = (core + extra)[:max_features]
             files.sort()
-            print(f"[StockDataset] Limited to {len(files)} features (max_features={max_features})")
+            print(f"[StockDataset] Limited to {len(files)}/{max_features} features (auto-fit to available RAM)")
         data_list = []
         for file in files:
             file_path = os.path.join(path, file)
