@@ -65,15 +65,31 @@ def load_alpha360_features(features_dir: str) -> np.ndarray:
 
     feature_names = [os.path.splitext(f)[0] for f in csv_files]
     slices = []
+    ref_shape = None
+    skipped = []
     for fname in csv_files:
         df = pd.read_csv(
             os.path.join(features_dir, fname), index_col=0, parse_dates=True
         )
-        slices.append(df.values)  # [T, N]
+        arr = df.values  # [T, N]
+        if ref_shape is None:
+            ref_shape = arr.shape
+        if arr.shape != ref_shape:
+            # Align to reference shape (truncate or pad)
+            T_min = min(arr.shape[0], ref_shape[0])
+            N_min = min(arr.shape[1], ref_shape[1])
+            arr = arr[:T_min, :N_min]
+            if ref_shape != (T_min, N_min):
+                # Update ref_shape to the minimum common shape
+                ref_shape = (T_min, N_min)
+                # Re-trim earlier slices
+                slices = [s[:T_min, :N_min] for s in slices]
+        slices.append(arr)
 
     # Stack along a new last axis -> [T, N, F]
     features = np.stack(slices, axis=-1)
-    print(f"Loaded {len(csv_files)} Alpha360 features  ->  shape {features.shape}")
+    feature_names = [os.path.splitext(f)[0] for f in csv_files]
+    print(f"Loaded {len(csv_files)} features  ->  shape {features.shape}")
     return features, feature_names
 
 
@@ -253,14 +269,32 @@ def main():
     features, feature_names = load_alpha360_features(features_dir)
     labels = load_labels(flow_path)
 
-    # Ensure temporal alignment
+    # Temporal alignment: Alpha360 discards the first LAG_BUFFER=60 rows of
+    # OHLCV. label.csv starts at OHLCV date d_0, while features start at d_60.
+    # We must use offset=60 (the actual lag buffer), NOT T_lab - T_feat (=59),
+    # because label.csv also lost 1 row from pct_change().shift(-1).iloc[:-1].
+    # Using 59 causes a 1-day misalignment where CLOSE_d1 ≡ label + 1 (leakage).
+    LAG_BUFFER = 60  # Must match build_alpha360.py
     T_feat, N_feat, F = features.shape
     T_lab, N_lab = labels.shape
-    T = min(T_feat, T_lab)
     N = min(N_feat, N_lab)
+    T = min(T_feat, T_lab - LAG_BUFFER)
     features = features[:T, :N, :]
-    labels = labels[:T, :N]
-    print(f"Aligned to T={T}, N={N}, F={F}")
+    labels = labels[LAG_BUFFER:LAG_BUFFER + T, :N]
+    print(f"Aligned to T={T}, N={N}, F={F} (label offset={LAG_BUFFER}, matching Alpha360 lag buffer)")
+    print()
+
+    # ------------------------------------------------------------------
+    # Filter out MACRO features (constant across stocks, can't rank)
+    # ------------------------------------------------------------------
+    macro_mask = np.array([not name.startswith("MACRO_") for name in feature_names])
+    n_excluded = (~macro_mask).sum()
+    if n_excluded > 0:
+        features = features[:, :, macro_mask]
+        feature_names = [n for n, keep in zip(feature_names, macro_mask) if keep]
+        F = features.shape[-1]
+        print(f"Excluded {n_excluded} MACRO features (constant cross-sectionally, can't rank stocks)")
+        print(f"Remaining features: {F}")
     print()
 
     # ------------------------------------------------------------------
@@ -276,11 +310,14 @@ def main():
     print("Training LightGBM ...")
     model = lgb.LGBMRegressor(
         objective="huber",
-        n_estimators=500,
-        learning_rate=0.05,
-        num_leaves=63,
-        subsample=0.8,
-        colsample_bytree=0.8,
+        n_estimators=300,
+        learning_rate=0.01,
+        num_leaves=31,
+        subsample=0.7,
+        colsample_bytree=0.5,
+        min_child_samples=100,
+        reg_alpha=0.1,
+        reg_lambda=1.0,
         random_state=42,
         n_jobs=-1,
         verbose=-1,
@@ -291,7 +328,7 @@ def main():
         splits["y_train"],
         eval_set=[(splits["X_val"], splits["y_val"])],
         callbacks=[
-            lgb.early_stopping(stopping_rounds=50, verbose=True),
+            lgb.early_stopping(stopping_rounds=30, verbose=True),
             lgb.log_evaluation(period=50),
         ],
     )

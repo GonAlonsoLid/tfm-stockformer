@@ -135,10 +135,25 @@ def main(data_dir: str) -> None:
     tickers = load_tickers(data_dir)
     print(f"[tickers] {len(tickers)} tickers loaded")
 
-    dates = load_label_index(data_dir)
-    start_date = str(dates.min().date())
-    end_date = str(dates.max().date())
-    print(f"[dates] Range: {start_date} to {end_date} ({len(dates)} trading days)")
+    label_dates = load_label_index(data_dir)
+
+    # Align to Alpha360 date range (which trims the first 60 rows for lag buffer)
+    # Find an existing Alpha360 CSV to get the reference dates
+    alpha360_ref = None
+    for f in sorted(os.listdir(features_dir)):
+        if f.endswith(".csv") and not f.startswith("MACRO_"):
+            alpha360_ref = pd.read_csv(os.path.join(features_dir, f), index_col=0, parse_dates=True)
+            break
+    if alpha360_ref is not None:
+        dates = alpha360_ref.index
+        print(f"[dates] Aligned to Alpha360 range ({len(dates)} trading days)")
+    else:
+        dates = label_dates
+        print(f"[dates] Using label.csv range ({len(dates)} trading days)")
+
+    start_date = str(dates.min().date()) if hasattr(dates.min(), 'date') else str(dates.min())
+    end_date = str(dates.max().date()) if hasattr(dates.max(), 'date') else str(dates.max())
+    print(f"[dates] Range: {start_date} to {end_date}")
 
     # ── 3. Download macro data ────────────────────────────────────────────────
     # Extend start date back by 90 days to have enough history for rolling windows
