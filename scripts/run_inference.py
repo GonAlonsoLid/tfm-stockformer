@@ -89,6 +89,10 @@ def main():
                         default=float(config["param"]["samples"]))
     parser.add_argument("--w", type=str,
                         default=config["param"]["wave"])
+    parser.add_argument("--max_features", type=int,
+                        default=int(config["param"].get("max_features", "0")))
+    parser.add_argument("--decomposition", type=str,
+                        default=config["param"].get("decomposition", "dwt"))
 
     # [file] section
     parser.add_argument("--traffic_file",
