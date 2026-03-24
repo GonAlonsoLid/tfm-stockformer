@@ -202,11 +202,11 @@ def test_positions_output():
         columns=price_cols,
     )
 
-    _, _, positions = run_backtest_loop(pred_df, prices, tickers, top_k_n=2)
+    _, _, positions, _ = run_backtest_loop(pred_df, prices, tickers, top_k_n=2)
     pos_df = pd.DataFrame(positions)
 
     assert len(pos_df) == 6, f"Expected 6 rows, got {len(pos_df)}"
-    assert set(pos_df.columns) == {"date", "ticker", "weight", "predicted_score"}
+    assert {"date", "ticker", "weight", "predicted_score"}.issubset(set(pos_df.columns))
     assert (pos_df["weight"] == 0.5).all(), "All weights must equal 0.5 for top_k=2"
     assert pos_df.notna().all().all(), "No null values expected"
     for d, grp in pos_df.groupby("date"):

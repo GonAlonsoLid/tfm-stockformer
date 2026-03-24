@@ -56,19 +56,39 @@ def build_portfolio_weights(
     all_tickers: list,
     k: int,
 ) -> pd.Series:
-    """Build equal-weight portfolio: 1/k for selected tickers, 0 for all others.
-
-    Args:
-        top_k_index: pd.Index of the k selected tickers (from select_top_k).
-        all_tickers: list of all universe ticker symbols (determines index).
-        k:           Number of selected tickers (used to compute 1/k weight).
-
-    Returns:
-        pd.Series indexed by all_tickers. Selected tickers = 1/k; rest = 0.0.
-        Weights sum exactly to 1.0 when k tickers are selected.
-    """
+    """Build equal-weight long-only portfolio: 1/k for selected tickers, 0 for rest."""
     weights = pd.Series(0.0, index=all_tickers)
     weights[top_k_index] = 1.0 / k
+    return weights
+
+
+def build_longshort_weights(
+    scores: pd.Series,
+    all_tickers: list,
+    long_k: int,
+    short_k: int | None = None,
+) -> pd.Series:
+    """Build dollar-neutral long-short portfolio weights.
+
+    Long top decile, short bottom decile, equal-weight within each side.
+    Sum of weights ≈ 0 (dollar-neutral).
+
+    Args:
+        scores:      Predicted returns per ticker.
+        all_tickers: Full universe of tickers.
+        long_k:      Number of stocks to go long.
+        short_k:     Number of stocks to go short (defaults to long_k).
+
+    Returns:
+        pd.Series with positive weights for longs, negative for shorts.
+    """
+    if short_k is None:
+        short_k = long_k
+    weights = pd.Series(0.0, index=all_tickers)
+    long_tickers = scores.nlargest(long_k).index
+    short_tickers = scores.nsmallest(short_k).index
+    weights[long_tickers] = 1.0 / long_k
+    weights[short_tickers] = -1.0 / short_k
     return weights
 
 
@@ -162,6 +182,11 @@ def compute_performance_metrics(
     beta = float(slope)
     alpha_annualized = float(intercept) * 252  # annualize daily alpha
 
+    # Information ratio (excess return / tracking error)
+    excess = r.values - spy_r
+    te = float(np.std(excess, ddof=1))
+    ir = float(np.mean(excess)) / te * math.sqrt(252) if te > 0 else float("nan")
+
     return {
         "annualized_return": annualized_return,
         "sharpe_ratio": sharpe_ratio,
@@ -170,6 +195,7 @@ def compute_performance_metrics(
         "beta": beta,
         "total_return": total_return,
         "n_days": n_days,
+        "information_ratio": ir,
     }
 
 
@@ -251,8 +277,9 @@ def derive_date_index(config_path: str, n_days: int, output_dir: str = None) -> 
         data_dir = os.path.dirname(traffic_path)
         # Resolve relative paths relative to the config file location
         config_dir = os.path.dirname(os.path.abspath(config_path))
+        project_root = os.path.dirname(config_dir)
         if not os.path.isabs(data_dir):
-            data_dir = os.path.join(config_dir, data_dir)
+            data_dir = os.path.join(project_root, data_dir)
         label_path = os.path.join(data_dir, "label.csv")
 
     if label_path is None or not os.path.isfile(label_path):
@@ -356,84 +383,100 @@ def download_prices(tickers: list, date_index: pd.DatetimeIndex) -> pd.DataFrame
     return prices
 
 
+def _compute_price_return(prices, date):
+    """Compute single-day price return for all tickers."""
+    date_loc = prices.index.get_loc(date)
+    if date_loc == 0:
+        return pd.Series(0.0, index=prices.columns)
+    prev_date = prices.index[date_loc - 1]
+    curr_close = prices.loc[date]
+    prev_close = prices.loc[prev_date]
+    with np.errstate(divide="ignore", invalid="ignore"):
+        ratio = np.where(prev_close != 0, (curr_close - prev_close) / prev_close, 0.0)
+    return pd.Series(ratio, index=prices.columns).fillna(0.0)
+
+
 def run_backtest_loop(
     pred_df: pd.DataFrame,
     prices: pd.DataFrame,
     tickers: list,
     top_k_n: int,
+    strategy: str = "longonly",
 ) -> tuple:
     """Run the daily backtest loop over the test period.
 
-    For each day in pred_df.index:
-      1. Select top-K tickers by predicted return score.
-      2. Build equal-weight portfolio weights.
-      3. Compute realized price returns for that day.
-      4. Deduct transaction costs (10 bps × turnover).
-
     Args:
-        pred_df:  DataFrame of shape (n_days, n_stocks) with DatetimeIndex.
-        prices:   DataFrame of adjusted close prices including all tickers + SPY.
-        tickers:  Ordered list of stock universe tickers.
-        top_k_n:  K — number of stocks to select per day.
+        pred_df:  DataFrame (n_days, n_stocks) with DatetimeIndex.
+        prices:   Adjusted close prices including tickers + SPY.
+        tickers:  Ordered list of universe tickers.
+        top_k_n:  K stocks per side (long-only: total; long-short: per side).
+        strategy: "longonly", "longshort", or "longshort_hedged".
 
     Returns:
-        (portfolio_returns, spy_daily_returns, positions): two lists of floats
-        (length n_days each) and a list of dicts with keys date/ticker/weight/predicted_score.
+        (portfolio_returns, spy_daily_returns, positions, turnover_series)
     """
     FEE = 0.001  # 10 bps round-trip
 
     portfolio_returns = []
     spy_daily_returns = []
-
+    turnover_series = []
     weight_prev = pd.Series(0.0, index=tickers)
     positions: list = []
 
-    for date in pred_df.index:
-        # Daily price returns via pct_change (requires prior-day price)
-        # prices is reindexed to date_index; use the prices DataFrame directly
-        # compute pct_change on the slice up to this date
-        date_loc = prices.index.get_loc(date)
-        if date_loc == 0:
-            # No prior day in the reindexed slice — use zero return
-            daily_price_ret = pd.Series(0.0, index=prices.columns)
-        else:
-            prev_date = prices.index[date_loc - 1]
-            curr_close = prices.loc[date]
-            prev_close = prices.loc[prev_date]
-            # Avoid division by zero for zero-padded prices
-            with np.errstate(divide="ignore", invalid="ignore"):
-                ratio = np.where(
-                    prev_close != 0,
-                    (curr_close - prev_close) / prev_close,
-                    0.0,
-                )
-            daily_price_ret = pd.Series(ratio, index=prices.columns).fillna(0.0)
+    # For beta hedging: track rolling beta
+    rolling_port_rets = []
+    rolling_spy_rets = []
+    BETA_WINDOW = 60
 
-        # SPY return for the day
+    for date in pred_df.index:
+        daily_price_ret = _compute_price_return(prices, date)
         spy_ret = float(daily_price_ret.get("SPY", 0.0))
         spy_daily_returns.append(spy_ret)
 
-        # Portfolio construction
         scores = pred_df.loc[date]
-        top_k_index = select_top_k(scores, top_k_n)
-        _w = 1.0 / top_k_n
-        for _ticker in top_k_index:
-            positions.append({
-                "date": date.strftime("%Y-%m-%d"),
-                "ticker": _ticker,
-                "weight": _w,
-                "predicted_score": float(scores[_ticker]),
-            })
-        weight_now = build_portfolio_weights(top_k_index, tickers, top_k_n)
-
-        # Daily portfolio return
         stock_returns = daily_price_ret.reindex(tickers).fillna(0.0)
-        port_ret = compute_daily_return(weight_now, weight_prev, stock_returns, fee=FEE)
-        portfolio_returns.append(port_ret)
 
+        if strategy == "longonly":
+            top_k_index = select_top_k(scores, top_k_n)
+            weight_now = build_portfolio_weights(top_k_index, tickers, top_k_n)
+            for _ticker in top_k_index:
+                positions.append({
+                    "date": date.strftime("%Y-%m-%d"), "ticker": _ticker,
+                    "weight": 1.0 / top_k_n, "predicted_score": float(scores[_ticker]),
+                    "side": "long",
+                })
+        else:  # longshort or longshort_hedged
+            weight_now = build_longshort_weights(scores, tickers, top_k_n)
+            for _ticker in weight_now[weight_now != 0].index:
+                w = float(weight_now[_ticker])
+                positions.append({
+                    "date": date.strftime("%Y-%m-%d"), "ticker": _ticker,
+                    "weight": w, "predicted_score": float(scores[_ticker]),
+                    "side": "long" if w > 0 else "short",
+                })
+
+        # Compute portfolio return
+        turnover = float((weight_now - weight_prev).abs().sum())
+        turnover_series.append(turnover)
+        gross = float((weight_now * stock_returns).sum())
+        cost = turnover * FEE
+        port_ret = gross - cost
+
+        # Beta hedging: subtract beta * SPY return
+        if strategy == "longshort_hedged":
+            rolling_port_rets.append(port_ret)
+            rolling_spy_rets.append(spy_ret)
+            if len(rolling_port_rets) >= BETA_WINDOW:
+                recent_port = np.array(rolling_port_rets[-BETA_WINDOW:])
+                recent_spy = np.array(rolling_spy_rets[-BETA_WINDOW:])
+                if np.std(recent_spy) > 1e-10:
+                    beta_est = np.cov(recent_port, recent_spy)[0, 1] / np.var(recent_spy)
+                    port_ret = port_ret - beta_est * spy_ret
+
+        portfolio_returns.append(port_ret)
         weight_prev = weight_now
 
-    return portfolio_returns, spy_daily_returns, positions
+    return portfolio_returns, spy_daily_returns, positions, turnover_series
 
 
 def save_outputs(
@@ -503,8 +546,10 @@ def save_outputs(
 
     # --- backtest_summary.csv (one row, eight columns) ---
     summary = {
+        "strategy": "longonly",  # default for save_outputs; overridden by caller if needed
         "annualized_return": metrics["annualized_return"],
         "sharpe_ratio": metrics["sharpe_ratio"],
+        "information_ratio": metrics.get("information_ratio", float("nan")),
         "max_drawdown": metrics["max_drawdown"],
         "alpha_annualized": metrics["alpha_annualized"],
         "beta": metrics["beta"],
@@ -578,15 +623,24 @@ def main(output_dir: str = None, top_k: int = None) -> None:
             default="config/Multitask_Stock_SP500.conf",
             help="Path to Stockformer config file (used to derive test-period dates)",
         )
+        parser.add_argument(
+            "--strategy",
+            type=str,
+            default="longonly",
+            choices=["longonly", "longshort", "longshort_hedged"],
+            help="Trading strategy: longonly (default), longshort (dollar-neutral), longshort_hedged (beta-hedged)",
+        )
         args = parser.parse_args()
         output_dir = args.output_dir
         top_k_n = args.top_k
         tickers_file = args.tickers_file
         config_path = args.config
+        strategy = args.strategy
     else:
         top_k_n = top_k if top_k is not None else 10
         tickers_file = "data/Stock_SP500_2018-01-01_2024-01-01/tickers.txt"
         config_path = "config/Multitask_Stock_SP500.conf"
+        strategy = "longonly"
 
     if not os.path.isdir(output_dir):
         print(f"ERROR: output_dir does not exist: {output_dir}", file=sys.stderr)
@@ -624,9 +678,9 @@ def main(output_dir: str = None, top_k: int = None) -> None:
     prices = download_prices(tickers, date_index)
 
     # 6. Run backtest loop
-    print(f"Running backtest (top_k={top_k_n}, fee=0.001)...")
-    portfolio_returns, spy_daily_returns, positions = run_backtest_loop(
-        pred_df, prices, tickers, top_k_n
+    print(f"Running backtest (strategy={strategy}, top_k={top_k_n}, fee=0.001)...")
+    portfolio_returns, spy_daily_returns, positions, turnover_series = run_backtest_loop(
+        pred_df, prices, tickers, top_k_n, strategy=strategy
     )
 
     # 7. Compute performance metrics
@@ -638,16 +692,23 @@ def main(output_dir: str = None, top_k: int = None) -> None:
         positions=positions,
     )
 
-    # 9. Console summary block (same style as compute_ic.py)
-    print("\n=== Backtest Summary ===")
-    print(f"  Top-K               : {top_k_n}")
+    # 9. Console summary block
+    avg_turnover = np.mean(turnover_series) if turnover_series else 0
+    annualized_turnover = avg_turnover * 252
+
+    print(f"\n=== Backtest Summary ({strategy}) ===")
+    print(f"  Strategy            : {strategy}")
+    print(f"  Top-K (per side)    : {top_k_n}")
     print(f"  Test days           : {metrics['n_days']}")
     print(f"  Total return        : {metrics['total_return']:+.4f} ({metrics['total_return']*100:+.2f}%)")
     print(f"  Annualized return   : {metrics['annualized_return']:+.4f} ({metrics['annualized_return']*100:+.2f}%)")
     print(f"  Sharpe ratio        : {metrics['sharpe_ratio']:+.4f}")
+    print(f"  Information ratio   : {metrics['information_ratio']:+.4f}")
     print(f"  Max drawdown        : {metrics['max_drawdown']:.4f} ({metrics['max_drawdown']*100:.2f}%)")
     print(f"  Alpha (annualized)  : {metrics['alpha_annualized']:+.4f} ({metrics['alpha_annualized']*100:+.2f}%)")
     print(f"  Beta vs SPY         : {metrics['beta']:.4f}")
+    print(f"  Avg daily turnover  : {avg_turnover:.4f}")
+    print(f"  Annualized turnover : {annualized_turnover:.1f}%")
 
 
 if __name__ == "__main__":
