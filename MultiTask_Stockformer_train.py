@@ -292,8 +292,9 @@ def test(model, valXL, valXH, valXC, bonus_valX, valTE, valY, valYC, adjgat):
         print(f"Error: Unable to load model state dictionary from file {args.model_file}. File may be empty or corrupted.")
         return
 
-    acc, mae, rmse, mape = evaluate_test(model, valXL, valXH, valXC, bonus_valX, valTE, valY, valYC, adjgat)
-    return acc, mae, rmse, mape
+    acc, mae, rmse, mape, ic = evaluate_test(model, valXL, valXH, valXC, bonus_valX, valTE, valY, valYC, adjgat)
+    log_string(log, f"Test IC: {ic:.6f}")
+    return acc, mae, rmse, mape, ic
 
 
 if __name__ == '__main__':
