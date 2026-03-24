@@ -109,11 +109,13 @@ class sparseSpatialAttention(nn.Module):
 
         attn = self.attn_dropout(torch.softmax(Q_K, dim=-1))
 
-        # copy operation
-        cp = attn.argmax(dim=-2, keepdim=True).transpose(-2,-1)
-        value = torch.matmul(attn, V).unsqueeze(-3).expand(B, T, N, N, V.shape[-1])[torch.arange(B)[:, None, None, None],
-                                                                                             torch.arange(T)[None, :, None, None],
-                                                                                             torch.arange(N)[None, None, :, None],cp,:].squeeze(-2)
+        # Copy operation: for each stock n, find which stock attends most to n,
+        # then copy that stock's attended value. Uses gather instead of expand
+        # to avoid O(B*T*N*N*D) memory allocation.
+        attended = torch.matmul(attn, V)  # [B, T, N, D]
+        cp = attn.argmax(dim=-2)  # [B, T, N] — which stock attends most to each n
+        cp_expanded = cp.unsqueeze(-1).expand(B, T, N, D)  # [B, T, N, D]
+        value = torch.gather(attended, dim=2, index=cp_expanded)  # [B, T, N, D]
 
         value = self.ofc(value) + x_
         value = self.ln(value)
