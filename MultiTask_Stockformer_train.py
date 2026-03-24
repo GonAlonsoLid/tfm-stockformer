@@ -49,6 +49,8 @@ parser.add_argument('--d', type=int, default=config['param']['dims'])
 parser.add_argument('--j', type=int, default=config['param']['level'])
 parser.add_argument('--s', type=float, default=config['param']['samples'])
 parser.add_argument('--w', default=config['param']['wave'])
+parser.add_argument('--max_features', type=int, default=config['param'].get('max_features', '0'))
+parser.add_argument('--decomposition', default=config['param'].get('decomposition', 'dwt'))
 
 parser.add_argument('--traffic_file', default=config['file']['traffic'])
 parser.add_argument('--indicator_file', default=config['file']['indicator'])

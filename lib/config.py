@@ -54,6 +54,7 @@ def load_config(config_path: str, extra_args: list[str] | None = None) -> argpar
     parser.add_argument('--j', type=int, default=config['param']['level'])
     parser.add_argument('--s', type=float, default=config['param']['samples'])
     parser.add_argument('--w', default=config['param']['wave'])
+    parser.add_argument('--max_features', type=int, default=config['param'].get('max_features', '0'))
     parser.add_argument('--decomposition', default=config['param'].get('decomposition', 'dwt'))
     parser.add_argument('--stl_period', type=int, default=config['param'].get('stl_period', '5'))
     parser.add_argument('--graph_type', default=config['param'].get('graph_type', 'static'))

@@ -207,7 +207,15 @@ class StockDataset(Dataset):
         Traffic = np.load(args.traffic_file)['result']
         indicator = np.load(args.indicator_file)['result']
         path = args.alpha_360_dir
-        files = sorted(os.listdir(path))
+        files = sorted(f for f in os.listdir(path) if f.endswith('.csv'))
+        max_features = getattr(args, 'max_features', 0)
+        if max_features > 0 and len(files) > max_features:
+            # Prioritize Alpha360 core features, then Alpha158, then MACRO
+            core = [f for f in files if not f.startswith('MACRO_') and not f.startswith(('RSI_', 'BBANDS_', 'MACD_', 'ATR_', 'ROC_', 'RVOL_'))]
+            extra = [f for f in files if f not in core]
+            files = (core + extra)[:max_features]
+            files.sort()
+            print(f"[StockDataset] Limited to {len(files)} features (max_features={max_features})")
         data_list = []
         for file in files:
             file_path = os.path.join(path, file)
