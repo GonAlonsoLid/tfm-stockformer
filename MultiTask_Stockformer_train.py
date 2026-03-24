@@ -214,7 +214,9 @@ def evaluate_test(model, testXL, testXH, testXC, bonus_testX, testTE, testY, tes
 def train(model, trainXL, trainXH, trainXC, bonus_trainX, trainTE, trainY, trainYL, trainYC, valXL, valXH, valXC, bonus_valX, valTE, valY, valYC, adjgat):
     num_train = trainXL.shape[0]
     best_ic = -float('inf')
-    optimizer = torch.optim.Adam(model.parameters(), lr=args.learning_rate)
+    epochs_no_improve = 0
+    early_stopping_patience = 15
+    optimizer = torch.optim.Adam(model.parameters(), lr=args.learning_rate, weight_decay=1e-5)
     lr_scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
         optimizer, mode='max', factor=0.1, patience=20,
         threshold=0.001, threshold_mode='rel', cooldown=0, min_lr=2e-6, eps=1e-08
@@ -251,7 +253,7 @@ def train(model, trainXL, trainXH, trainXC, bonus_trainX, trainTE, trainY, train
                 loss = loss_ranking + 0.5 * loss_class
 
                 loss.backward()
-                nn.utils.clip_grad_norm_(model.parameters(), 0.5)
+                nn.utils.clip_grad_norm_(model.parameters(), 0.3)
                 optimizer.step()
 
                 train_l_sum += loss.cpu().item()
@@ -269,8 +271,14 @@ def train(model, trainXL, trainXH, trainXC, bonus_trainX, trainTE, trainY, train
 
         if ic > best_ic:
             best_ic = ic
+            epochs_no_improve = 0
             torch.save(model.state_dict(), args.model_file)
             log_string(log, f'Epoch {epoch}: New best IC: {best_ic:.6f}, Model saved.')
+        else:
+            epochs_no_improve += 1
+            if epochs_no_improve >= early_stopping_patience:
+                log_string(log, f'Early stopping at epoch {epoch} (no IC improvement for {early_stopping_patience} epochs)')
+                break
 
 
 def test(model, valXL, valXH, valXC, bonus_valX, valTE, valY, valYC, adjgat):

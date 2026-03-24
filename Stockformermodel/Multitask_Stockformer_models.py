@@ -70,20 +70,22 @@ class FeedForward(nn.Module):
         return x
 
 class sparseSpatialAttention(nn.Module):
-    def __init__(self, features, h, d, s):
+    def __init__(self, features, h, d, s, dropout=0.2):
         super(sparseSpatialAttention, self).__init__()
         self.qfc = nn.Linear(features, features)
         self.kfc = nn.Linear(features, features)
         self.vfc = nn.Linear(features, features)
         self.ofc = nn.Linear(features, features)
-        
+
         self.h = h
         self.d = d
         self.s = s
+        self.attn_dropout = nn.Dropout(dropout)
 
         self.ln = nn.LayerNorm(features, elementwise_affine=False)
         self.ff = nn.Sequential(nn.Linear(features, features),
                                  nn.ReLU(),
+                                 nn.Dropout(dropout),
                                  nn.Linear(features, features))
 
         self.proj = nn.Linear(d, 1)
@@ -105,7 +107,7 @@ class sparseSpatialAttention(nn.Module):
 
         Q_K /= (self.d ** 0.5)
 
-        attn = torch.softmax(Q_K, dim=-1)
+        attn = self.attn_dropout(torch.softmax(Q_K, dim=-1))
 
         # copy operation
         cp = attn.argmax(dim=-2, keepdim=True).transpose(-2,-1)
@@ -118,7 +120,7 @@ class sparseSpatialAttention(nn.Module):
         return self.ff(value)
 
 class temporalAttention(nn.Module):
-    def __init__(self, features, h, d):
+    def __init__(self, features, h, d, dropout=0.2):
         super(temporalAttention, self).__init__()
         self.qfc = FeedForward([features,features])
         self.kfc = FeedForward([features,features])
@@ -126,6 +128,7 @@ class temporalAttention(nn.Module):
         self.ofc = FeedForward([features,features])
         self.h = h
         self.d = d
+        self.attn_dropout = nn.Dropout(dropout)
         self.ln = nn.LayerNorm(features, elementwise_affine=False)
         self.ff = FeedForward([features,features,features], True)
 
@@ -155,7 +158,7 @@ class temporalAttention(nn.Module):
             zero_vec = (-2 ** 15 + 1)*torch.ones_like(attention) # [k*B,N,T,T]
             attention = torch.where(mask, attention, zero_vec)
 
-        attention = F.softmax(attention, -1) # [k*B,N,T,T]
+        attention = self.attn_dropout(F.softmax(attention, -1)) # [k*B,N,T,T]
 
         value = torch.matmul(attention, value).permute(0,2,1,3) # [k*B,N,T,d]
         value = self.ofc(value)
@@ -196,7 +199,7 @@ class temporalConvNet(nn.Module):
         return xh
 
 class adaptiveFusion(nn.Module):
-    def __init__(self, features, h, d):
+    def __init__(self, features, h, d, dropout=0.2):
         super(adaptiveFusion, self).__init__()
         self.qlfc = FeedForward([features,features])
         self.klfc = FeedForward([features,features])
@@ -206,6 +209,7 @@ class adaptiveFusion(nn.Module):
         self.ofc = FeedForward([features,features])
         self.h = h
         self.d = d
+        self.attn_dropout = nn.Dropout(dropout)
         self.ln = nn.LayerNorm(features, elementwise_affine=False)
         self.ff = FeedForward([features,features,features], True)
 
@@ -236,7 +240,7 @@ class adaptiveFusion(nn.Module):
             zero_vec = (-2 ** 15 + 1)*torch.ones_like(attentionh) # [k*B,N,T,T]
             attentionh = torch.where(mask, attentionh, zero_vec)
         attentionh /= (self.d ** 0.5) # scaled
-        attentionh = F.softmax(attentionh, -1) # [k*B,N,T,T]
+        attentionh = self.attn_dropout(F.softmax(attentionh, -1)) # [k*B,N,T,T]
 
 
         value = torch.matmul(attentionh, valueh).permute(0,2,1,3)
@@ -271,15 +275,16 @@ class dualEncoder(nn.Module):
 
 
 class StockformerBackbone(nn.Module):
-    def __init__(self, infea, outfea, L, h, d, s, T1, T2, dev):
+    def __init__(self, infea, outfea, L, h, d, s, T1, T2, dev, noise_std=0.01):
         super(StockformerBackbone, self).__init__()
+        self.noise_std = noise_std
         self.start_emb_l = FeedForward([infea, outfea, outfea])
         self.start_emb_h = FeedForward([infea, outfea, outfea])
         self.te_emb = temporalEmbedding(outfea)
 
         self.dual_encoder = nn.ModuleList([dualEncoder(outfea, h, d, s) for i in range(L)])
         self.adaptive_fusion = adaptiveFusion(outfea, h, d)
-        
+
         self.pre_l = nn.Conv2d(T1, T2, (1,1))
         self.pre_h = nn.Conv2d(T1, T2, (1,1))
 
@@ -289,10 +294,15 @@ class StockformerBackbone(nn.Module):
         indicator:[B,T,N]
         bonus:[B,T,N,D2]
         '''
-        xl, xh, indicator = xl.unsqueeze(-1), xh.unsqueeze(-1), indicator.unsqueeze(-1) # [B,T,N]->[B,T,N,1]
-        xl = torch.concat([xl,indicator,bonus],dim = -1) # [B,T,N,1]->[B,T,N,2+D_bonus]
-        xh = torch.concat([xh,indicator,bonus],dim = -1) # [B,T,N,1]->[B,T,N,2+D_bonus]
+        xl, xh, indicator = xl.unsqueeze(-1), xh.unsqueeze(-1), indicator.unsqueeze(-1)
+        xl = torch.concat([xl,indicator,bonus],dim = -1)
+        xh = torch.concat([xh,indicator,bonus],dim = -1)
         xl, xh, TE = self.start_emb_l(xl), self.start_emb_h(xh), self.te_emb(te)
+
+        # Gaussian noise injection during training (acts as implicit regularization)
+        if self.training and self.noise_std > 0:
+            xl = xl + torch.randn_like(xl) * self.noise_std
+            xh = xh + torch.randn_like(xh) * self.noise_std
 
         for enc in self.dual_encoder:
             xl, xh = enc(xl, xh, TE[:,:xl.shape[1],:,:], adjgat)
