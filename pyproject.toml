@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "tfm-stockformer"
+version = "0.1.0"
+description = "Multitask Stockformer adapted for S&P 500 stock prediction"
+requires-python = ">=3.11,<3.12"
+
+[tool.setuptools.packages.find]
+include = ["lib*", "Stockformermodel*", "scripts*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = [".", "scripts"]

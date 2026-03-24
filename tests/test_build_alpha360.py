@@ -98,10 +98,6 @@ def alpha360_env(tmp_path):
 
 # ── ALPHA360-01: Script runs and produces 360 CSVs ───────────────────────────
 
-@pytest.mark.xfail(
-    strict=False,
-    reason="Wave 0 stub — scripts/build_alpha360.py not yet implemented",
-)
 def test_build_alpha360_creates_360_csvs(alpha360_env):
     """ALPHA360-01: script runs and produces exactly 360 CSV files in features_dir."""
     import sys
@@ -123,10 +119,6 @@ def test_build_alpha360_creates_360_csvs(alpha360_env):
 
 # ── ALPHA360-02: Shape, NaN, and inf validation ───────────────────────────────
 
-@pytest.mark.xfail(
-    strict=False,
-    reason="Wave 0 stub — scripts/build_alpha360.py not yet implemented",
-)
 def test_feature_csv_shape_and_no_nan(alpha360_env):
     """ALPHA360-02: each CSV has correct shape (T_features, N_tickers), zero NaN, zero inf."""
     import sys
@@ -153,10 +145,6 @@ def test_feature_csv_shape_and_no_nan(alpha360_env):
 
 # ── ALPHA360-03: First row date = index[60] of OHLCV (60-row lag buffer) ─────
 
-@pytest.mark.xfail(
-    strict=False,
-    reason="Wave 0 stub — scripts/build_alpha360.py not yet implemented",
-)
 def test_first_row_date(alpha360_env):
     """ALPHA360-03: first date in each feature CSV is index[60] of the OHLCV date range.
 
@@ -189,10 +177,6 @@ def test_first_row_date(alpha360_env):
 
 # ── ALPHA360-04: Backup directory created with original CSVs ─────────────────
 
-@pytest.mark.xfail(
-    strict=False,
-    reason="Wave 0 stub — scripts/build_alpha360.py not yet implemented",
-)
 def test_backup_created(alpha360_env):
     """ALPHA360-04: backup directory created in data_dir, containing the 3 original dummy CSVs."""
     import sys
@@ -223,10 +207,6 @@ def test_backup_created(alpha360_env):
 
 # ── ALPHA360-05: Column order matches tickers.txt ────────────────────────────
 
-@pytest.mark.xfail(
-    strict=False,
-    reason="Wave 0 stub — scripts/build_alpha360.py not yet implemented",
-)
 def test_column_order_matches_tickers(alpha360_env):
     """ALPHA360-05: column order in every CSV matches the order in tickers.txt."""
     import sys

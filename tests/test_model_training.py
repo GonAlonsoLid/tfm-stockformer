@@ -15,7 +15,6 @@ import configparser
 
 # ── MODEL-01: Configuration tests ─────────────────────────────────────────────
 
-@pytest.mark.xfail(strict=False, reason="config/Multitask_Stock_SP500.conf not yet created")
 def test_config_file_exists(project_root):
     """Assert that config/Multitask_Stock_SP500.conf exists on disk."""
     config_path = os.path.join(project_root, "config", "Multitask_Stock_SP500.conf")
@@ -24,7 +23,6 @@ def test_config_file_exists(project_root):
     )
 
 
-@pytest.mark.xfail(strict=False, reason="config/Multitask_Stock_SP500.conf not yet created")
 def test_config_fields_present(project_root):
     """Load Multitask_Stock_SP500.conf and assert all four INI sections and required keys exist.
 
@@ -56,7 +54,6 @@ def test_config_fields_present(project_root):
 
 # ── MODEL-01/02: Dataset smoke test ───────────────────────────────────────────
 
-@pytest.mark.xfail(strict=False, reason="requires Phase 2 data on disk")
 def test_dataset_loads(project_root):
     """Smoke test: assert config file exists as a placeholder for full dataset loading.
 
@@ -71,7 +68,6 @@ def test_dataset_loads(project_root):
 
 # ── MODEL-02: Stockformer forward pass ────────────────────────────────────────
 
-@pytest.mark.xfail(strict=False, reason="requires full model setup verification")
 def test_stockformer_forward_pass():
     """Assert Stockformer forward pass returns a tuple with two tensors of correct shape.
 
@@ -82,35 +78,43 @@ def test_stockformer_forward_pass():
     from Stockformermodel.Multitask_Stockformer_models import Stockformer  # type: ignore
 
     device = torch.device("cpu")
+    T1, T2, N, D_bonus = 20, 2, 5, 360
+    infea = D_bonus + 2  # bonus features + xl + indicator channels
+    h, d = 1, 64
     model = Stockformer(
-        infea=362,
-        hidden=128,
+        infea=infea,
+        outfea=h * d,
         outfea_class=2,
         outfea_regress=1,
-        L=2,
-        h=1,
-        d=128,
+        L=1,
+        h=h,
+        d=d,
         s=1,
-        T1=20,
-        T2=2,
-        device=device,
+        T1=T1,
+        T2=T2,
+        dev=device,
     ).to(device)
     model.eval()
 
-    batch, N, T = 2, 5, 22  # T = T1 + T2
-    x = torch.randn(batch, N, T)
+    batch = 2
+    xl = torch.randn(batch, T1, N)
+    xh = torch.randn(batch, T1, N)
+    te = torch.randint(0, 10, (batch, T1 + T2, 2))
+    bonus = torch.randn(batch, T1, N, D_bonus)
+    indicator = torch.randn(batch, T1, N)
+    adjgat = torch.randn(N, h * d).to(device)
+
     with torch.no_grad():
-        output = model(x)
+        output = model(xl, xh, te, bonus, indicator, adjgat)
 
     assert isinstance(output, tuple), "Stockformer must return a tuple"
-    assert len(output) == 2, "Stockformer output tuple must have two elements"
+    assert len(output) == 4, "Stockformer output tuple must have 4 elements (class, class_l, regress, regress_l)"
     for tensor in output:
         assert isinstance(tensor, torch.Tensor), "Each output element must be a torch.Tensor"
 
 
 # ── MODEL-02: Inference script tests ──────────────────────────────────────────
 
-@pytest.mark.xfail(strict=False, reason="requires run_inference.py to be created")
 def test_inference_script_exists(project_root):
     """Assert that scripts/run_inference.py exists on disk."""
     script_path = os.path.join(project_root, "scripts", "run_inference.py")
@@ -119,7 +123,6 @@ def test_inference_script_exists(project_root):
     )
 
 
-@pytest.mark.xfail(strict=False, reason="requires run_inference.py to be created")
 def test_inference_script_args(project_root):
     """Assert that scripts/run_inference.py accepts --config and --checkpoint arguments."""
     script_path = os.path.join(project_root, "scripts", "run_inference.py")

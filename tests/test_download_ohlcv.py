@@ -9,10 +9,6 @@ import os
 import pytest
 
 
-@pytest.mark.xfail(
-    strict=False,
-    reason="scripts/sp500_pipeline/download_ohlcv.py does not exist yet (moved in Plan 09-02)"
-)
 def test_ticker_fallback_reads_from_file(tmp_path, monkeypatch):
     """When tickers.txt exists, main() reads tickers from file and skips Wikipedia."""
     # Write a known tickers.txt
@@ -59,10 +55,6 @@ def test_ticker_fallback_reads_from_file(tmp_path, monkeypatch):
     )
 
 
-@pytest.mark.xfail(
-    strict=False,
-    reason="scripts/sp500_pipeline/download_ohlcv.py does not exist yet (moved in Plan 09-02)"
-)
 def test_ticker_fallback_calls_wikipedia_when_absent(tmp_path, monkeypatch):
     """When tickers.txt is absent, main() calls get_sp500_tickers()."""
     # No tickers.txt in tmp_path

@@ -1,14 +1,11 @@
 """Shared fixtures for Phase 1 infrastructure tests."""
 import pytest
 import os
-import sys
 import configparser
 import numpy as np
 import pandas as pd
 
-# Ensure project root is importable
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-sys.path.insert(0, PROJECT_ROOT)
 
 @pytest.fixture
 def project_root():

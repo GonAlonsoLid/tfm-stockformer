@@ -38,8 +38,8 @@ class temporalEmbedding(nn.Module):
         '''
         TE:[B,T,2]
         '''
-        dayofweek = torch.empty(TE.shape[0], TE.shape[1], 5).to(device) # [B,T,5]
-        timeofday = torch.empty(TE.shape[0], TE.shape[1], T).to(device) # [B,T,50]
+        dayofweek = torch.empty(TE.shape[0], TE.shape[1], 5, device=TE.device) # [B,T,5]
+        timeofday = torch.empty(TE.shape[0], TE.shape[1], T, device=TE.device) # [B,T,50]
         for i in range(TE.shape[0]):
             dayofweek[i] = F.one_hot(TE[..., 0][i].to(torch.int64) % 5, 5)
         for j in range(TE.shape[0]):
@@ -147,12 +147,12 @@ class temporalAttention(nn.Module):
             batch_size = x.shape[0]
             num_steps = x.shape[1]
             num_vertexs = x.shape[2]
-            mask = torch.ones(num_steps, num_steps).to(device) # [T,T]
+            mask = torch.ones(num_steps, num_steps, device=x.device) # [T,T]
             mask = torch.tril(mask) # [T,T]
             mask = torch.unsqueeze(torch.unsqueeze(mask, dim=0), dim=0) # [1,1,T,T]
             mask = mask.repeat(self.h * batch_size, num_vertexs, 1, 1) # [k*B,N,T,T]
             mask = mask.to(torch.bool)
-            zero_vec = (-2 ** 15 + 1)*torch.ones_like(attention).to(device) # [k*B,N,T,T]
+            zero_vec = (-2 ** 15 + 1)*torch.ones_like(attention) # [k*B,N,T,T]
             attention = torch.where(mask, attention, zero_vec)
 
         attention = F.softmax(attention, -1) # [k*B,N,T,T]
@@ -228,12 +228,12 @@ class adaptiveFusion(nn.Module):
             batch_size = xl.shape[0]
             num_steps = xl.shape[1]
             num_vertexs = xl.shape[2]
-            mask = torch.ones(num_steps, num_steps).to(device) # [T,T]
+            mask = torch.ones(num_steps, num_steps, device=xl.device) # [T,T]
             mask = torch.tril(mask) # [T,T]
             mask = torch.unsqueeze(torch.unsqueeze(mask, dim=0), dim=0) # [1,1,T,T]
             mask = mask.repeat(self.h * batch_size, num_vertexs, 1, 1) # [k*B,N,T,T]
             mask = mask.to(torch.bool)
-            zero_vec = (-2 ** 15 + 1)*torch.ones_like(attentionh).to(device) # [k*B,N,T,T]
+            zero_vec = (-2 ** 15 + 1)*torch.ones_like(attentionh) # [k*B,N,T,T]
             attentionh = torch.where(mask, attentionh, zero_vec)
         attentionh /= (self.d ** 0.5) # scaled
         attentionh = F.softmax(attentionh, -1) # [k*B,N,T,T]
@@ -268,51 +268,11 @@ class dualEncoder(nn.Module):
         xh = spa_statesh + xh
         
         return xl, xh
-    
-class Stockformer_raw(nn.Module):
-    def __init__(self, infea, outfea, L, h, d, s, T1, T2, dev):
-        super(Stockformer_raw, self).__init__()
-        global device
-        device = dev
-        self.start_emb_l = FeedForward([infea, outfea, outfea])
-        self.start_emb_h = FeedForward([infea, outfea, outfea])
-        self.te_emb = temporalEmbedding(outfea)
 
-        self.dual_encoder = nn.ModuleList([dualEncoder(outfea, h, d, s) for i in range(L)])
-        self.adaptive_fusion = adaptiveFusion(outfea, h, d)
-        
-        self.pre_l = nn.Conv2d(T1, T2, (1,1))
-        self.pre_h = nn.Conv2d(T1, T2, (1,1))
-        
-        self.end_emb = FeedForward([outfea, outfea, 1])
-        self.end_emb_l = FeedForward([outfea, outfea, 1])
-
-    def forward(self, xl, xh, te, bonus, adjgat):
-        '''
-        x:[B,T,N]
-        bonus:[B,T,N,D2]
-        '''
-        xl, xh = xl.unsqueeze(-1), xh.unsqueeze(-1) # [B,T,N]->[B,T,N,1]
-        xl = torch.concat([xl,bonus],dim = -1) # [B,T,N,1]->[B,T,N,D1+D2]
-        xh = torch.concat([xh,bonus],dim = -1) # [B,T,N,1]->[B,T,N,D1+D2]
-        xl, xh, TE = self.start_emb_l(xl), self.start_emb_h(xh), self.te_emb(te)
-
-        for enc in self.dual_encoder:
-            xl, xh = enc(xl, xh, TE[:,:xl.shape[1],:,:], adjgat)
-        
-        hat_y_l = self.pre_l(xl)
-        hat_y_h = self.pre_h(xh)
-
-        hat_y = self.adaptive_fusion(hat_y_l, hat_y_h, TE[:,xl.shape[1]:,:,:])
-        hat_y, hat_y_l = self.end_emb(hat_y), self.end_emb_l(hat_y_l)
-        
-        return hat_y.squeeze(-1), hat_y_l.squeeze(-1)
 
 class StockformerBackbone(nn.Module):
     def __init__(self, infea, outfea, L, h, d, s, T1, T2, dev):
         super(StockformerBackbone, self).__init__()
-        global device
-        device = dev
         self.start_emb_l = FeedForward([infea, outfea, outfea])
         self.start_emb_h = FeedForward([infea, outfea, outfea])
         self.te_emb = temporalEmbedding(outfea)
@@ -322,9 +282,6 @@ class StockformerBackbone(nn.Module):
         
         self.pre_l = nn.Conv2d(T1, T2, (1,1))
         self.pre_h = nn.Conv2d(T1, T2, (1,1))
-        
-        # self.end_emb = FeedForward([outfea, outfea, 1])
-        # self.end_emb_l = FeedForward([outfea, outfea, 1])
 
     def forward(self, xl, xh, te, bonus, indicator, adjgat):
         '''
@@ -333,10 +290,8 @@ class StockformerBackbone(nn.Module):
         bonus:[B,T,N,D2]
         '''
         xl, xh, indicator = xl.unsqueeze(-1), xh.unsqueeze(-1), indicator.unsqueeze(-1) # [B,T,N]->[B,T,N,1]
-        xl = torch.concat([xl,indicator,bonus],dim = -1) # [B,T,N,1]->[B,T,N,2]
-        xh = torch.concat([xh,indicator,bonus],dim = -1) # [B,T,N,1]->[B,T,N,2]        
-        # xl = torch.concat([xl,bonus],dim = -1) # [B,T,N,1]->[B,T,N,2+D2]
-        # xh = torch.concat([xh,bonus],dim = -1) # [B,T,N,1]->[B,T,N,2+D2]
+        xl = torch.concat([xl,indicator,bonus],dim = -1) # [B,T,N,1]->[B,T,N,2+D_bonus]
+        xh = torch.concat([xh,indicator,bonus],dim = -1) # [B,T,N,1]->[B,T,N,2+D_bonus]
         xl, xh, TE = self.start_emb_l(xl), self.start_emb_h(xh), self.te_emb(te)
 
         for enc in self.dual_encoder:
@@ -346,15 +301,12 @@ class StockformerBackbone(nn.Module):
         hat_y_h = self.pre_h(xh)
 
         hat_y = self.adaptive_fusion(hat_y_l, hat_y_h, TE[:,xl.shape[1]:,:,:])
-        # hat_y, hat_y_l = self.end_emb(hat_y), self.end_emb_l(hat_y_l)
-        
+
         return hat_y, hat_y_l
     
 class StockformerOutput(nn.Module):
     def __init__(self, outfea, outfea_class, outfea_regress, dev):
         super(StockformerOutput, self).__init__()
-        global device
-        device = dev
         # Classification output layer; dimension by number of classes
         self.end_emb_class = FeedForward([outfea, outfea, outfea_class])
         # Regression output layer; dimension by number of regression targets

@@ -76,13 +76,6 @@ if not os.path.exists(model_directory):
     os.makedirs(model_directory)
     print(f"Directory created for model file: {model_directory}")
 
-
-# # Safely open log file for writing
-# with open(args.log_file, 'w') as log:
-#     log.write("Logging has started.\n")
-# print(f"Log file is ready to write at {args.log_file}")
-
-# Confirm model file path is ready (path only, no file creation here)
 print(f"Model file path is ready at {args.model_file}")
 
 
@@ -118,10 +111,14 @@ if args.seed is not None:
     torch.cuda.manual_seed(args.seed)
     torch.backends.cudnn.deterministic = True
 
-def res(model, valXL, valXH, valXC, bonus_valX, valTE, valY, valYC, adjgat, epoch, log, tensor_writer):
+def _evaluate(model, dataXL, dataXH, dataXC, bonus_dataX, dataTE, dataY, dataYC, adjgat):
+    """Run model inference on a dataset split and return predictions + metrics.
+
+    Returns (pred_class, pred_regress, label_class, label_regress, avg_acc, avg_mae, avg_rmse, avg_mape).
+    """
     model.eval()
-    num_val = valXL.shape[0]
-    num_batch = math.ceil(num_val / args.batch_size)
+    num_samples = dataXL.shape[0]
+    num_batch = math.ceil(num_samples / args.batch_size)
 
     pred_class = []
     pred_regress = []
@@ -130,38 +127,33 @@ def res(model, valXL, valXH, valXC, bonus_valX, valTE, valY, valYC, adjgat, epoc
 
     with torch.no_grad():
         for batch_idx in range(num_batch):
-            if isinstance(model, torch.nn.Module):
-                start_idx = batch_idx * args.batch_size
-                end_idx = min(num_val, (batch_idx + 1) * args.batch_size)
+            start_idx = batch_idx * args.batch_size
+            end_idx = min(num_samples, (batch_idx + 1) * args.batch_size)
 
-                xl = torch.from_numpy(valXL[start_idx : end_idx]).float().to(device)
-                xh = torch.from_numpy(valXH[start_idx : end_idx]).float().to(device)
-                xc = torch.from_numpy(valXC[start_idx : end_idx]).float().to(device)
-                te = torch.from_numpy(valTE[start_idx : end_idx]).to(device)
-                bonus = torch.from_numpy(bonus_valX[start_idx : end_idx]).float().to(device)
-                y = valY[start_idx : end_idx]
-                yc = valYC[start_idx : end_idx]
+            xl = torch.from_numpy(dataXL[start_idx:end_idx]).float().to(device)
+            xh = torch.from_numpy(dataXH[start_idx:end_idx]).float().to(device)
+            xc = torch.from_numpy(dataXC[start_idx:end_idx]).float().to(device)
+            te = torch.from_numpy(dataTE[start_idx:end_idx]).to(device)
+            bonus = torch.from_numpy(bonus_dataX[start_idx:end_idx]).float().to(device)
+            y = dataY[start_idx:end_idx]
+            yc = dataYC[start_idx:end_idx]
 
-                hat_y_class, hat_y_l_class, hat_y_regress, hat_y_l_regress = model(xl, xh, te, bonus, xc, adjgat)
+            hat_y_class, hat_y_l_class, hat_y_regress, hat_y_l_regress = model(xl, xh, te, bonus, xc, adjgat)
 
-                pred_class.append(hat_y_class.cpu().numpy())
-                pred_regress.append(hat_y_regress.cpu().numpy())
-                label_class.append(yc)
-                label_regress.append(y)
-    
+            pred_class.append(hat_y_class.cpu().numpy())
+            pred_regress.append(hat_y_regress.cpu().numpy())
+            label_class.append(yc)
+            label_regress.append(y)
+
     pred_class = np.concatenate(pred_class, axis=0)
     pred_regress = np.concatenate(pred_regress, axis=0)
     label_class = np.concatenate(label_class, axis=0)
     label_regress = np.concatenate(label_regress, axis=0)
 
-    accs = []
-    maes = []
-    rmses = []
-    mapes = []
-
-    # Assume second dimension is time
+    accs, maes, rmses, mapes = [], [], [], []
     for i in range(pred_class.shape[1]):
-        acc, mae, rmse, mape = metric(pred_regress[:, i, :], label_regress[:, i, :], pred_class[:, i, :], label_class[:, i, :])
+        acc, mae, rmse, mape = metric(pred_regress[:, i, :], label_regress[:, i, :],
+                                       pred_class[:, i, :], label_class[:, i, :])
         accs.append(acc)
         maes.append(mae)
         rmses.append(rmse)
@@ -173,82 +165,33 @@ def res(model, valXL, valXH, valXC, bonus_valX, valTE, valY, valYC, adjgat, epoc
     avg_rmse = np.mean(rmses)
     avg_mape = np.mean(mapes)
     log_string(log, f'average, acc: {avg_acc:.4f}, mae: {avg_mae:.4f}, rmse: {avg_rmse:.4f}, mape: {avg_mape:.4f}')
-    
 
-    # Optional: Log to TensorBoard
+    return pred_class, pred_regress, label_class, label_regress, avg_acc, avg_mae, avg_rmse, avg_mape
+
+
+def validate_epoch(model, valXL, valXH, valXC, bonus_valX, valTE, valY, valYC, adjgat, epoch, log, tensor_writer):
+    """Validate model on the validation split and log metrics to TensorBoard."""
+    _, _, _, _, avg_acc, avg_mae, avg_rmse, avg_mape = _evaluate(
+        model, valXL, valXH, valXC, bonus_valX, valTE, valY, valYC, adjgat
+    )
     tensor_writer.add_scalar('Val/Average_Accuracy', avg_acc, epoch)
     tensor_writer.add_scalar('Val/Average_MAE', avg_mae, epoch)
     tensor_writer.add_scalar('Val/Average_RMSE', avg_rmse, epoch)
     tensor_writer.add_scalar('Val/Average_MAPE', avg_mape, epoch)
-    
     return avg_acc, avg_mae, avg_rmse, avg_mape
 
-def test_res(model, valXL, valXH, valXC, bonus_valX, valTE, valY, valYC, adjgat):
-    model.eval()
-    num_val = valXL.shape[0]
-    num_batch = math.ceil(num_val / args.batch_size)
 
-    pred_class = []
-    pred_regress = []
-    label_class = []
-    label_regress = []
+def evaluate_test(model, testXL, testXH, testXC, bonus_testX, testTE, testY, testYC, adjgat):
+    """Evaluate model on the test split and save prediction CSVs."""
+    pred_class, pred_regress, label_class, label_regress, avg_acc, avg_mae, avg_rmse, avg_mape = _evaluate(
+        model, testXL, testXH, testXC, bonus_testX, testTE, testY, testYC, adjgat
+    )
 
-    with torch.no_grad():
-        for batch_idx in range(num_batch):
-            if isinstance(model, torch.nn.Module):
-                start_idx = batch_idx * args.batch_size
-                end_idx = min(num_val, (batch_idx + 1) * args.batch_size)
-
-                xl = torch.from_numpy(valXL[start_idx : end_idx]).float().to(device)
-                xh = torch.from_numpy(valXH[start_idx : end_idx]).float().to(device)
-                xc = torch.from_numpy(valXC[start_idx : end_idx]).float().to(device)
-                te = torch.from_numpy(valTE[start_idx : end_idx]).to(device)
-                bonus = torch.from_numpy(bonus_valX[start_idx : end_idx]).float().to(device)
-                y = valY[start_idx : end_idx]
-                yc = valYC[start_idx : end_idx]
-                
-
-                hat_y_class, hat_y_l_class, hat_y_regress, hat_y_l_regress = model(xl, xh, te, bonus, xc, adjgat)
-
-                pred_class.append(hat_y_class.cpu().numpy())
-                pred_regress.append(hat_y_regress.cpu().numpy())  # Assume regression output may need denormalization
-                label_class.append(yc)
-                label_regress.append(y)
-    
-    pred_class = np.concatenate(pred_class, axis=0)
-    pred_regress = np.concatenate(pred_regress, axis=0)
-    label_class = np.concatenate(label_class, axis=0)
-    label_regress = np.concatenate(label_regress, axis=0)
-
-    accs = []
-    maes = []
-    rmses = []
-    mapes = []
-
-    for i in range(pred_regress.shape[1]):  # Assume second dimension is time
-        acc, mae, rmse, mape = metric(pred_regress[:, i, :], label_regress[:, i, :], pred_class[:, i, :], label_class[:, i, :])
-        accs.append(acc)
-        maes.append(mae)
-        rmses.append(rmse)
-        mapes.append(mape)
-        log_string(log,'step %d, acc: %.4f, mae: %.4f, rmse: %.4f, mape: %.4f' % (i+1, acc, mae, rmse, mape))
-    
-    # Compute average metrics
-    avg_acc = np.mean(accs)
-    avg_mae = np.mean(maes)
-    avg_rmse = np.mean(rmses)
-    avg_mape = np.mean(mapes)
-    log_string(log, 'average, acc: %.4f, mae: %.4f, rmse: %.4f, mape: %.4f' % (avg_acc, avg_mae, avg_rmse, avg_mape))
-    
-    # Create output subdirectories (may not exist on fresh machines)
     os.makedirs(os.path.join(args.output_dir, 'classification'), exist_ok=True)
     os.makedirs(os.path.join(args.output_dir, 'regression'), exist_ok=True)
 
-    # Save classification task last time step predictions and labels
     save_to_csv(os.path.join(args.output_dir, 'classification', 'classification_pred_last_step.csv'), pred_class[:, -1, :])
     save_to_csv(os.path.join(args.output_dir, 'classification', 'classification_label_last_step.csv'), label_class[:, -1])
-
-    # Save regression task last time step predictions and labels
     save_to_csv(os.path.join(args.output_dir, 'regression', 'regression_pred_last_step.csv'), pred_regress[:, -1, :])
     save_to_csv(os.path.join(args.output_dir, 'regression', 'regression_label_last_step.csv'), label_regress[:, -1])
 
@@ -256,7 +199,6 @@ def test_res(model, valXL, valXH, valXC, bonus_valX, valTE, valY, valYC, adjgat)
 
 def train(model, trainXL, trainXH, trainXC, bonus_trainX, trainTE, trainY, trainYL, trainYC, valXL, valXH, valXC, bonus_valX, valTE, valY, valYC, adjgat):
     num_train = trainXL.shape[0]
-    # best_composite_score = 0.5
     best_mae = float('inf')
     optimizer = torch.optim.Adam(model.parameters(),
                                      lr=args.learning_rate)
@@ -291,29 +233,10 @@ def train(model, trainXL, trainXH, trainXC, bonus_trainX, trainTE, trainY, train
 
                 loss_regress = _compute_regression_loss(y, hat_y_regress) + _compute_regression_loss(yl, hat_y_l_regress)
                 loss_class = _compute_class_loss(yc, hat_y_class) + _compute_class_loss(yc, hat_y_l_class)
-                
-                # epsilon = 1e-8  # Prevent division by zero
 
-                # # Compute weights (inverse of loss)
-                # weight_regress = 1 / (loss_regress.item() + epsilon)
-                # weight_class = 1 / (loss_class.item() + epsilon)
-
-                # # Normalize weights so they sum to 1
-                # weights_sum = weight_regress + weight_class
-                # w1 = weight_regress / weights_sum
-                # w2 = weight_class / weights_sum
-
-                # Apply weights to loss
-                # loss = w1*loss_regress + w2*loss_class
                 loss = loss_regress + loss_class
 
-
                 loss.backward()
-                
-                # # Print gradient range before clipping
-                # max_grad = max(p.grad.data.abs().max() for p in model.parameters() if p.grad is not None)
-                # print(f"Max grad before clipping: {max_grad}")
-                
                 nn.utils.clip_grad_norm_(model.parameters(), 0.5)
                 optimizer.step()
                 
@@ -326,27 +249,12 @@ def train(model, trainXL, trainXH, trainXC, bonus_trainX, trainTE, trainY, train
 
         tensor_writer.add_scalar('training loss', train_l_sum / batch_count, epoch)
 
-        # acc, mae, rmse, mape = res(model, valXL, valXH, valXC, bonus_valX, valTE, valY, valYC, adjgat, epoch, log, tensor_writer)
-        # lr_scheduler.step(acc)  # Choose metric for scheduler as needed
-        # # Check if new best composite score reached
-        # # Check if new best accuracy reached
-        # if acc > best_composite_score:  # We want highest accuracy
-        #     best_composite_score = acc  # Update best composite score
-        #     # Save model with best composite score
-        #     torch.save(model.state_dict(), args.model_file)
-        #     log_string(log, f'Epoch {epoch}: New best accuracy: {best_composite_score:.4f}, Model saved.')
-        
-        
-        # Assume res returns accuracy (acc), MAE, RMSE and MAPE
-        acc, mae, rmse, mape = res(model, valXL, valXH, valXC, bonus_valX, valTE, valY, valYC, adjgat, epoch, log, tensor_writer)
-        
-        # Use MAE as metric for learning rate scheduler
-        lr_scheduler.step(mae)  # Pass mae instead of acc
+        acc, mae, rmse, mape = validate_epoch(model, valXL, valXH, valXC, bonus_valX, valTE, valY, valYC, adjgat, epoch, log, tensor_writer)
 
-        # Check if we got a lower MAE (better model performance)
-        if mae < best_mae:  # Seek minimum MAE
-            best_mae = mae  # Update best MAE
-            # Save model state with best mae
+        lr_scheduler.step(mae)
+
+        if mae < best_mae:
+            best_mae = mae
             torch.save(model.state_dict(), args.model_file)
             log_string(log, f'Epoch {epoch}: New best mae: {best_mae:.4f}, Model saved.')
 
@@ -360,7 +268,7 @@ def test(model, valXL, valXH, valXC, bonus_valX, valTE, valY, valYC, adjgat):
         print(f"Error: Unable to load model state dictionary from file {args.model_file}. File may be empty or corrupted.")
         return
 
-    acc, mae, rmse, mape = test_res(model, valXL, valXH, valXC, bonus_valX, valTE, valY, valYC, adjgat)
+    acc, mae, rmse, mape = evaluate_test(model, valXL, valXH, valXC, bonus_valX, valTE, valY, valYC, adjgat)
     return acc, mae, rmse, mape
 
 

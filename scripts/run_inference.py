@@ -20,7 +20,9 @@ import numpy as np
 import torch
 
 # Ensure project root is on sys.path so lib/ and Stockformermodel/ are importable
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+_PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if _PROJECT_ROOT not in sys.path:
+    sys.path.insert(0, _PROJECT_ROOT)
 
 # Safe lib imports — no module-level side effects in these modules
 from lib.Multitask_Stockformer_utils import (  # noqa: E402

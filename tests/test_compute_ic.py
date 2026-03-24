@@ -16,7 +16,6 @@ import pytest
 # ---------------------------------------------------------------------------
 
 
-@pytest.mark.xfail(strict=False, reason="scripts/compute_ic.py not yet implemented (Plan 02)")
 def test_ic_known_correlation():
     """compute_ic_metrics(label, label) must return ic_per_day all equal to 1.0."""
     try:
@@ -35,7 +34,6 @@ def test_ic_known_correlation():
     )
 
 
-@pytest.mark.xfail(strict=False, reason="scripts/compute_ic.py not yet implemented (Plan 02)")
 def test_ic_nan_handling():
     """
     When one day's predictions are constant (zero variance), ic_per_day[that_day]
@@ -64,7 +62,6 @@ def test_ic_nan_handling():
     )
 
 
-@pytest.mark.xfail(strict=False, reason="scripts/compute_ic.py not yet implemented (Plan 02)")
 def test_icir_formula():
     """
     ICIR = mean(ic_valid) / std(ic_valid, ddof=1).
@@ -97,7 +94,6 @@ def test_icir_formula():
 # ---------------------------------------------------------------------------
 
 
-@pytest.mark.xfail(strict=False, reason="scripts/compute_ic.py not yet implemented (Plan 02)")
 def test_mae_rmse_zero_for_perfect():
     """compute_regression_metrics(data, data) must return (mae=0.0, rmse=0.0)."""
     try:
@@ -119,7 +115,6 @@ def test_mae_rmse_zero_for_perfect():
 # ---------------------------------------------------------------------------
 
 
-@pytest.mark.xfail(strict=False, reason="scripts/compute_ic.py not yet implemented (Plan 02)")
 def test_f1_perfect_classification():
     """
     compute_classification_metrics(preds_2d, labels_flat) must return (acc=1.0, f1=1.0)
@@ -144,10 +139,6 @@ def test_f1_perfect_classification():
 # ---------------------------------------------------------------------------
 
 
-@pytest.mark.xfail(
-    strict=False,
-    reason="Integration test: requires scripts/compute_ic.py and actual inference outputs",
-)
 def test_smoke_actual_output(tmp_path):
     """
     Imports main() from scripts.compute_ic and verifies it exits cleanly.

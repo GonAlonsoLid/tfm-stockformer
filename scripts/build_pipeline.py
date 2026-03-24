@@ -53,14 +53,15 @@ PIPELINE_DIR = os.path.join(_SCRIPT_DIR, "sp500_pipeline")
 if _SCRIPT_DIR not in sys.path:
     sys.path.insert(0, _SCRIPT_DIR)
 
-# (script_name, sentinel_file_relative_to_data_dir)
+# Steps 1-4 run via subprocess; step 5 (Alpha360) runs via direct import.
 # Each step is skipped when its sentinel already exists (unless --force).
-STEPS = [
+SUBPROCESS_STEPS = [
     ("download_ohlcv.py",   "tickers.txt"),
     ("normalize_split.py",  "split_indices.json"),
     ("serialize_arrays.py", "flow.npz"),
     ("graph_embedding.py",  "128_corr_struc2vec_adjgat.npy"),
 ]
+TOTAL_STEPS = 5  # 4 subprocess + 1 Alpha360
 
 
 def _sentinel_exists(data_dir: str, sentinel: str) -> bool:
@@ -255,14 +256,14 @@ def main() -> None:
     # Extra arguments forwarded only to download_ohlcv.py
     download_extra = ["--start", args.start, "--end", args.end]
 
-    for i, (script_name, sentinel) in enumerate(STEPS, start=1):
+    for i, (script_name, sentinel) in enumerate(SUBPROCESS_STEPS, start=1):
         extra = download_extra if script_name == "download_ohlcv.py" else []
-        print(f"\n--- Step {i}/{len(STEPS)}: {script_name} ---")
+        print(f"\n--- Step {i}/{TOTAL_STEPS}: {script_name} ---")
         run_step(script_name, sentinel, data_dir, extra, force=args.force)
 
     # Step 5: Alpha360 feature builder (requires --config; skipped silently if no config)
     if config_path:
-        print(f"\n--- Step 5/5: build_alpha360 ---")
+        print(f"\n--- Step {TOTAL_STEPS}/{TOTAL_STEPS}: build_alpha360 ---")
         run_alpha360_step(config_path=config_path, features_dir=alpha_360_dir, force=args.force)
     else:
         print("\n[INFO] Skipping step 5 (build_alpha360): pass --config to enable.")

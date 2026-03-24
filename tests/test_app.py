@@ -10,13 +10,11 @@ import pandas as pd
 
 # ── UI-01: app.py exists and exports expected constants ───────────────────────
 
-@pytest.mark.xfail(strict=False, reason="app.py not yet implemented")
 def test_app_imports():
     """app.py must exist at project root and import without error."""
     import app  # noqa: F401
 
 
-@pytest.mark.xfail(strict=False, reason="app.py not yet implemented")
 def test_sidebar_defaults():
     """app.py must export DEFAULT_CONFIG_PATH, DEFAULT_OUTPUT_DIR, DEFAULT_TOP_K."""
     import app
@@ -27,7 +25,6 @@ def test_sidebar_defaults():
 
 # ── UI-02: equity curve chart ─────────────────────────────────────────────────
 
-@pytest.mark.xfail(strict=False, reason="app.py not yet implemented")
 def test_equity_chart_shape(backtest_daily_returns_fixture):
     """build_equity_chart(df) must return a go.Figure with exactly 2 traces."""
     import plotly.graph_objects as go
@@ -38,7 +35,6 @@ def test_equity_chart_shape(backtest_daily_returns_fixture):
     assert len(fig.data) == 2
 
 
-@pytest.mark.xfail(strict=False, reason="app.py not yet implemented")
 def test_equity_chart_starts_at_one(backtest_daily_returns_fixture):
     """Both equity curve traces must start at y=1.0."""
     from app import build_equity_chart
@@ -51,7 +47,6 @@ def test_equity_chart_starts_at_one(backtest_daily_returns_fixture):
 
 # ── UI-03: metrics table ──────────────────────────────────────────────────────
 
-@pytest.mark.xfail(strict=False, reason="app.py not yet implemented")
 def test_metrics_table_columns(backtest_summary_fixture):
     """format_metrics_table(df) must return a DataFrame with all 8 required columns."""
     from app import format_metrics_table
@@ -66,7 +61,6 @@ def test_metrics_table_columns(backtest_summary_fixture):
 
 # ── UI-04: prediction heatmap ─────────────────────────────────────────────────
 
-@pytest.mark.xfail(strict=False, reason="app.py not yet implemented")
 def test_heatmap_zmid(regression_pred_fixture):
     """build_heatmap must return a go.Figure whose first trace has zmid=0."""
     import plotly.graph_objects as go
@@ -81,7 +75,6 @@ def test_heatmap_zmid(regression_pred_fixture):
     assert heatmap_trace.zmid == 0
 
 
-@pytest.mark.xfail(strict=False, reason="app.py not yet implemented")
 def test_heatmap_top_k_filter(regression_pred_fixture):
     """build_heatmap with k=3 must produce a heatmap with exactly 3 y-axis rows."""
     from app import build_heatmap

@@ -1,14 +1,10 @@
-import logging
 import numpy as np
 import pandas as pd
 import os
-import pickle
-import sys
 import torch
 import math
 from pytorch_wavelets import DWT1DForward, DWT1DInverse
 import csv
-# from DILATE.loss.dilate_loss import dilate_loss
 from torch.utils.data import Dataset
 
 # log string
@@ -27,7 +23,7 @@ def metric(reg_pred, reg_label, class_pred, class_label):
         wape = np.divide(np.sum(mae), np.sum(reg_label))
         wape = np.nan_to_num(wape * mask)
         rmse = np.square(mae)
-        mape = np.divide(mae, reg_label)
+        mape = np.divide(mae, np.abs(reg_label))
         mae = np.nan_to_num(mae * mask)
         mae = np.mean(mae)
         rmse = np.nan_to_num(rmse * mask)
@@ -90,15 +86,22 @@ def disentangle(data, w, j):
     return trafficl, traffich
 
 def generate_temporal_embeddings(num_step, args):
+    """Generate day-of-week and time-of-day temporal embeddings.
+
+    Encodes each trading day with two indices:
+    - TE[:, 0]: month index (0..11), cycling every 12*21=252 trading days (~1 year)
+    - TE[:, 1]: day-within-month index (0..20), cycling every 21 trading days (~1 month)
+    """
+    TRADING_DAYS_PER_MONTH = 21
+    MONTHS_PER_YEAR = 12
     TE = np.zeros([num_step, 2])
-    startd = (3 - 1) * 21
-    df = 12
+    startd = (3 - 1) * TRADING_DAYS_PER_MONTH  # Start at month index 2 (March)
     startt = 0
     for i in range(num_step):
-        TE[i, 0] = startd // 21
+        TE[i, 0] = startd // TRADING_DAYS_PER_MONTH
         TE[i, 1] = startt
-        startd = (startd + 1) % (df * 21)
-        startt = (startt + 1) % 21
+        startd = (startd + 1) % (MONTHS_PER_YEAR * TRADING_DAYS_PER_MONTH)
+        startt = (startt + 1) % TRADING_DAYS_PER_MONTH
     return TE
 
 class StockDataset(Dataset):
@@ -108,7 +111,7 @@ class StockDataset(Dataset):
         Traffic = np.load(args.traffic_file)['result']
         indicator = np.load(args.indicator_file)['result']
         path = args.alpha_360_dir
-        files = os.listdir(path)
+        files = sorted(os.listdir(path))
         data_list = []
         for file in files:
             file_path = os.path.join(path, file)
@@ -144,7 +147,8 @@ class StockDataset(Dataset):
         self.TE = self.seq2instance(self.TE, args.T1, args.T2)
         self.TE = np.concatenate(self.TE, axis=1).astype(np.int32)
         # Adding the infea attribute based on bonus_all
-        self.infea = bonus_all.shape[-1] + 2  # Last dimension of bonus_all plus one
+        # +2 accounts for the XL and indicator channels concatenated with bonus features
+        self.infea = bonus_all.shape[-1] + 2
 
     def __getitem__(self, index):
         return {
