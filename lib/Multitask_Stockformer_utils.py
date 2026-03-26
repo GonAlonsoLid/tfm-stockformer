@@ -18,12 +18,14 @@ def metric(reg_pred, reg_label, class_pred, class_label):
         # Regression task metric computation
         mask = np.not_equal(reg_label, 0)
         mask = mask.astype(np.float32)
-        mask /= np.mean(mask)
+        mask_mean = np.mean(mask)
+        if mask_mean > 0:
+            mask /= mask_mean
         mae = np.abs(np.subtract(reg_pred, reg_label)).astype(np.float32)
         wape = np.divide(np.sum(mae), np.sum(reg_label))
         wape = np.nan_to_num(wape * mask)
         rmse = np.square(mae)
-        mape = np.divide(mae, np.abs(reg_label))
+        mape = np.divide(mae, np.abs(reg_label), out=np.zeros_like(mae, dtype=np.float64), where=np.abs(reg_label) > 0)
         mae = np.nan_to_num(mae * mask)
         mae = np.mean(mae)
         rmse = np.nan_to_num(rmse * mask)
@@ -279,10 +281,15 @@ class StockDataset(Dataset):
             Traffic = Traffic[LAG_BUFFER:]      # trim labels to match feature dates
             indicator = indicator[LAG_BUFFER:]
             print(f"[StockDataset] Aligned labels to features (skipped first {LAG_BUFFER} label rows)")
+        elif LAG_BUFFER < 0:
+            raise ValueError(
+                f"Alpha360 features ({T_feat} days) exceed labels ({T_lab} days). "
+                f"Check data alignment — LAG_BUFFER={LAG_BUFFER}"
+            )
 
         num_step = Traffic.shape[0]  # now matches bonus_all
-        train_steps = round(args.train_ratio * num_step)
-        test_steps = round(args.test_ratio * num_step)
+        train_steps = int(args.train_ratio * num_step)
+        test_steps = int(args.test_ratio * num_step)
         val_steps = num_step - train_steps - test_steps
         TE = generate_temporal_embeddings(num_step, args)
         if mode == 'train':
@@ -290,7 +297,7 @@ class StockDataset(Dataset):
         elif mode == 'val':
             data_slice = slice(train_steps, train_steps + val_steps)
         else:  # mode == 'test'
-            data_slice = slice(-test_steps, None)
+            data_slice = slice(num_step - test_steps, None)
         self.data = Traffic[data_slice]
         self.indicator = indicator[data_slice]
         self.bonus_all = bonus_all[data_slice]

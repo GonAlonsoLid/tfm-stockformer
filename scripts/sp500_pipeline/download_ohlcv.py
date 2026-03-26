@@ -278,6 +278,8 @@ def main() -> None:
         df_t = pd.read_parquet(os.path.join(ohlcv_dir, f"{ticker}.parquet"))
         close_frames.append(df_t["Close"].rename(ticker))
     close_wide = pd.concat(close_frames, axis=1)          # [T+1 × N], date-indexed
+    # Forward 1-day return: for each day t, label = (Close[t+1] - Close[t]) / Close[t]
+    # pct_change() gives backward return at t+1, shift(-1) aligns it to day t
     label_df = close_wide.pct_change().shift(-1).iloc[:-1]  # forward return, drop last row
     label_path = os.path.join(args.data_dir, "label.csv")
     label_df.to_csv(label_path)

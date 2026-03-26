@@ -83,10 +83,7 @@ class sparseSpatialAttention(nn.Module):
         self.attn_dropout = nn.Dropout(dropout)
 
         self.ln = nn.LayerNorm(features, elementwise_affine=False)
-        self.ff = nn.Sequential(nn.Linear(features, features),
-                                 nn.ReLU(),
-                                 nn.Dropout(dropout),
-                                 nn.Linear(features, features))
+        self.ff = FeedForward([features, features, features], True)
 
         self.proj = nn.Linear(d, 1)
 
@@ -229,7 +226,8 @@ class adaptiveFusion(nn.Module):
         valueh = torch.relu(self.vhfc(xh)).permute(0,2,1,3) # [B,T,N,F]
 
         attentionh = torch.matmul(query, keyh) # [k*B,N,T,T]
-        
+        attentionh /= (self.d ** 0.5) # scaled
+
         if Mask:
             batch_size = xl.shape[0]
             num_steps = xl.shape[1]
@@ -241,7 +239,6 @@ class adaptiveFusion(nn.Module):
             mask = mask.to(torch.bool)
             zero_vec = (-2 ** 15 + 1)*torch.ones_like(attentionh) # [k*B,N,T,T]
             attentionh = torch.where(mask, attentionh, zero_vec)
-        attentionh /= (self.d ** 0.5) # scaled
         attentionh = self.attn_dropout(F.softmax(attentionh, -1)) # [k*B,N,T,T]
 
 
@@ -281,7 +278,7 @@ class StockformerBackbone(nn.Module):
         super(StockformerBackbone, self).__init__()
         self.noise_std = noise_std
         self.outfea = outfea
-        self.adjgat_proj = None  # lazy init when adjgat dim != outfea
+        self.adjgat_proj = nn.LazyLinear(outfea, bias=False)
         self.start_emb_l = FeedForward([infea, outfea, outfea])
         self.start_emb_h = FeedForward([infea, outfea, outfea])
         self.te_emb = temporalEmbedding(outfea)
@@ -295,8 +292,6 @@ class StockformerBackbone(nn.Module):
     def forward(self, xl, xh, te, bonus, indicator, adjgat):
         # Project adjgat to model dimension if needed
         if adjgat.shape[-1] != self.outfea:
-            if self.adjgat_proj is None or self.adjgat_proj.in_features != adjgat.shape[-1]:
-                self.adjgat_proj = nn.Linear(adjgat.shape[-1], self.outfea, bias=False).to(adjgat.device)
             adjgat = self.adjgat_proj(adjgat)
         '''
         x:[B,T,N]

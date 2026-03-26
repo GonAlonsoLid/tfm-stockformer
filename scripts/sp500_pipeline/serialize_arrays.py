@@ -27,7 +27,10 @@ def main():
     label_path = os.path.join(args.data_dir, args.label_file)
     df = pd.read_csv(label_path, index_col=0)
     df.index = pd.to_datetime(df.index)
-    df.fillna(0, inplace=True)
+    # Drop tickers (columns) that are entirely NaN
+    df = df.dropna(axis=1, how='all')
+    # Forward-fill sparse gaps (standard in financial time series), then drop remaining
+    df = df.ffill().dropna()
     save_model_arrays(df, args.data_dir)
 
 

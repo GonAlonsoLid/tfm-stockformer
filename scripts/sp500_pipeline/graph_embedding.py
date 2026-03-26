@@ -35,12 +35,14 @@ def build_correlation_graph(data_dir: str, threshold: float = 0.3) -> int:
     df = pd.read_csv(label_path, index_col=0)
     df.fillna(0, inplace=True)
 
-    # Zero-variance guard — identical to the existing preprocessing script
+    # Zero-variance guard — add small noise to preserve temporal structure
     epsilon = 1e-10
     std_devs = np.std(df.values, axis=0)
     zero_var = std_devs < epsilon
     if zero_var.any():
-        df.iloc[:, zero_var] = epsilon
+        # Add small noise to zero-variance columns instead of replacing them
+        noise = np.random.RandomState(42).normal(0, epsilon, size=(df.shape[0], zero_var.sum()))
+        df.iloc[:, zero_var] += noise
 
     corr_matrix = np.corrcoef(df.values, rowvar=False)
     np.save(os.path.join(data_dir, "corr_adj.npy"), corr_matrix)
@@ -88,7 +90,8 @@ def run_struc2vec(data_dir: str, embed_size: int = 128, workers: int = 4) -> Non
             raise ImportError("ge package not found")
         import os as _os
         _models_init = _os.path.join(_os.path.dirname(_ge_spec.origin), "models", "__init__.py")
-        _src = open(_models_init).read()
+        with open(_models_init) as f:
+            _src = f.read()
         if "try:" not in _src:
             _src = (
                 _src
@@ -101,7 +104,8 @@ def run_struc2vec(data_dir: str, embed_size: int = 128, workers: int = 4) -> Non
                     "try:\n    from .sdne import SDNE\nexcept (ImportError, ModuleNotFoundError):\n    pass",
                 )
             )
-            open(_models_init, "w").write(_src)
+            with open(_models_init, "w") as f:
+                f.write(_src)
         from ge import Struc2Vec
     except (ImportError, AttributeError, FileNotFoundError):
         raise ImportError(

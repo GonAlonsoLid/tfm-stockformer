@@ -31,25 +31,25 @@ config.read(args.config)
 
 # Add other config parameters
 parser.add_argument('--cuda', type=str, default=config['train']['cuda'])
-parser.add_argument('--seed', type=int, default=config['train']['seed'])
-parser.add_argument('--batch_size', type=int, default=config['train']['batch_size'])
-parser.add_argument('--max_epoch', type=int, default=config['train']['max_epoch'])
-parser.add_argument('--learning_rate', type=float, default=config['train']['learning_rate'])
+parser.add_argument('--seed', type=int, default=int(config['train']['seed']))
+parser.add_argument('--batch_size', type=int, default=int(config['train']['batch_size']))
+parser.add_argument('--max_epoch', type=int, default=int(config['train']['max_epoch']))
+parser.add_argument('--learning_rate', type=float, default=float(config['train']['learning_rate']))
 
 parser.add_argument('--Dataset', default=config['data']['dataset'])
-parser.add_argument('--T1', type=int, default=config['data']['T1'])
-parser.add_argument('--T2', type=int, default=config['data']['T2'])
-parser.add_argument('--train_ratio', type=float, default=config['data']['train_ratio'])
-parser.add_argument('--val_ratio', type=float, default=config['data']['val_ratio'])
-parser.add_argument('--test_ratio', type=float, default=config['data']['test_ratio'])
+parser.add_argument('--T1', type=int, default=int(config['data']['T1']))
+parser.add_argument('--T2', type=int, default=int(config['data']['T2']))
+parser.add_argument('--train_ratio', type=float, default=float(config['data']['train_ratio']))
+parser.add_argument('--val_ratio', type=float, default=float(config['data']['val_ratio']))
+parser.add_argument('--test_ratio', type=float, default=float(config['data']['test_ratio']))
 
-parser.add_argument('--L', type=int, default=config['param']['layers'])
-parser.add_argument('--h', type=int, default=config['param']['heads'])
-parser.add_argument('--d', type=int, default=config['param']['dims'])
-parser.add_argument('--j', type=int, default=config['param']['level'])
-parser.add_argument('--s', type=float, default=config['param']['samples'])
+parser.add_argument('--L', type=int, default=int(config['param']['layers']))
+parser.add_argument('--h', type=int, default=int(config['param']['heads']))
+parser.add_argument('--d', type=int, default=int(config['param']['dims']))
+parser.add_argument('--j', type=int, default=int(config['param']['level']))
+parser.add_argument('--s', type=float, default=float(config['param']['samples']))
 parser.add_argument('--w', default=config['param']['wave'])
-parser.add_argument('--max_features', type=int, default=config['param'].get('max_features', '0'))
+parser.add_argument('--max_features', type=int, default=int(config['param'].get('max_features', '0')))
 parser.add_argument('--decomposition', default=config['param'].get('decomposition', 'dwt'))
 
 parser.add_argument('--traffic_file', default=config['file']['traffic'])
@@ -283,16 +283,16 @@ def train(model, trainXL, trainXH, trainXC, bonus_trainX, trainTE, trainY, train
                 break
 
 
-def test(model, valXL, valXH, valXC, bonus_valX, valTE, valY, valYC, adjgat):
+def test(model, testXL, testXH, testXC, bonus_testX, testTE, testY, testYC, adjgat):
     try:
-        model.load_state_dict(torch.load(args.model_file))
+        model.load_state_dict(torch.load(args.model_file, weights_only=True))
         total_params = sum(p.numel() for p in model.parameters())
         log_string(log, 'Total parameters: {}'.format(total_params))
     except EOFError:
         print(f"Error: Unable to load model state dictionary from file {args.model_file}. File may be empty or corrupted.")
         return
 
-    acc, mae, rmse, mape, ic = evaluate_test(model, valXL, valXH, valXC, bonus_valX, valTE, valY, valYC, adjgat)
+    acc, mae, rmse, mape, ic = evaluate_test(model, testXL, testXH, testXC, bonus_testX, testTE, testY, testYC, adjgat)
     log_string(log, f"Test IC: {ic:.6f}")
     return acc, mae, rmse, mape, ic
 
@@ -351,3 +351,6 @@ if __name__ == '__main__':
     log_string(log, "testing begin....")
     test(model, testXL, testXH, testXC, bonus_testX, testTE, testY, testYC, adjgat)
     log_string(log, "testing end....")
+
+    tensor_writer.close()
+    log.close()
