@@ -74,7 +74,7 @@ def test_stockformer_forward_pass():
     Imports are inside the test body so the module loads without errors
     even when the model package is not yet on the import path.
     """
-    import torch
+    torch = pytest.importorskip("torch")
     from Stockformermodel.Multitask_Stockformer_models import Stockformer  # type: ignore
 
     device = torch.device("cpu")

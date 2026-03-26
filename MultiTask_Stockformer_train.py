@@ -335,9 +335,16 @@ if __name__ == '__main__':
     bonus_testX = test_dataset.bonus_X
     # infeature number
     infeature = train_dataset.infea
-    # adj, graphwave = loadGraph(args)
-    adjgat = loadGraph(args)
-    adjgat = torch.from_numpy(adjgat).float().to(device)
+    graph_type = getattr(args, 'graph_type', 'static')
+    if graph_type == 'static':
+        adjgat = loadGraph(args)
+        adjgat = torch.from_numpy(adjgat).float().to(device)
+    else:
+        from lib.dynamic_graph import load_dynamic_graph
+        n_stocks = train_dataset.bonus_X.shape[2]  # N dimension
+        d_model = args.h * args.d
+        adjgat = load_dynamic_graph(args, n_stocks, d_model, graph_type)
+        adjgat = adjgat.to(device)  # nn.Module, moves parameters to device
     log_string(log, "loading end....")
 
     log_string(log, "constructing model begin....")
