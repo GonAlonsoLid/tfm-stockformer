@@ -243,13 +243,14 @@ class StockDataset(Dataset):
         indicator = np.load(args.indicator_file)['result']
         path = args.alpha_360_dir
         files = sorted(f for f in os.listdir(path) if f.endswith('.csv'))
-        max_features = getattr(args, 'max_features', 0)
-        if max_features <= 0:
+        max_features = getattr(args, 'max_features', -1)
+        if max_features == 0:
             # Auto-detect: estimate max features that fit in available RAM
             max_features = _estimate_max_features(
                 n_files=len(files), path=path, T1=args.T1, T2=args.T2,
                 ram_fraction=0.6,  # use at most 60% of available RAM
             )
+        # max_features < 0 means "load all" (no limit)
         if max_features > 0 and len(files) > max_features:
             core = [f for f in files if not f.startswith('MACRO_') and not f.startswith(('RSI_', 'BBANDS_', 'MACD_', 'ATR_', 'ROC_', 'RVOL_'))]
             extra = [f for f in files if f not in core]
@@ -270,15 +271,21 @@ class StockDataset(Dataset):
         bonus_all = concatenated_arr
 
         # CRITICAL: Align Traffic/indicator (T_lab rows from d_0) with
-        # bonus_all (T_feat rows from d_LAG_BUFFER). Without this, features
-        # from future dates get paired with past labels → catastrophic leakage.
-        T_lab = Traffic.shape[0]
-        T_feat = bonus_all.shape[0]
-        LAG_BUFFER = T_lab - T_feat  # typically 59 (2059 - 2000)
-        if LAG_BUFFER > 0:
-            Traffic = Traffic[LAG_BUFFER:]      # trim labels to match feature dates
-            indicator = indicator[LAG_BUFFER:]
-            print(f"[StockDataset] Aligned labels to features (skipped first {LAG_BUFFER} label rows)")
+        # bonus_all (T_feat rows starting from d_60 due to Alpha360 lag buffer).
+        #
+        # The correct offset is the Alpha360 LAG_BUFFER (60), NOT T_lab - T_feat (59).
+        # With offset=59: features[0]=d_60 pairs with label[59]=d_59, and
+        # CLOSE_d1[d_60] = Close[d_60]/Close[d_59] ≡ label[d_59]+1 → leakage!
+        # With offset=60: features[0]=d_60 pairs with label[60]=d_60, and
+        # label[d_60] = Close[d_61]/Close[d_60] ≠ CLOSE_d1[d_60] → correct.
+        ALPHA360_LAG = 60  # Alpha360 drops first 60 rows for the 60-day ratio window
+        Traffic = Traffic[ALPHA360_LAG:]
+        indicator = indicator[ALPHA360_LAG:]
+        min_T = min(Traffic.shape[0], bonus_all.shape[0])
+        Traffic = Traffic[:min_T]
+        indicator = indicator[:min_T]
+        bonus_all = bonus_all[:min_T]
+        print(f"[StockDataset] Aligned labels to features (offset={ALPHA360_LAG}, T={min_T})")
 
         num_step = Traffic.shape[0]  # now matches bonus_all
         train_steps = round(args.train_ratio * num_step)

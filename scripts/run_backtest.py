@@ -402,6 +402,7 @@ def run_backtest_loop(
     tickers: list,
     top_k_n: int,
     strategy: str = "longonly",
+    regime_scalers: pd.Series = None,
 ) -> tuple:
     """Run the daily backtest loop over the test period.
 
@@ -472,6 +473,10 @@ def run_backtest_loop(
                 if np.std(recent_spy) > 1e-10:
                     beta_est = np.cov(recent_port, recent_spy)[0, 1] / np.var(recent_spy)
                     port_ret = port_ret - beta_est * spy_ret
+
+        # Regime scaling: reduce position size in high-volatility regimes
+        if regime_scalers is not None and date in regime_scalers.index:
+            port_ret = port_ret * regime_scalers[date]
 
         portfolio_returns.append(port_ret)
         weight_prev = weight_now
@@ -630,17 +635,24 @@ def main(output_dir: str = None, top_k: int = None) -> None:
             choices=["longonly", "longshort", "longshort_hedged"],
             help="Trading strategy: longonly (default), longshort (dollar-neutral), longshort_hedged (beta-hedged)",
         )
+        parser.add_argument(
+            "--regime_scale",
+            action="store_true",
+            help="Enable VIX-based regime scaling of positions (Low=1.0x, Normal=0.7x, High=0.3x)",
+        )
         args = parser.parse_args()
         output_dir = args.output_dir
         top_k_n = args.top_k
         tickers_file = args.tickers_file
         config_path = args.config
         strategy = args.strategy
+        regime_scale = args.regime_scale
     else:
         top_k_n = top_k if top_k is not None else 10
         tickers_file = "data/Stock_SP500_2018-01-01_2024-01-01/tickers.txt"
         config_path = "config/Multitask_Stock_SP500.conf"
         strategy = "longonly"
+        regime_scale = False
 
     if not os.path.isdir(output_dir):
         print(f"ERROR: output_dir does not exist: {output_dir}", file=sys.stderr)
@@ -677,10 +689,21 @@ def main(output_dir: str = None, top_k: int = None) -> None:
     print(f"Downloading prices for {n_stocks} tickers + SPY via yfinance...")
     prices = download_prices(tickers, date_index)
 
-    # 6. Run backtest loop
+    # 6. Regime scaling (optional)
+    regime_scalers = None
+    if regime_scale:
+        try:
+            from lib.regime import get_regime_scaler, load_vix
+            vix = load_vix(start=date_index[0], end=date_index[-1])
+            regime_scalers = get_regime_scaler(vix)
+            print(f"Regime scaling enabled: {(regime_scalers < 1.0).sum()}/{len(regime_scalers)} days scaled down")
+        except Exception as e:
+            print(f"WARNING: Could not load VIX for regime scaling: {e}. Proceeding without.")
+
+    # 7. Run backtest loop
     print(f"Running backtest (strategy={strategy}, top_k={top_k_n}, fee=0.001)...")
     portfolio_returns, spy_daily_returns, positions, turnover_series = run_backtest_loop(
-        pred_df, prices, tickers, top_k_n, strategy=strategy
+        pred_df, prices, tickers, top_k_n, strategy=strategy, regime_scalers=regime_scalers
     )
 
     # 7. Compute performance metrics

@@ -181,10 +181,14 @@ def main():
     parser.add_argument("--step_days", type=int, default=21)
     parser.add_argument("--max_epoch", type=int, default=30)
     parser.add_argument("--output_dir", default="output/walkforward")
+    parser.add_argument("--max_features", type=int, default=-1,
+                        help="-1=load all, 0=auto-fit RAM, N=limit to N features")
     cli_args = parser.parse_args()
 
     args = load_config(cli_args.config)
     args.max_epoch = cli_args.max_epoch
+    if cli_args.max_features != -1:
+        args.max_features = cli_args.max_features
 
     device = torch.device(f"cuda:{args.cuda}" if torch.cuda.is_available() else "cpu")
     print(f"Device: {device}")
