@@ -287,7 +287,7 @@ def train(model, trainXL, trainXH, trainXC, bonus_trainX, trainTE, trainY, train
 def test(model, testXL, testXH, testXC, bonus_testX, testTE, testY, testYC, adjgat):
     try:
         torch.serialization.add_safe_globals([torch.nn.parameter.UninitializedParameter])
-        model.load_state_dict(torch.load(args.model_file, weights_only=True))
+        model.load_state_dict(torch.load(args.model_file, map_location=device, weights_only=True))
         total_params = sum(p.numel() for p in model.parameters())
         log_string(log, 'Total parameters: {}'.format(total_params))
     except EOFError:
