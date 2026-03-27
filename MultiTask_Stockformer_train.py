@@ -288,7 +288,7 @@ def test(model, testXL, testXH, testXC, bonus_testX, testTE, testY, testYC, adjg
     try:
         # weights_only=False is safe here — checkpoint was produced by our own training
         model.load_state_dict(torch.load(args.model_file, map_location=device, weights_only=False))
-        total_params = sum(p.numel() for p in model.parameters() if p.is_leaf)
+        total_params = sum(p.numel() for p in model.parameters() if p.is_leaf and not isinstance(p, torch.nn.parameter.UninitializedParameter))
         log_string(log, 'Total parameters: {}'.format(total_params))
     except EOFError:
         print(f"Error: Unable to load model state dictionary from file {args.model_file}. File may be empty or corrupted.")
