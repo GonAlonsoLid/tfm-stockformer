@@ -286,6 +286,15 @@ def train(model, trainXL, trainXH, trainXC, bonus_trainX, trainTE, trainY, train
 
 def test(model, testXL, testXH, testXC, bonus_testX, testTE, testY, testYC, adjgat):
     try:
+        # Dummy forward pass to initialize LazyModule parameters
+        with torch.no_grad():
+            dummy_xl = torch.from_numpy(testXL[:1]).float().to(device)
+            dummy_xh = torch.from_numpy(testXH[:1]).float().to(device)
+            dummy_xc = torch.from_numpy(testXC[:1]).float().to(device)
+            dummy_te = torch.from_numpy(testTE[:1]).to(device)
+            dummy_bonus = torch.from_numpy(bonus_testX[:1]).float().to(device)
+            model(dummy_xl, dummy_xh, dummy_te, dummy_bonus, dummy_xc, adjgat)
+
         torch.serialization.add_safe_globals([torch.nn.parameter.UninitializedParameter])
         model.load_state_dict(torch.load(args.model_file, map_location=device, weights_only=True))
         total_params = sum(p.numel() for p in model.parameters())
