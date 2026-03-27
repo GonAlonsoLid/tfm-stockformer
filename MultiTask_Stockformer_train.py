@@ -62,6 +62,7 @@ parser.add_argument('--log_file', default=config['file']['log'])
 parser.add_argument('--alpha_360_dir', default=config['file']['alpha_360_dir'])
 parser.add_argument('--output_dir', default=config['file']['output_dir'])
 parser.add_argument('--tensorboard_dir', default=config['file']['tensorboard_dir'])
+parser.add_argument('--loss_type', default=config.get('loss', 'type', fallback='ranking_combined'))
 
 # Final argument parse
 args = parser.parse_args()
@@ -250,10 +251,13 @@ def train(model, trainXL, trainXH, trainXC, bonus_trainX, trainTE, trainY, train
 
                 hat_y_class, hat_y_l_class, hat_y_regress, hat_y_l_regress = model(xl, xh, te, bonus, xc, adjgat)
 
-                # Ranking loss (ListNet + IC + MAE) replaces pure MAE for regression
-                loss_ranking = combined_ranking_loss(hat_y_regress, y)
+                # Loss computation — configurable via [loss] type in .conf
+                if args.loss_type == 'mse':
+                    loss_regress = _compute_regression_loss(y, hat_y_regress)
+                else:  # ranking_combined (default)
+                    loss_regress = combined_ranking_loss(hat_y_regress, y)
                 loss_class = _compute_class_loss(yc, hat_y_class) + _compute_class_loss(yc, hat_y_l_class)
-                loss = loss_ranking + 0.5 * loss_class
+                loss = loss_regress + 0.5 * loss_class
 
                 loss.backward()
                 nn.utils.clip_grad_norm_(model.parameters(), 0.3)
