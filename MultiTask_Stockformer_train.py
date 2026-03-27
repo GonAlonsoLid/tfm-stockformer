@@ -21,6 +21,7 @@ from torch.utils.tensorboard import SummaryWriter
 # Initialize parser
 parser = argparse.ArgumentParser()
 parser.add_argument("--config", type=str, help='configuration file')
+parser.add_argument("--test-only", action='store_true', help='skip training, run test on existing checkpoint')
 
 # First parse: only get config file
 args, unknown = parser.parse_known_args()  # Use known_args to avoid conflict with later-added args
@@ -285,6 +286,7 @@ def train(model, trainXL, trainXH, trainXC, bonus_trainX, trainTE, trainY, train
 
 def test(model, testXL, testXH, testXC, bonus_testX, testTE, testY, testYC, adjgat):
     try:
+        torch.serialization.add_safe_globals([torch.nn.parameter.UninitializedParameter])
         model.load_state_dict(torch.load(args.model_file, weights_only=True))
         total_params = sum(p.numel() for p in model.parameters())
         log_string(log, 'Total parameters: {}'.format(total_params))
@@ -351,9 +353,16 @@ if __name__ == '__main__':
     model = Stockformer(infeature, args.h*args.d, outfea_class, outfea_regress, args.L, args.h, args.d, args.s, args.T1, args.T2, device).to(device)
     log_string(log, "constructing model end....")
 
-    log_string(log, "training begin....")
-    train(model, trainXL, trainXH, trainXC, bonus_trainX, trainTE, trainY, trainYL, trainYC, valXL, valXH, valXC, bonus_valX, valTE, valY, valYC, adjgat)
-    log_string(log, "training end....")
+    if not args.test_only:
+        log_string(log, "training begin....")
+        train(model, trainXL, trainXH, trainXC, bonus_trainX, trainTE, trainY, trainYL, trainYC, valXL, valXH, valXC, bonus_valX, valTE, valY, valYC, adjgat)
+        log_string(log, "training end....")
+    else:
+        if not os.path.exists(args.model_file):
+            log_string(log, f"ERROR: --test-only requires checkpoint at {args.model_file}")
+            log.close()
+            exit(1)
+        log_string(log, f"--test-only: skipping training, using checkpoint {args.model_file}")
 
     log_string(log, "testing begin....")
     test(model, testXL, testXH, testXC, bonus_testX, testTE, testY, testYC, adjgat)

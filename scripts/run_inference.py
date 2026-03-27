@@ -185,7 +185,8 @@ def main():
     ).to(device)
 
     print(f"Loading checkpoint: {args.model_file}")
-    model.load_state_dict(torch.load(args.model_file, map_location=device))
+    torch.serialization.add_safe_globals([torch.nn.parameter.UninitializedParameter])
+    model.load_state_dict(torch.load(args.model_file, map_location=device, weights_only=True))
     model.eval()
     total_params = sum(p.numel() for p in model.parameters())
     print(f"Total model parameters: {total_params:,}")
