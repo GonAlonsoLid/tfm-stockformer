@@ -1,0 +1,2 @@
+experiment,name,ic,accuracy,mae,rmse,mape
+E6,LightGBM + Alpha158 Baseline,0.013645218999246886,nan,nan,nan,nan
