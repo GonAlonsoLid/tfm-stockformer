@@ -35,6 +35,7 @@ from lib import eval_harness as eh  # noqa: E402
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 RESULTS_DIR = os.path.join(PROJECT_ROOT, "results")
 DAILY_IC_DIR = os.path.join(RESULTS_DIR, "ladder_daily_ic")
+LS_RETURNS_DIR = os.path.join(RESULTS_DIR, "ladder_ls_returns")
 DEFAULT_DATA_DIR = "data/Stock_SP500_2018-01-01_2026-03-16"
 
 QUANTILE = 0.1   # decile long-short
@@ -172,6 +173,10 @@ def evaluate_model(name: str, spec: dict, panel: dp.Panel, split: dict) -> dict:
     os.makedirs(DAILY_IC_DIR, exist_ok=True)
     daily_ic.rename("rank_ic").to_csv(os.path.join(DAILY_IC_DIR, f"{name}.csv"),
                                       header=True)
+    # Persist the long-short net return series for equity-curve figures
+    ls = eh.longshort_returns(pred, label, quantile=QUANTILE, fee=FEE)
+    os.makedirs(LS_RETURNS_DIR, exist_ok=True)
+    ls.to_csv(os.path.join(LS_RETURNS_DIR, f"{name}.csv"))
 
     row = {"model": name, "level": spec["level"], "family": spec["family"],
            "n_params": n_params, **metrics, "seconds": round(time.time() - t0, 1)}
