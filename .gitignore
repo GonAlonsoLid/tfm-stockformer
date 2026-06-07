@@ -35,3 +35,4 @@ cluster_bundle/panel.npz
 cluster_bundle/predictions/
 data/*/fundamentals.npz
 data/*/edgar_cache/
+data/*/realized_vol.npz

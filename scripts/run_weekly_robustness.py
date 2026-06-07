@@ -178,6 +178,8 @@ def main():
     ap.add_argument("--step", type=int, default=26, help="retrain step in weeks (~semiannual)")
     ap.add_argument("--with_fundamentals", action="store_true",
                     help="concatenate EDGAR fundamentals.npz to the feature set")
+    ap.add_argument("--with_realized", action="store_true",
+                    help="concatenate realized_vol.npz (Tier C risk features)")
     args = ap.parse_args()
 
     print("Loading panel + weekly resampling ...")
@@ -185,6 +187,9 @@ def main():
     if args.with_fundamentals:
         panel = dp.attach_fundamentals(panel, os.path.join(args.data_dir, "fundamentals.npz"))
         print(f"  + fundamentals -> {panel.X.shape[2]} features")
+    if args.with_realized:
+        panel = dp.attach_fundamentals(panel, os.path.join(args.data_dir, "realized_vol.npz"))
+        print(f"  + realized-vol -> {panel.X.shape[2]} features")
     week = wp.build_weekly(panel)
     print(f"  {week.Xw.shape[0]} weeks total")
 
