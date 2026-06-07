@@ -173,10 +173,15 @@ def main():
     ap.add_argument("--name_cap", type=float, default=0.04)
     ap.add_argument("--target_vol", type=float, default=0.10)
     ap.add_argument("--smooth_halflife", type=float, default=2.0)
+    ap.add_argument("--with_fundamentals", action="store_true",
+                    help="concatenate EDGAR fundamentals.npz to the feature set")
     args = ap.parse_args()
 
     print("Loading daily panel + building weekly panel ...")
     panel = dp.load_panel(args.data_dir)
+    if args.with_fundamentals:
+        panel = dp.attach_fundamentals(panel, os.path.join(args.data_dir, "fundamentals.npz"))
+        print(f"  + fundamentals -> {panel.X.shape[2]} features")
     week = wp.build_weekly(panel)
     print(f"  weekly: {week.Xw.shape[0]} weeks x {week.Xw.shape[1]} stocks; "
           f"train_end_w={week.train_end_w} val_end_w={week.val_end_w}")

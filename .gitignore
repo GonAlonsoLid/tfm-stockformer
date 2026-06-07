@@ -33,3 +33,5 @@ temp_struc2vec/
 # Large cluster bundle artifacts (generated, do not commit)
 cluster_bundle/panel.npz
 cluster_bundle/predictions/
+data/*/fundamentals.npz
+data/*/edgar_cache/

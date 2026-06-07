@@ -131,3 +131,33 @@ def test_flatten_split_shapes_and_test_indexing(fake_data_dir):
     assert s["date_idx_test"].shape[0] == s["X_test"].shape[0]
     # date_idx_test values are global date indices into panel.dates
     assert s["date_idx_test"].min() >= panel.val_end
+
+
+# ── attach_fundamentals ─────────────────────────────────────────────────────────
+
+def test_attach_fundamentals_concatenates_and_extends_names(fake_data_dir, tmp_path):
+    data_dir, meta = fake_data_dir
+    panel = dp.load_panel(str(data_dir), lag=meta["lag"])
+    T, N, F = panel.X.shape
+    fund_path = tmp_path / "fundamentals.npz"
+    import numpy as _np
+    Xf = _np.random.default_rng(0).normal(size=(T, N, 2))
+    Xf[0, 0, 0] = _np.nan  # NaN must become 0.0
+    _np.savez_compressed(fund_path, X_fund=Xf,
+                         feature_names=_np.array(["FUND_a", "FUND_b"]))
+    p2 = dp.attach_fundamentals(panel, str(fund_path))
+    assert p2.X.shape == (T, N, F + 2)
+    assert p2.feature_names[-2:] == ["FUND_a", "FUND_b"]
+    assert p2.X[0, 0, F] == 0.0  # NaN -> 0
+
+
+def test_attach_fundamentals_grid_mismatch_raises(fake_data_dir, tmp_path):
+    data_dir, meta = fake_data_dir
+    panel = dp.load_panel(str(data_dir), lag=meta["lag"])
+    import numpy as _np
+    bad = tmp_path / "bad.npz"
+    _np.savez_compressed(bad, X_fund=_np.zeros((3, 3, 1)),
+                         feature_names=_np.array(["FUND_x"]))
+    import pytest as _pytest
+    with _pytest.raises(ValueError):
+        dp.attach_fundamentals(panel, str(bad))

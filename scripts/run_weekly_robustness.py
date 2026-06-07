@@ -176,10 +176,15 @@ def main():
     ap.add_argument("--data_dir", default=DEFAULT_DATA_DIR)
     ap.add_argument("--init_train", type=int, default=200, help="initial train weeks (~4y)")
     ap.add_argument("--step", type=int, default=26, help="retrain step in weeks (~semiannual)")
+    ap.add_argument("--with_fundamentals", action="store_true",
+                    help="concatenate EDGAR fundamentals.npz to the feature set")
     args = ap.parse_args()
 
     print("Loading panel + weekly resampling ...")
     panel = dp.load_panel(args.data_dir)
+    if args.with_fundamentals:
+        panel = dp.attach_fundamentals(panel, os.path.join(args.data_dir, "fundamentals.npz"))
+        print(f"  + fundamentals -> {panel.X.shape[2]} features")
     week = wp.build_weekly(panel)
     print(f"  {week.Xw.shape[0]} weeks total")
 

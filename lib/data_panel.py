@@ -103,6 +103,25 @@ def load_panel(data_dir: str, exclude_macro: bool = True, lag: int = ALPHA360_LA
                  feature_names=feature_names, train_end=train_end, val_end=val_end)
 
 
+def attach_fundamentals(panel: Panel, fund_path: str) -> Panel:
+    """Return a new Panel with fundamentals.npz features concatenated to X.
+
+    The fundamentals file must be aligned to the same [T, N] grid (built by
+    scripts/build_fundamentals.py). NaNs (no coverage) become 0.0, which for the
+    cross-sectionally z-scored factors is the neutral cross-sectional mean.
+    """
+    data = np.load(fund_path, allow_pickle=True)
+    Xf = np.nan_to_num(data["X_fund"].astype(np.float64), nan=0.0)
+    names = [str(n) for n in data["feature_names"]]
+    if Xf.shape[:2] != panel.X.shape[:2]:
+        raise ValueError(
+            f"fundamentals grid {Xf.shape[:2]} != panel grid {panel.X.shape[:2]}")
+    X = np.concatenate([panel.X, Xf], axis=2)
+    return Panel(X=X, y=panel.y, dates=panel.dates, tickers=panel.tickers,
+                 feature_names=panel.feature_names + names,
+                 train_end=panel.train_end, val_end=panel.val_end)
+
+
 def to_canonical(matrix: np.ndarray, dates, tickers: list[str]) -> pd.DataFrame:
     """Wrap a [days x stocks] matrix as the canonical [dates x tickers] frame."""
     return pd.DataFrame(np.asarray(matrix), index=pd.DatetimeIndex(dates),
