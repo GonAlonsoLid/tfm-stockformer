@@ -152,7 +152,9 @@ def longshort_returns(pred: pd.DataFrame, label: pd.DataFrame,
         rets = label.loc[date].reindex(tickers).fillna(0.0)
         w = pd.Series(0.0, index=tickers)
         valid = scores.dropna()
-        if len(valid) >= 2 * k:
+        # need enough names AND real dispersion (constant scores carry no rank
+        # information -> a no-skill predictor must take no position)
+        if len(valid) >= 2 * k and valid.nunique() >= 2:
             longs = valid.nlargest(k).index
             shorts = valid.nsmallest(k).index
             w[longs] = 1.0 / k

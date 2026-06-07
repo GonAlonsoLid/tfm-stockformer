@@ -129,6 +129,17 @@ def test_longshort_is_dollar_neutral_and_known_return():
     assert ls["turnover"].iloc[0] == pytest.approx(2.0)
 
 
+def test_longshort_takes_no_position_when_scores_constant():
+    # a no-skill flat predictor must not earn/lose from arbitrary tie-breaking
+    label = _frame([[0.05, 0.01, 0.0, -0.01, -0.05]],
+                   tickers=["A", "B", "C", "D", "E"])
+    pred = _frame([[1, 1, 1, 1, 1]], tickers=["A", "B", "C", "D", "E"])
+    ls = eh.longshort_returns(pred, label, quantile=0.2, fee=0.001)
+    assert ls["gross"].iloc[0] == pytest.approx(0.0)
+    assert ls["turnover"].iloc[0] == pytest.approx(0.0)
+    assert ls["net"].iloc[0] == pytest.approx(0.0)
+
+
 def test_longshort_fee_reduces_net_return():
     label = _frame([[0.05, 0.01, 0.0, -0.01, -0.05]],
                    tickers=["A", "B", "C", "D", "E"])
