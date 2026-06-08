@@ -1,3 +1,49 @@
 \chapter{Tablas completas}\label{ap:tablas}
 
-% TODO
+Este apéndice recoge las versiones de detalle completo de las tablas resumidas
+en el cuerpo de la memoria. Todos los fragmentos se generan automáticamente desde
+\texttt{results/*.csv} mediante \texttt{scripts/build\_latex\_tables.py}
+(ver Apéndice~\ref{ap:repro}), de modo que las cifras quedan ligadas a los CSV
+producidos por el pipeline.
+
+\section{Complexity ladder completa}
+
+La Tabla~\ref{tab:ladder-full} muestra todas las métricas evaluadas para cada
+peldaño de la escalera de complejidad, incluido el Stockformer en la cúspide:
+IC medio, su desviación, IR, $t$-estadístico, $p$-valor, porcentaje de días
+positivos, intervalo de confianza bootstrap del IC, IC de Pearson, y las métricas
+de la cartera long-short (Sharpe, retorno anualizado, máximo drawdown, beta,
+rotación y tiempo de cómputo). Es la evidencia central del resultado
+``simpler-is-better'': los modelos lineales y de árboles igualan o superan al
+transformer en IC con una fracción de los parámetros.
+
+\begin{table}[htbp]
+\centering
+\caption{Resultados completos de la complexity ladder}
+\label{tab:ladder-full}
+\resizebox{\textwidth}{!}{%
+  \input{tablas/ladder_full_body}%
+}
+\end{table}
+
+\section{Robustez con datos adicionales}
+
+Las dos tablas siguientes documentan los resultados \emph{negativos honestos} de
+añadir información extra al pipeline semanal. La Tabla~\ref{tab:rob-fund} reporta
+la robustez walk-forward al concatenar fundamentales point-in-time de SEC EDGAR
+(Tier B); la Tabla~\ref{tab:rob-realized} hace lo propio con las variables de
+realized-vol / IVOL (Tier C). En ambos casos el Sharpe neto out-of-sample no
+mejora respecto a la línea base (Tabla~\ref{tab:weekly-robustness}), lo que
+refuerza que el cuello de botella es la señal, no la falta de datos.
+
+\input{tablas/robustez_fund}
+
+\input{tablas/robustez_realized}
+
+\section{Ablación de variantes}
+
+La Tabla~\ref{tab:ablation} recoge la ablación de variantes de entrada y modelo
+empleada como contraste durante el desarrollo (IC y métricas de error del
+baseline de LightGBM sobre Alpha158).
+
+\input{tablas/ablation}

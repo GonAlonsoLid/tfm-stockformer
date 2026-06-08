@@ -8,13 +8,20 @@ OUT = ROOT / "MEMORIA" / "tfm" / "tablas"
 OUT.mkdir(parents=True, exist_ok=True)
 
 
-def emit(df, fname, caption, label, cols=None, floatfmt="%.4f"):
+def emit(df, fname, caption, label, cols=None, floatfmt="%.4f", body_only=False):
     if cols:
         df = df[cols]
-    tex = df.to_latex(index=False, escape=True,
-                      float_format=lambda x: (floatfmt % x) if pd.notna(x) else "",
-                      na_rep="",
-                      caption=caption, label=label, position="htbp")
+    if body_only:
+        # Just the tabular environment, so the caller can wrap it in
+        # \resizebox / \begin{table} from the .tex (used for very wide tables).
+        tex = df.to_latex(index=False, escape=True,
+                          float_format=lambda x: (floatfmt % x) if pd.notna(x) else "",
+                          na_rep="")
+    else:
+        tex = df.to_latex(index=False, escape=True,
+                          float_format=lambda x: (floatfmt % x) if pd.notna(x) else "",
+                          na_rep="",
+                          caption=caption, label=label, position="htbp")
     (OUT / fname).write_text(tex, encoding="utf-8")
     print("wrote", fname)
 
@@ -45,6 +52,28 @@ def main():
     emit(wa, "weekly_attribution.tex",
          "Atribución de construcción: aporte incremental de cada etapa al Sharpe neto.",
          "tab:weekly-attribution")
+
+    # ── Tablas completas (Apéndice B) ───────────────────────────────────────────
+    ladder_full = pd.read_csv(RES / "ladder_full_results.csv")
+    # 21 columns: emit only the tabular body so the .tex wraps it in \resizebox.
+    emit(ladder_full, "ladder_full_body.tex",
+         "Resultados completos de la complexity ladder",
+         "tab:ladder-full", body_only=True)
+
+    rob_fund = pd.read_csv(RES / "weekly_robustness_summary_fund.csv")
+    emit(rob_fund, "robustez_fund.tex",
+         "Robustez walk-forward con fundamentales (Tier B)",
+         "tab:rob-fund")
+
+    rob_realized = pd.read_csv(RES / "weekly_robustness_summary_realized.csv")
+    emit(rob_realized, "robustez_realized.tex",
+         "Robustez walk-forward con realized-vol (Tier C)",
+         "tab:rob-realized")
+
+    ablation = pd.read_csv(RES / "ablation_results.csv")
+    emit(ablation, "ablation.tex",
+         "Ablación de variantes de entrada y modelo",
+         "tab:ablation")
 
     print("Tablas generadas en", OUT)
 
