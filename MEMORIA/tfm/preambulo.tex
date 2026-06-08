@@ -28,6 +28,10 @@
 }
 \usepackage[backend=bibtex, style=numeric, citestyle=numeric, sorting=none]{biblatex}
 \addbibresource{main.bib}
+% verbatim en cuerpo más pequeño (solo se usa en los apéndices: comandos y árbol)
+\makeatletter
+\renewcommand{\verbatim@font}{\normalfont\ttfamily\footnotesize}
+\makeatother
 % Cabeceras
 \setlength{\headheight}{15pt}
 \fancyhf{}
