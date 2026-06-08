@@ -1,0 +1,18 @@
+\begin{table}[htbp]
+\caption{Complexity ladder: IC, parámetros y Sharpe por modelo (split único, 250 días).}
+\label{tab:ladder}
+\begin{tabular}{llrrrrrr}
+\toprule
+model & family & n\_params & ic\_mean & icir & tstat & pvalue & sharpe \\
+\midrule
+zero & sanity & 0 &  &  &  &  &  \\
+momentum & sanity & 0 & -0.0128 & -0.0670 & -1.0589 & 0.2907 & -1.4289 \\
+reversal & sanity & 0 & 0.0126 & 0.0673 & 1.0635 & 0.2886 & -1.4258 \\
+ridge & linear & 376 & 0.0173 & 0.1064 & 1.6826 & 0.0937 & -2.8542 \\
+lasso & linear & 5 & 0.0238 & 0.0951 & 1.5035 & 0.1340 & 0.9099 \\
+elasticnet & linear & 19 & 0.0157 & 0.0687 & 1.0864 & 0.2784 & -0.0607 \\
+lightgbm & trees & 31 & 0.0136 & 0.1110 & 1.7547 & 0.0805 & 0.2062 \\
+xgboost & trees & 9600 & 0.0141 & 0.0926 & 1.4639 & 0.1445 & -1.8505 \\
+\bottomrule
+\end{tabular}
+\end{table}

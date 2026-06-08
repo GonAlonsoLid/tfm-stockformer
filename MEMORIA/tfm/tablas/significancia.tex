@@ -1,0 +1,15 @@
+\begin{table}[htbp]
+\caption{Tests de significancia del IC frente a Stockformer (diferencia de medias, t, p).}
+\label{tab:significancia}
+\begin{tabular}{llrrrr}
+\toprule
+model & vs & mean\_diff & tstat & pvalue & n \\
+\midrule
+lasso & stockformer & 0.0319 & 1.8616 & 0.0639 & 236 \\
+ridge & stockformer & 0.0187 & 1.4215 & 0.1565 & 236 \\
+lightgbm & stockformer & 0.0178 & 1.6267 & 0.1052 & 236 \\
+xgboost & stockformer & 0.0214 & 1.7157 & 0.0875 & 236 \\
+momentum & stockformer & -0.0093 & -0.5822 & 0.5610 & 236 \\
+\bottomrule
+\end{tabular}
+\end{table}
