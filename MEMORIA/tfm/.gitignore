@@ -18,3 +18,7 @@
 *.vrb
 *.dvi
 *.ps
+main-blx.bib
+
+# Excepciones: activos fuente que NO son build artifacts
+!LogoUniversidadBN.pdf
