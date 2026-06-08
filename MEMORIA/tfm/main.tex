@@ -1,0 +1,43 @@
+\documentclass[12pt, a4paper]{book}
+\input{preambulo}
+\begin{document}
+  \frontmatter
+  \pagestyle{empty}
+  \begin{titlepage}
+    \centering
+    \includegraphics[width=0.3\linewidth]{LogoUniversidadBN}\\[2em]
+    {\Large Universidad Pontificia Comillas --- ICAI}\\[0.5em]
+    {\large \masterTFM}\\[2.5em]
+    {\large Trabajo Fin de Máster}\\[1em]
+    {\LARGE \bfseries \tituloTFM}\\[3em]
+    {\large Autor: \autorTFM}\\[1em]
+    {\large Dirigido por: \tutorTFM}\\
+    \vfill
+    {\large \fechaTFM}
+  \end{titlepage}
+  \cleardoublepage
+  \chapter*{Resumen}
+  \input{Capitulos/00_resumen}
+  \cleardoublepage
+  \tableofcontents
+  \listoffigures
+  \listoftables
+  \cleardoublepage
+  \mainmatter
+  \pagestyle{fancy}
+  \include{Capitulos/01_introduccion}
+  \include{Capitulos/02_estado_del_arte}
+  \include{Capitulos/03_stockformer}
+  \include{Capitulos/04_metodologia}
+  \include{Capitulos/05_parte1_transferencia}
+  \include{Capitulos/06_parte2_que_funciona}
+  \include{Capitulos/07_discusion}
+  \include{Capitulos/08_conclusiones}
+  \appendix
+  \include{Apendices/A_reproducibilidad}
+  \include{Apendices/B_tablas_completas}
+  \include{Apendices/C_estructura_repo}
+  \cleardoublepage
+  \printbibliography[heading=bibintoc]
+  \backmatter
+\end{document}

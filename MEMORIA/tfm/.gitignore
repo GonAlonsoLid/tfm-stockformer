@@ -1,0 +1,20 @@
+# LaTeX build artifacts
+*.aux
+*.log
+*.out
+*.pdf
+*.fls
+*.fdb_latexmk
+*.toc
+*.lof
+*.lot
+*.bbl
+*.blg
+*.run.xml
+*.bcf
+*.synctex.gz
+*.nav
+*.snm
+*.vrb
+*.dvi
+*.ps
