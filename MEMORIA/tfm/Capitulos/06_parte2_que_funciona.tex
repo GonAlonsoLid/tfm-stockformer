@@ -75,7 +75,7 @@ de optimizar la construcción. Es importante subrayar que esta etapa no añade p
 predictivo ---no mejora el IC---, sino que reduce el coste de cosechar la señal que ya
 existe.
 
-\section{Construcción de cartera \textit{cost-aware}}\label{sec:p2-construccion}
+\section{Construcción de cartera cost-aware}\label{sec:p2-construccion}
 
 El corazón del \textit{pipeline} es el constructor de cartera, que resuelve, en cada fecha
 de rebalanceo, un problema de optimización convexa sobre el vector de pesos $w \in
@@ -166,7 +166,7 @@ sobreinterpretar esta cifra aislada: un Sharpe neto de $0{,}95$ sobre 52 semanas
 resultado favorable, pero una sola ventana anual es una muestra estrecha. La sección
 siguiente somete este número a la prueba que de verdad importa.
 
-\section{Robustez \textit{walk-forward}}\label{sec:p2-robustez}
+\section{Robustez walk-forward}\label{sec:p2-robustez}
 
 Una única ventana de 52 semanas no basta para afirmar que una estrategia es robusta. Para
 estresar el resultado, reentrenamos el \textit{ensemble} de forma periódica (cada 26

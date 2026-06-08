@@ -14,8 +14,18 @@
 \usepackage{xcolor}
 \usepackage{csquotes}
 \usepackage{hyperref}
-\usepackage{bookmark}
 \hypersetup{colorlinks=true, linkcolor=black, citecolor=blue, urlcolor=blue}
+% Neutraliza contenido frágil (matemáticas, formato) en las cadenas de los
+% marcadores PDF, evitando el fatal "File ended while scanning \BKM@entry".
+\pdfstringdefDisableCommands{%
+  \let\(\relax%
+  \let\)\relax%
+  \def\sim{~}%
+  \def\textit#1{#1}%
+  \def\textbf#1{#1}%
+  \def\textsc#1{#1}%
+  \def\,{ }%
+}
 \usepackage[backend=bibtex, style=numeric, citestyle=numeric, sorting=none]{biblatex}
 \addbibresource{main.bib}
 % Cabeceras

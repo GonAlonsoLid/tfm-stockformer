@@ -47,7 +47,7 @@ canónica de este panel está implementada en \texttt{lib/data\_panel.py}, que o
 estructura inmutable (\texttt{Panel}) con las variables, las etiquetas, el calendario, la
 lista de \textit{tickers} y los índices de corte del \textit{split} temporal.
 
-\paragraph{Alineación variable--etiqueta.} El invariante anti-\textit{leakage} central del
+\paragraph{Alineación variable--etiqueta.} El invariante anti-leakage central del
 panel es el desfase (\textit{offset}) de \texttt{ALPHA360\_LAG~=~60} días entre las
 variables y las etiquetas. Las variables Alpha360 requieren un \textit{buffer} de 60
 retardos (\textit{lags}) para estar definidas, de modo que las primeras 60 filas del
@@ -56,7 +56,7 @@ panel bruto se descartan; las etiquetas se desplazan en consonancia, emparejando
 ramas del trabajo —la del Stockformer y la de los modelos tabulares— y es,
 precisamente, lo que verifica la auditoría de la sección~\ref{sec:met-leakage}.
 
-\paragraph{\textit{Split} fijo estándar.} Para la comparación de modelos de la Parte~I se
+\paragraph{Split fijo estándar.} Para la comparación de modelos de la Parte~I se
 emplea un \textit{split} temporal fijo en proporciones \(0{,}75/0{,}125/0{,}125\)
 (entrenamiento, validación y test) sobre la longitud post-alineación. Todas las
 estadísticas de normalización se estiman \emph{solo} sobre el tramo de entrenamiento y
@@ -70,7 +70,7 @@ excluye las variables macroeconómicas, que son constantes en sección transvers
 tanto, carecen de información de \textit{ranking}; el estándar acordado es que los
 \(F\!\approx\!375\) regresores idénticos alimenten a todos los modelos.
 
-\paragraph{Evaluación temporal: \textit{walk-forward} purgado y embargado.} Para la
+\paragraph{Evaluación temporal: walk-forward purgado y embargado.} Para la
 estrategia semanal de la Parte~II un único \textit{split} fijo sería insuficiente: el
 riesgo es atribuir a la estrategia un rendimiento que dependa de una ventana favorable.
 Por ello la evaluación temporal de la Parte~II sigue un protocolo \textit{walk-forward}
@@ -147,7 +147,7 @@ constantes en sección transversal y, por ello, se excluyen del conjunto base us
 el \textit{ranking} de acciones (su valor está en el \textit{overlay} de régimen de la
 Parte~II, no en la predicción transversal).
 
-\paragraph{Higiene transversal sin \textit{leakage}.} La pieza metodológica clave de esta
+\paragraph{Higiene transversal sin leakage.} La pieza metodológica clave de esta
 sección es el orden y la dirección del procesamiento. Toda normalización se aplica
 \emph{por fecha} y \emph{en sección transversal} (a lo largo de las acciones, eje de
 \textit{tickers}), nunca a lo largo del tiempo: normalizar en el eje temporal usaría
@@ -181,7 +181,7 @@ comparación homogénea y reproducible. El \textit{harness} recibe dos paneles a
 metodología sigue la práctica establecida en \textit{asset pricing} con \textit{machine
 learning} \cite{gu2020empirical}.
 
-\paragraph{Métricas de poder predictivo.} La métrica primaria es el \textbf{rank IC}
+\paragraph{Métricas de poder predictivo.} La métrica primaria es el rank IC
 (\textit{Information Coefficient}): la correlación de Spearman, en sección transversal y
 para cada fecha, entre el \textit{score} predicho y el retorno realizado. Días con menos
 de dos pares válidos o con predicciones/etiquetas constantes —sin información de
@@ -203,7 +203,7 @@ genuino se aplica un \textbf{contraste t} de una muestra sobre la serie diaria d
 las fechas comunes; este contraste pareado es el que sustenta las afirmaciones de
 significancia entre modelos de la Parte~I.
 
-\paragraph{Backtest \textit{long-short} por deciles.} El \textit{harness} incluye un
+\paragraph{Backtest long-short por deciles.} El harness incluye un
 \textit{backtest} factorial \textit{long-short} \textit{dollar-neutral}: cada día se
 ordenan las acciones por \textit{score}, se compra el decil superior (peso equiponderado
 que suma \(+1\)) y se vende en corto el decil inferior (que suma \(-1\)); el retorno
@@ -217,7 +217,7 @@ frente a un proxy de mercado equiponderado—. La advertencia metodológica, des
 la sección~\ref{sec:met-loss}, es que el modelo de mejor IC no es necesariamente el de
 mejor retorno neto.
 
-\section{La \textit{complexity ladder}}\label{sec:met-ladder}
+\section{La complexity ladder}\label{sec:met-ladder}
 
 El diseño experimental central de la Parte~I es una \textbf{escalera de complejidad}
 (\textit{complexity ladder}): una secuencia de modelos ordenados por número de parámetros
@@ -260,7 +260,7 @@ cada peldaño simple frente al Stockformer— se presentan en la Parte~I
 \emph{comparativo}: su valor no reside en el rendimiento absoluto de ningún modelo, sino en
 la pendiente IC-vs-complejidad que dibuja el conjunto.
 
-\section{Función de pérdida de \textit{ranking}}\label{sec:met-loss}
+\section{Función de pérdida de ranking}\label{sec:met-loss}
 
 Una decisión metodológica transversal es \emph{qué} optimizan los modelos. El objetivo
 último de la estrategia no es predecir el retorno puntual de cada acción, sino
@@ -301,7 +301,7 @@ en la memoria: \emph{¿qué modelo predice mejor?} (la \textit{ladder}, Parte~I)
 dónde viene el retorno neto?} (la atribución de construcción de cartera, Parte~II,
 capítulo~\ref{cap:parte2}).
 
-\section{Auditoría anti-\textit{leakage}}\label{sec:met-leakage}
+\section{Auditoría anti-leakage}\label{sec:met-leakage}
 
 La conclusión más delicada del trabajo es \emph{negativa}: el Stockformer no genera señal
 predictiva sobre el S\&P~500 (su IC es \(\approx -0{,}003\)). Una conclusión negativa solo
