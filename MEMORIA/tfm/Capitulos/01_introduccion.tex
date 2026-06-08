@@ -1,9 +1,130 @@
 \chapter{Introducción}\label{cap:intro}
 
-\section{Motivación}      % TODO redactar
+\section{Motivación}
 
-\section{Preguntas de investigación}      % TODO redactar
+La última década ha consolidado al \textit{deep learning} como herramienta dominante en la
+predicción bursátil. Frente a los modelos lineales clásicos del \textit{asset pricing}, las
+arquitecturas profundas ---redes recurrentes, \textit{transformers}, descomposiciones en
+\textit{wavelets} y grafos de relaciones entre acciones--- prometen capturar las dependencias
+no lineales y temporales que gobiernan la sección transversal de los retornos. La literatura
+reciente ha producido un flujo constante de arquitecturas que reportan, sobre los mercados en
+que fueron concebidas, mejoras sustanciales del coeficiente de información y del Sharpe de
+cartera. Stockformer, el modelo de \textcite{ma2024stockformer} sobre el que se articula esta
+tesis, es un exponente representativo de esa frontera: combina una transformada \textit{wavelet}
+discreta, un codificador dual con auto-atención, \textit{embeddings} de grafo de relaciones y un
+conjunto de cabezas multitarea, y exhibe resultados notables sobre los índices chinos CSI~300 y
+CSI~500.
 
-\section{Contribución}      % TODO redactar
+El atractivo de importar una arquitectura del estado del arte a un mercado nuevo es evidente:
+el coste de adopción parece bajo ---reentrenar sobre datos locales, ajustar hiperparámetros---
+frente a la promesa de un retorno predictivo ya demostrado en otro lugar. Pero ese atractivo
+esconde un supuesto rara vez verificado: que la capacidad predictiva de un modelo es una
+propiedad transferible entre mercados. Los mercados financieros difieren en su microestructura,
+en su grado de eficiencia y en la composición de sus participantes. Un modelo afinado sobre
+acciones chinas A-shares ---un universo minorista, con fricciones de negociación y patrones de
+\textit{momentum} y \textit{reversal} marcados--- opera en un régimen estadístico que poco tiene
+que ver con el de las \textit{large-caps} estadounidenses, uno de los segmentos más líquidos,
+arbitrados y eficientes del mundo. La pregunta de si una arquitectura compleja conserva su poder
+predictivo al cruzar esa frontera no es retórica: es empírica, y su respuesta tiene
+consecuencias directas para cualquiera que pretenda construir una estrategia rentable sobre
+señales importadas.
 
-\section{Organización del documento}      % TODO redactar
+Este trabajo aborda precisamente ese riesgo. Toma una arquitectura del estado del arte,
+calibrada y validada en un mercado, y pregunta de forma honesta si transfiere a otro
+estructuralmente distinto. Y, cuando la respuesta resulta ser negativa, no se detiene en el
+veredicto: pregunta qué genera entonces el retorno neto que sí sobrevive a los costes de
+transacción en el mercado de destino. La motivación última es disciplinar el entusiasmo
+arquitectónico con evidencia: distinguir lo que la complejidad del modelo aporta de lo que no, y
+localizar la verdadera palanca del retorno allí donde el dato la sitúa, no donde la moda la
+presupone.
+
+\section{Preguntas de investigación}
+
+El trabajo se organiza en torno a dos preguntas de investigación encadenadas, que estructuran el
+cuerpo empírico de la memoria y a las que el Capítulo~\ref{cap:conclusiones} ofrece una respuesta
+explícita.
+
+\paragraph{RQ1.} ¿Transfiere Stockformer, un modelo de \textit{deep learning} financiero
+calibrado sobre acciones chinas A-shares, su capacidad predictiva al S\&P 500 a horizonte
+semanal? Es decir, ¿produce, sobre el universo \textit{large-cap} estadounidense y bajo un
+protocolo de evaluación riguroso, un coeficiente de información \textit{out-of-sample}
+positivo y estable, comparable o superior al de modelos sustancialmente más simples?
+
+\paragraph{RQ2.} Si la capacidad del modelo no es la fuente del retorno, ¿qué genera realmente
+el retorno neto de costes en el S\&P 500? Esto es: una vez aislada la contribución de la señal
+predictiva, ¿cuál de las etapas del \textit{pipeline} ---la calidad de la predicción, la
+neutralización factorial o la construcción de cartera consciente del coste--- es la que aporta
+Sharpe neto positivo?
+
+La segunda pregunta solo cobra sentido a la luz de la respuesta a la primera, y por eso ambas se
+abordan de forma secuencial. La Parte~I (Capítulo~\ref{cap:parte1}) responde a RQ1; la Parte~II
+(Capítulo~\ref{cap:parte2}) responde a RQ2. La estructura misma de la memoria ---dos actos, un
+fracaso que motiva una indagación constructiva--- es el reflejo de este encadenamiento.
+
+\section{Contribución}
+
+De las dos preguntas anteriores se deriva una doble contribución, una por cada parte del cuerpo
+empírico.
+
+La primera contribución es de naturaleza empírica: evidencia documentada de la
+\textit{no transferibilidad cross-market} de un modelo de \textit{deep learning} financiero.
+Stockformer, una arquitectura de en torno a un millón de parámetros, no transfiere su capacidad
+predictiva al S\&P 500: su coeficiente de información \textit{out-of-sample} cae a
+$\approx -0{,}003$, una correlación de rangos estadísticamente indistinguible de cero, y es
+batido por un Lasso de apenas cinco coeficientes que alcanza un IC de $+0{,}0238$. Una batería
+de ablaciones demuestra, además, que el fallo no se debe a un defecto puntual de configuración:
+ninguna corrección aislada ---pérdida de \textit{ranking}, grafos dinámicos, \textit{features}
+enriquecidas o \textit{walk-forward}--- rescata la señal, porque los modos de fallo se componen.
+Este hallazgo conecta con el fenómeno \textit{shallow-beats-deep} reportado por
+\textcite{rahimikia2025machine} y con la observación de \textcite{gu2020empirical} de que la
+ganancia del \textit{machine learning} en \textit{asset pricing} procede antes de la
+regularización que de la profundidad arquitectónica.
+
+La segunda contribución es metodológica y práctica: un \textit{pipeline} reproducible que
+cuantifica, con honestidad, dónde reside la palanca del Sharpe neto. La atribución etapa a etapa
+muestra que, con un IC semanal de la señal de apenas $0{,}0033$, el retorno no procede del poder
+predictivo; la neutralización factorial por sí sola resta Sharpe, y es la construcción de cartera
+consciente del coste (\textit{cost-aware}) la que rescata el resultado. Ese resultado, además, se
+reporta con la cautela que el dato exige: el Sharpe neto de $0{,}95$ medido sobre una ventana
+favorable de 52 semanas es un estimador de altísima varianza; el estimador defendible, el del
+\textit{walk-forward} sobre 215 semanas, es de $0{,}58 \pm 0{,}49$, no estadísticamente
+distinguible de cero.
+
+La honestidad metodológica es, en sí misma, parte de la contribución. Todo el cuerpo empírico
+descansa sobre una auditoría anti-fuga (\textit{leakage}) limpia ---seis verificaciones, las seis
+superadas--- que garantiza que el IID negativo de Stockformer es genuino y no un artefacto. Los
+resultados negativos se reportan en la misma extensión y con el mismo énfasis que los positivos:
+las ablaciones de datos que no mejoran el Sharpe, la ventana favorable contrastada con el
+estimador robusto, la significancia económica que se reconoce como límite. La lección transversal
+es una variante disciplinada del principio \textit{simpler-is-better}: en el régimen más eficiente
+y arbitrado del espacio de posibilidades, la parsimonia del modelo no es una concesión estética,
+sino la respuesta correcta a una sección transversal estrecha, y el retorno que sobrevive a los
+costes nace de cómo se construye la cartera, no de cuánta capacidad tiene el predictor.
+
+\section{Organización del documento}
+
+El resto de la memoria se organiza como sigue. El Capítulo~\ref{cap:sota} revisa el estado del
+arte: la eficiencia comparada de los mercados chino y estadounidense, las familias de
+\textit{features} y arquitecturas de \textit{deep learning} para selección de acciones, las
+pérdidas de \textit{ranking} y la metodología de construcción y evaluación de cartera, con
+especial atención a la evidencia \textit{shallow-beats-deep}. El Capítulo~\ref{cap:stockformer}
+describe en detalle la arquitectura original de Stockformer y los supuestos de microestructura
+china a los que está atada.
+
+El Capítulo~\ref{cap:metodologia} presenta la metodología propia: el panel del S\&P 500 y sus
+particiones con \textit{walk-forward} purgado y embargado, el \textit{feature engineering}, el
+\textit{harness} de evaluación unificado, la \textit{complexity ladder} que ordena los modelos por
+capacidad y la auditoría anti-fuga.
+
+Los dos capítulos siguientes constituyen el cuerpo empírico. El Capítulo~\ref{cap:parte1}
+(Parte~I) responde a RQ1 mediante la escalera de complejidad y las ablaciones, y mapea cada
+resultado a un modo de fallo documentado en la literatura. El Capítulo~\ref{cap:parte2} (Parte~II)
+responde a RQ2: construye la estrategia semanal \textit{market-neutral} consciente del coste,
+descompone el Sharpe neto por etapa de construcción y reporta, con honestidad, tanto la ventana
+favorable como el estimador robusto.
+
+El Capítulo~\ref{cap:discusion} discute por qué \textit{simpler-is-better} en este régimen, el
+efecto compuesto de los modos de fallo y las limitaciones del estudio. Finalmente, el
+Capítulo~\ref{cap:conclusiones} recapitula las respuestas a las dos preguntas, articula la doble
+contribución y traza las líneas de trabajo futuro, encabezadas por el flujo de inferencia
+\textit{live} para la predicción de posiciones reales.
