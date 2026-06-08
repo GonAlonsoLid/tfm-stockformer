@@ -1,13 +1,307 @@
 \chapter{Parte II: ¿Qué sí funciona?}\label{cap:parte2}
 
-\section{De la señal a las posiciones}      % TODO redactar
+Este capítulo constituye el segundo acto de la memoria. La Parte I cerró con un veredicto
+negativo ---Stockformer no transfiere al S\&P 500--- pero también con un hallazgo lateral
+de gran valor: los modelos simples sí producen un coeficiente de información (IC) positivo,
+aunque débil, mientras que la red profunda no. La pregunta natural, y el objeto de esta
+parte, es la inversa de la anterior: si la complejidad arquitectónica no es la palanca del
+retorno, \emph{¿qué lo es?} La respuesta que defendemos, sostenida por la evidencia
+empírica propia, es que la palanca está en la \textbf{construcción de cartera consciente de
+costes} (\textit{cost-aware portfolio construction}), no en el poder predictivo de la
+señal.
 
-\section{Construcción de cartera cost-aware}      % TODO redactar
+El recorrido argumental es exigente con la honestidad. Mostraremos que es posible convertir
+una señal transversal débil (IC semanal $\approx 0.003$) en una estrategia
+\textit{long-short} \textit{market-neutral} semanal con un Sharpe neto de costes de
+$0.95$ sobre una ventana favorable de 52 semanas; pero mostraremos también, en la misma
+extensión y con el mismo énfasis, que sobre un \textit{walk-forward} de 215 semanas ese
+Sharpe cae a $0.58 \pm 0.49$, una cifra que \emph{no es estadísticamente distinguible de
+cero}. El mensaje central, que la atribución de construcción cuantifica de forma explícita,
+es que el retorno neto positivo proviene de cómo se construye la cartera ---neutralización,
+penalización de costes, dimensionado por volatilidad--- y no de la capacidad de la señal
+para anticipar retornos. Este resultado es plenamente coherente con la tesis
+\textit{simpler-is-better} de la Parte I y con la auditoría anti-fuga (\textit{leakage})
+limpia descrita en la metodología.
 
-\section{Resultados}      % TODO redactar
+El capítulo se organiza en seis secciones. La Sección~\ref{sec:p2-pipeline} describe el
+\textit{pipeline} completo, de la señal a las posiciones. La
+Sección~\ref{sec:p2-construccion} formaliza el constructor de cartera \textit{cost-aware}.
+La Sección~\ref{sec:p2-resultados} presenta los resultados sobre la ventana de 52 semanas.
+La Sección~\ref{sec:p2-robustez} somete la estrategia a un \textit{walk-forward} de cuatro
+años y aplica la restricción de honestidad. La Sección~\ref{sec:p2-atribucion} descompone
+el Sharpe neto por etapa de construcción y establece el hallazgo central. Finalmente, la
+Sección~\ref{sec:p2-ablaciones} resume dos ablaciones de datos (fundamentales EDGAR y
+volatilidad realizada) cuyo resultado negativo refuerza el argumento.
 
-\section{Robustez \textit{walk-forward}}      % TODO redactar
+\section{De la señal a las posiciones}\label{sec:p2-pipeline}
 
-\section{Atribución de construcción}      % TODO redactar
+La estrategia encadena cinco etapas que transforman las \textit{features} transversales
+del panel en un libro de posiciones tradeable y evaluado neto de costes. El flujo es
+enteramente \textit{offline} y reutiliza la infraestructura validada en la Parte I:
 
-\section{Ablaciones de datos (Tier B/C)}      % TODO redactar
+\begin{enumerate}
+  \item \textbf{\textit{Resampling} semanal.} El panel diario se remuestrea a frecuencia
+  semanal tomando, para cada semana ISO, el último día de cotización como fecha de
+  rebalanceo; la etiqueta es el retorno compuesto hasta el siguiente rebalanceo. La
+  matriz de retornos diarios se conserva para estimar betas móviles y para el dimensionado
+  por volatilidad.
+  \item \textbf{Señal por \textit{ensemble} de modelos simples.} Sobre el panel semanal se
+  entrena un \textit{ensemble} de LightGBM (\textit{gradient boosting}) y \textit{elastic
+  net}, promediando sus predicciones estandarizadas transversalmente. Es la traducción
+  directa del hallazgo de la Parte I: el predictor es deliberadamente simple.
+  \item \textbf{Neutralización.} La señal de cada semana se residualiza por mínimos
+  cuadrados frente a la beta de mercado (y, en el diseño completo, frente a los factores
+  Fama-French de seis dimensiones y los sectores GICS), de modo que la cartera no
+  arrastre apuestas factoriales o sectoriales no deseadas.
+  \item \textbf{Suavizado.} La señal neutralizada se suaviza con una media móvil
+  exponencial (\textit{EWMA}) de semivida $\approx 2$ semanas, para reducir la rotación
+  espuria entre rebalanceos.
+  \item \textbf{Construcción \textit{cost-aware} y \textit{overlay} de régimen.} Un
+  optimizador convexo (\texttt{cvxpy}) resuelve los pesos imponiendo neutralidad de dólar
+  y de beta, una penalización $L_1$ de costes de transacción, topes por nombre y un
+  objetivo de volatilidad del 10\% anual; finalmente, un \textit{overlay} de régimen
+  inspirado en el VIX escala la exposición bruta según la volatilidad realizada reciente
+  del mercado.
+\end{enumerate}
+
+La decisión de diseño más consecuente es la primera: \textbf{rebalancear semanalmente y no
+a diario}. La propuesta original lo identifica como ``el salto más grande'' de Sharpe neto,
+y la razón es mecánica: pasar de diario a semanal recorta la rotación en un factor
+aproximado de cinco, y como el coste de transacción es lineal en la rotación, ese recorte
+se traduce casi punto por punto en Sharpe neto. En nuestros propios experimentos previos,
+el \textit{long-short} diario \emph{perdía} dinero una vez descontados los costes; la
+frecuencia semanal es lo que sitúa la estrategia en territorio neto positivo antes incluso
+de optimizar la construcción. Es importante subrayar que esta etapa no añade poder
+predictivo ---no mejora el IC---, sino que reduce el coste de cosechar la señal que ya
+existe.
+
+\section{Construcción de cartera \textit{cost-aware}}\label{sec:p2-construccion}
+
+El corazón del \textit{pipeline} es el constructor de cartera, que resuelve, en cada fecha
+de rebalanceo, un problema de optimización convexa sobre el vector de pesos $w \in
+\mathbb{R}^{N}$ a partir de la señal neutralizada $\alpha$ y de las exposiciones de riesgo.
+La formulación es:
+
+\begin{equation}\label{eq:costaware}
+  \max_{w}\quad \alpha^{\top} w \;-\; \gamma\, w^{\top}\Sigma\, w
+  \;-\; \frac{\kappa}{10^{4}}\,\bigl\lVert w - w_{\text{prev}}\bigr\rVert_{1}
+\end{equation}
+
+sujeto a las restricciones
+
+\begin{align}
+  \mathbf{1}^{\top} w &= 0 & &\text{(neutralidad de dólar)},\label{eq:dollar}\\
+  \beta^{\top} w &= 0 & &\text{(neutralidad de beta)},\label{eq:beta}\\
+  \lVert w \rVert_{1} &\le \texttt{gross} & &\text{(apalancamiento bruto, p.\,ej. } 2),\label{eq:gross}\\
+  \lvert w_{i} \rvert &\le \texttt{name\_cap} & &\forall i \quad \text{(tope por nombre)}.\label{eq:namecap}
+\end{align}
+
+Cada término de la función objetivo~\eqref{eq:costaware} cumple un papel preciso. El
+primer término, $\alpha^{\top} w$, es el retorno esperado de la cartera bajo la señal. El
+segundo, $\gamma\, w^{\top}\Sigma\, w$, penaliza el riesgo cuadrático, con $\Sigma$
+estimada mediante el encogimiento (\textit{shrinkage}) de Ledoit-Wolf
+\autocite{ledoit2004honey}, que regulariza la matriz de covarianzas muestral ---mal
+condicionada cuando el número de activos es comparable al de observaciones--- hacia un
+objetivo estructurado. El tercer término, la norma $L_1$ del cambio de posiciones $w -
+w_{\text{prev}}$ ponderada por el coste $\kappa$ en puntos básicos, es el mecanismo clave:
+implementa la regla ``operar solo cuando la ventaja supera al coste''. Al penalizar
+directamente la rotación dentro del problema de optimización, la solución incorpora
+\textit{no-trade bands} (bandas de no negociación) endógenas ---posiciones cuyo cambio no
+compensa el coste se quedan donde están---, lo que suprime la rotación y rescata el Sharpe
+neto a frecuencia semanal.
+
+Las restricciones encierran la cartera en un libro \textit{market-neutral} y controlado en
+riesgo. La condición~\eqref{eq:dollar} impone neutralidad de dólar (la suma de pesos largos
+iguala la de cortos); la~\eqref{eq:beta}, neutralidad de beta frente al mercado, estimada
+con una beta móvil sobre una ventana diaria de 60 días; la~\eqref{eq:gross} acota el
+apalancamiento bruto a $\lVert w \rVert_1 \le 2$ (una pata larga y una corta); y
+la~\eqref{eq:namecap} limita la concentración por nombre. A la solución del problema se le
+aplican dos capas posteriores: un \textbf{dimensionado por volatilidad} que escala el libro
+para alcanzar un objetivo del 10\% anual ---estimado sobre la ventana diaria reciente---
+con un tope de apalancamiento, y un \textbf{\textit{overlay} de régimen} que multiplica la
+exposición bruta por $\{1{,}0,\,0{,}7,\,0{,}4\}$ según el tercil de volatilidad realizada
+del mercado en que se sitúe la semana, reduciendo la exposición en regímenes turbulentos.
+
+Los parámetros del \textit{backtest} reflejan condiciones realistas para un universo
+\textit{large-cap}: un coste de transacción de \textbf{8 puntos básicos por lado}
+(\textit{spread} efectivo más impacto y comisiones) y un \textbf{retardo de un día} entre
+la observación de la señal y la ejecución, para evitar cualquier fuga de información. La
+omisión deliberada de una optimización \textit{end-to-end} (que diferenciaría a través del
+optimizador) responde a un criterio de parsimonia: a frecuencia semanal, el esquema
+\textit{predict-then-optimize} captura casi todo el beneficio sin el coste de ingeniería
+adicional.
+
+\section{Resultados}\label{sec:p2-resultados}
+
+La Tabla~\ref{tab:weekly-summary} recoge el desempeño de la estrategia completa sobre la
+ventana de evaluación de 52 semanas (el periodo \textit{out-of-sample} posterior al último
+reentrenamiento del diseño de ventana única).
+
+\input{tablas/weekly_summary}
+
+La estrategia alcanza un \textbf{Sharpe neto de $0{,}95$}, con un Sharpe bruto de $1{,}39$:
+la diferencia entre ambos ---unos $0{,}45$ puntos de Sharpe--- es exactamente el coste de
+transacción que la construcción \textit{cost-aware} logra contener. El retorno anualizado
+neto es del \textbf{$7{,}0\%$}, con una caída máxima (\textit{max drawdown}) acotada en
+\textbf{$-4{,}75\%$}, una cifra notablemente contenida que refleja la eficacia conjunta
+de la neutralidad de beta, el objetivo de volatilidad y el \textit{overlay} de régimen. La
+rotación media semanal es de $0{,}81$ (sobre un apalancamiento bruto de $2$), coherente con
+el efecto de las \textit{no-trade bands} de la formulación~\eqref{eq:costaware}.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.85\linewidth]{weekly_oos_equity}
+  \caption{Curva de retorno acumulado \textit{out-of-sample} de la estrategia semanal
+  \textit{market-neutral}: serie bruta (gris) frente a serie neta de costes de 8 puntos
+  básicos por lado (roja). La distancia creciente entre ambas curvas materializa el coste
+  acumulado de la rotación, que la construcción \textit{cost-aware} mantiene bajo control.}
+  \label{fig:weekly-oos-equity}
+\end{figure}
+
+La Figura~\ref{fig:weekly-oos-equity} muestra la curva de retorno acumulado, con la serie
+bruta y la neta superpuestas. La separación progresiva entre ambas es la traza visual del
+coste de transacción; que la serie neta conserve una pendiente positiva es precisamente lo
+que la construcción \textit{cost-aware} hace posible. Conviene, no obstante, no
+sobreinterpretar esta cifra aislada: un Sharpe neto de $0{,}95$ sobre 52 semanas es un
+resultado favorable, pero una sola ventana anual es una muestra estrecha. La sección
+siguiente somete este número a la prueba que de verdad importa.
+
+\section{Robustez \textit{walk-forward}}\label{sec:p2-robustez}
+
+Una única ventana de 52 semanas no basta para afirmar que una estrategia es robusta. Para
+estresar el resultado, reentrenamos el \textit{ensemble} de forma periódica (cada 26
+semanas, aproximadamente cada semestre) y concatenamos así unas \textbf{215 semanas de
+\textit{out-of-sample}} ---en torno a cuatro años--- en una única curva de equidad. Este
+protocolo \textit{walk-forward} es el contraste honesto: cada predicción se realiza con
+información estrictamente anterior, y la estrategia atraviesa varios regímenes de mercado en
+lugar de un solo año favorable. La Tabla~\ref{tab:weekly-robustness} recoge el resultado.
+
+\input{tablas/weekly_robustness}
+
+Aquí debemos ser explícitos y aplicar la restricción de honestidad que vertebra toda la
+memoria. \textbf{La estrategia rinde un Sharpe neto de $0{,}95$ sobre la ventana favorable
+de 52 semanas, pero un Sharpe neto de $0{,}58 \pm 0{,}49$ sobre el \textit{walk-forward} de
+215 semanas, un estimador que no es estadísticamente distinguible de cero.} El cociente
+entre el Sharpe y su error estándar es de apenas $0{,}58/0{,}49 \approx 1{,}2$, muy por
+debajo del umbral convencional de significancia: no podemos rechazar la hipótesis de que el
+Sharpe poblacional de la estrategia sea nulo. El retorno anualizado neto cae al
+$4{,}1\%$, la caída máxima se amplía a $-11{,}5\%$ ---más del doble que en la ventana
+favorable, lo que ilustra el sesgo optimista de evaluar sobre un solo año--- y la rotación
+media se mantiene en $0{,}84$.
+
+Esta es, a nuestro juicio, la lectura defendible. Sería un sobreajuste de la narrativa
+proclamar un Sharpe neto de $0{,}95$ como titular; el estimador robusto, sobre cuatro años
+y múltiples regímenes, es $0{,}58$ con una incertidumbre que abarca el cero. El IC semanal
+medio de la señal a lo largo de todo el \textit{walk-forward} es de apenas $0{,}0033$: una
+correlación de rangos prácticamente nula entre la predicción y el retorno realizado. Que una
+señal tan tenue produzca \emph{cualquier} retorno neto positivo, aun no significativo, es
+ya informativo, y nos conduce directamente a la pregunta de la sección siguiente: si la
+señal apenas predice, ¿de dónde sale el retorno?
+
+\section{Atribución de construcción}\label{sec:p2-atribucion}
+
+Esta sección establece el hallazgo central del capítulo. Para aislar de dónde procede el
+Sharpe neto, pasamos \emph{la misma señal \textit{walk-forward}} por cuatro variantes de
+construcción de sofisticación creciente y medimos el Sharpe neto de cada una. La
+descomposición desacopla el efecto del predictor del efecto de la construcción: como la
+señal es idéntica en las cuatro variantes, cualquier cambio en el Sharpe neto es atribuible
+exclusivamente a la construcción. La Tabla~\ref{tab:weekly-attribution} recoge la cadena.
+
+\input{tablas/weekly_attribution}
+
+Recorramos la cadena etapa a etapa, porque su forma es contraintuitiva y, precisamente por
+ello, instructiva:
+
+\begin{itemize}
+  \item \textbf{\texttt{raw\_decile} (Sharpe neto $0{,}045$).} La cartera ingenua de
+  deciles ---largo el decil superior de la señal, corto el inferior, equiponderada y
+  rebalanceada cada semana--- arroja un Sharpe neto esencialmente nulo. Su rotación es
+  enorme ($3{,}07$) y los costes se comen el retorno bruto. Este es el punto de partida: la
+  señal cruda, construida de forma naíf, no genera valor neto.
+  \item \textbf{\texttt{+neutralize} (Sharpe neto $-0{,}40$).} Añadir la neutralización
+  factorial/sectorial \emph{empeora} el Sharpe neto, llevándolo a territorio negativo. Esto
+  puede sorprender, pero es coherente y honesto: la neutralización elimina exposiciones
+  factoriales que, en esta muestra, contribuían positivamente al retorno bruto; depura la
+  señal pero, por sí sola, resta rentabilidad. La neutralización no es una palanca de
+  retorno, sino una condición de higiene que garantiza un libro \textit{market-neutral}
+  genuino.
+  \item \textbf{\texttt{+cost\_aware} (Sharpe neto $0{,}47$).} Al introducir el constructor
+  convexo con penalización $L_1$ de costes y suavizado, el Sharpe neto da un salto de
+  $-0{,}40$ a $\mathbf{+0{,}47}$. La rotación se desploma de $3{,}12$ a $1{,}60$. \emph{Esta
+  es la palanca}: la gestión explícita del coste de transacción dentro de la optimización
+  es lo que convierte una cartera neutralizada y deficitaria en una rentable.
+  \item \textbf{\texttt{full} (Sharpe neto $0{,}58$).} Añadir el dimensionado por
+  volatilidad y el \textit{overlay} de régimen eleva el Sharpe neto hasta $0{,}58$ y, sobre
+  todo, reduce la caída máxima de $-22{,}9\%$ a $-11{,}5\%$: estas capas aportan
+  estabilidad y control de cola más que retorno bruto adicional.
+\end{itemize}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.85\linewidth]{weekly_attribution}
+  \caption{Atribución de construcción: Sharpe neto de cada variante con su error estándar.
+  La neutralización (segunda barra) \emph{resta} Sharpe; la construcción \textit{cost-aware}
+  (tercera barra) es la etapa que rescata el resultado y lo lleva a territorio positivo. La
+  señal predictiva es la misma en las cuatro variantes.}
+  \label{fig:weekly-attribution}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.85\linewidth]{improvement_waterfall}
+  \caption{Diagrama de cascada del aporte incremental de cada etapa de construcción al
+  Sharpe neto, desde la cartera de deciles cruda hasta la estrategia completa. El tramo
+  decisivo es la transición a la construcción \textit{cost-aware}.}
+  \label{fig:improvement-waterfall}
+\end{figure}
+
+Las Figuras~\ref{fig:weekly-attribution} y~\ref{fig:improvement-waterfall} visualizan esta
+cadena. El mensaje, sostenido por la columna de IC de la Tabla~\ref{tab:weekly-attribution}
+---que se mantiene en torno a $0{,}003$ en las variantes con la señal final---, es
+inequívoco: \textbf{la palanca del Sharpe neto es la construcción de cartera, no el poder
+predictivo de la señal}. La señal aporta un IC de $\approx 0{,}003$, prácticamente ruido; lo
+que separa una cartera deficitaria de una rentable es la neutralización seguida de la
+gestión explícita de costes. Este resultado cierra el círculo con la Parte I: si la
+complejidad del modelo no compra IC, y el IC apenas mueve el retorno, entonces el esfuerzo
+de ingeniería rinde mucho más invertido en la construcción de cartera que en la
+arquitectura del predictor. Es la formulación cuantitativa, sobre datos propios, de la
+tesis \textit{simpler-is-better}.
+
+\section{Ablaciones de datos (Tier B/C)}\label{sec:p2-ablaciones}
+
+Si la señal es la limitación, una hipótesis razonable es que enriquecerla con datos nuevos
+mejore el resultado. La propuesta original identificaba dos familias prioritarias de
+\textit{features}: fundamentales \textit{point-in-time} (Tier B) y medidas de riesgo de
+volatilidad realizada (Tier C). Esta sección reporta, con honestidad, que \emph{ninguna de
+las dos mejora el Sharpe neto} sobre el \textit{walk-forward} de 215 semanas. El estimador
+robusto de referencia es el Sharpe neto de $0{,}579$ de la estrategia completa
+(Tabla~\ref{tab:weekly-robustness}).
+
+\textbf{Tier B --- fundamentales EDGAR.} Construimos un \textit{pipeline}
+\textit{point-in-time} a partir de los datos XBRL de la SEC (\texttt{companyfacts}),
+filtrando por fecha de presentación (\texttt{filed}) para evitar toda fuga de información, y
+derivamos \textit{features} de rentabilidad bruta \autocite{novymarx2013other}, crecimiento
+de activos, emisión neta y valor compuesto, en línea con el modelo de cinco factores de
+\textcite{famafrench2015five}. Concatenadas al conjunto de \textit{features} y reevaluadas
+en el mismo protocolo, el Sharpe neto \textbf{baja a $0{,}195$} (frente a $0{,}579$ de
+referencia), con un retorno anualizado del $1{,}3\%$ y una caída máxima que empeora hasta
+$-19{,}6\%$. Los fundamentales no añaden señal explotable a horizonte semanal en este
+universo \textit{large-cap}; si acaso, introducen ruido que degrada la construcción.
+
+\textbf{Tier C --- volatilidad realizada / IVOL.} La segunda ablación añade
+\textit{features} de riesgo derivadas solo del precio ---volatilidad realizada, volatilidad
+idiosincrática (IVOL) y beta--- motivadas por la anomalía de baja volatilidad
+\autocite{ang2006cross}. El resultado es igualmente negativo: el Sharpe neto se queda en
+\textbf{$0{,}220$} (frente a $0{,}579$), con un retorno anualizado del $1{,}4\%$. Pese a
+ser \textit{features} gratuitas, sin fuga y con alta evidencia en la literatura, tampoco
+mejoran el Sharpe neto de la estrategia.
+
+Estos dos resultados negativos no son un fracaso del trabajo, sino una pieza de evidencia
+honesta y valiosa. Refuerzan, desde el lado de los datos, la misma conclusión que la
+atribución de construcción establecía desde el lado del modelo: \textbf{a horizonte semanal
+sobre el S\&P 500, ni más arquitectura ni más datos mueven la aguja del Sharpe neto; lo que
+la mueve es la construcción de cartera consciente de costes}. Reportarlos con la misma
+visibilidad que los resultados positivos es, además, una exigencia metodológica: la
+literatura de \textit{machine learning} financiero está plagada de mejoras que no
+sobreviven a una evaluación \textit{out-of-sample} honesta, y la disciplina de publicar los
+resultados negativos es la mejor defensa contra ese sesgo.
