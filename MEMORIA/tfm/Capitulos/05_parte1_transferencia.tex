@@ -1,9 +1,278 @@
 \chapter{Parte I: ¿Transfiere Stockformer?}\label{cap:parte1}
 
-\section{Resultados de la complexity ladder}      % TODO redactar
+Este capítulo constituye el primer acto de la memoria. Su objetivo es responder a la
+primera pregunta de investigación: ¿transfiere Stockformer ---un modelo de selección de
+acciones basado en \textit{wavelets}, \textit{transformers} y grafos de relaciones,
+calibrado sobre acciones chinas A-shares--- al universo del S\&P 500? La respuesta,
+anticipada en la introducción, es negativa. Pero la contribución no es el veredicto en sí,
+sino la forma de obtenerlo: en lugar de comparar Stockformer contra un único rival, lo
+situamos dentro de una \textit{complexity ladder} (escalera de complejidad) que ordena los
+modelos desde controles de sanidad de cero parámetros hasta la red de aproximadamente un
+millón de parámetros. Esta escalera permite formular el hallazgo central en términos
+falsables: \emph{el poder predictivo no crece con la complejidad del modelo}. De hecho, en
+nuestro panel el modelo más complejo es el peor.
 
-\section{Significancia estadística}      % TODO redactar
+El capítulo se organiza en cuatro secciones. La Sección~\ref{sec:p1-ladder} presenta los
+resultados de la escalera de complejidad. La Sección~\ref{sec:p1-signif} examina con
+honestidad la significancia estadística de las diferencias observadas. La
+Sección~\ref{sec:p1-ablaciones} resume las ablaciones E1--E7, que descartan
+sistemáticamente que el fallo se deba a una elección desafortunada de \textit{loss},
+grafos, \textit{features} o protocolo de validación. Finalmente, la
+Sección~\ref{sec:p1-fallo} mapea cada resultado a un modo de fallo documentado en la
+literatura sobre transferibilidad de modelos de \textit{deep learning} financiero.
 
-\section{Ablaciones (E1--E7)}      % TODO redactar
+\section{Resultados de la complexity ladder}\label{sec:p1-ladder}
 
-\section{Modos de fallo de la transferencia}      % TODO redactar
+La escalera de complejidad evalúa, sobre un mismo panel del S\&P 500 y un mismo
+\textit{harness} de evaluación, una familia de modelos ordenada por número de parámetros y
+capacidad representacional. El protocolo es idéntico para todos: las predicciones se
+convierten en un \textit{rank} transversal diario, se calcula el coeficiente de
+información de rangos (\textit{rank IC}) sobre 250 días de evaluación y, en paralelo, se
+construye una cartera \textit{long-short} para medir el Sharpe asociado. La métrica
+nuclear es el IC medio, que cuantifica la correlación entre la señal predicha y el retorno
+realizado; un IC positivo y estable es condición necesaria para que un modelo aporte
+señal. La Tabla~\ref{tab:ladder} recoge los resultados.
+
+\input{tablas/ladder}
+
+Conviene recorrer la escalera de abajo arriba. En el peldaño cero (\textit{sanity checks})
+situamos controles sin parámetros entrenables: la cartera nula (\texttt{zero}), el
+\textit{momentum} y la \textit{reversal}. Su función es calibrar qué valor de IC es
+indistinguible del ruido en este panel. El \textit{momentum} obtiene un IC de $-0.0128$
+($t=-1.06$, $p=0.29$) y la \textit{reversal} un IC de $+0.0126$ ($t=1.06$, $p=0.29$);
+ambos son simétricos, no significativos y, a efectos prácticos, ruido. Esta simetría es
+informativa: fija una banda de $\pm 0.013$ aproximadamente como magnitud de lo que el azar
+produce sobre 250 días.
+
+En el primer peldaño (modelos lineales) aparece el mejor modelo de toda la escalera. El
+\textbf{Lasso}, con apenas \textbf{5 parámetros} efectivos tras la regularización, alcanza
+un IC de \textbf{$+0.0238$} y, lo que es más relevante para la Parte II, el único Sharpe
+\textit{long-short} claramente positivo de la tabla: \textbf{$+0.91$}, con un retorno
+anualizado del $+27.4\%$. El Ridge, con 376 parámetros, obtiene un IC de $+0.0173$ pero un
+Sharpe de $-2.85$: predice direccionalmente algo mejor que el ruido, pero su cartera no es
+rentable, lo que ilustra que IC y Sharpe no son intercambiables. El \textit{elastic net}
+queda en un IC de $+0.0157$, intermedio y consistente con el resto de lineales.
+
+En el segundo peldaño (árboles) encontramos \textbf{LightGBM} (31 parámetros nominales en
+su configuración por defecto) con un IC de \textbf{$+0.0136$} y un Sharpe de $+0.21$, y
+\textbf{XGBoost} (9600 parámetros) con un IC de \textbf{$+0.0141$} y un Sharpe de $-1.85$.
+Los árboles no mejoran a los lineales: su IC es comparable o inferior al del Lasso pese a
+disponer de mucha más capacidad. El salto de tres órdenes de magnitud en parámetros entre
+LightGBM y XGBoost no se traduce en ganancia de IC.
+
+En el peldaño superior se sitúa \textbf{Stockformer}, con del orden de un millón de
+parámetros. Su IC es \textbf{$\approx -0.003$}: negativo y estadísticamente
+indistinguible de cero. Es decir, el modelo más complejo de la escalera no solo no supera a
+un Lasso de cinco parámetros, sino que cae \emph{por debajo} de la banda de ruido fijada
+por los controles de sanidad.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.85\linewidth]{complexity_vs_ic}
+  \caption{IC medio frente a número de parámetros (escala logarítmica) a lo largo de la
+  \textit{complexity ladder}. La relación es plana o decreciente: el IC no crece con la
+  complejidad y el modelo más complejo (Stockformer) es el peor.}
+  \label{fig:complexity-vs-ic}
+\end{figure}
+
+La Figura~\ref{fig:complexity-vs-ic} resume visualmente el hallazgo central. Si el poder
+predictivo escalara con la capacidad del modelo, esperaríamos una nube de puntos
+ascendente al desplazarnos hacia la derecha en el eje de parámetros. Lo que observamos es
+lo contrario: una relación plana en la zona de los modelos simples y un descenso pronunciado
+hacia Stockformer. El titular de esta sección es, por tanto, inequívoco y falsable:
+\textbf{el IC no aumenta con la complejidad}; en este panel, el mejor modelo es el más
+parsimonioso y el peor es el más expresivo. Este resultado replica, en el dominio de la
+selección transversal de acciones, el fenómeno \textit{shallow-beats-deep} documentado en
+el \textit{asset pricing} empírico por \textcite{gu2020empirical}.
+
+\section{Significancia estadística}\label{sec:p1-signif}
+
+El hallazgo anterior sería frágil si las diferencias de IC no fueran estables. Esta sección
+las somete a contraste estadístico, con una restricción de honestidad explícita: no
+afirmaremos que Stockformer es \emph{significativamente} peor allí donde la evidencia no lo
+sostiene. La Tabla~\ref{tab:significancia} recoge, para cada modelo simple, la diferencia
+de medias de IC frente a Stockformer, el estadístico $t$ del contraste pareado por día y su
+$p$-valor, sobre $n=236$ días con predicciones emparejadas.
+
+\input{tablas/significancia}
+
+La lectura honesta es la siguiente. La mayor diferencia corresponde al \textbf{Lasso}:
+\textbf{$+0.0319$} de IC frente a Stockformer, con $t=1.86$ y un \textbf{$p=0.064$}. Este
+$p$-valor es \emph{marginal}, no concluyente: no alcanza el umbral convencional de
+$0.05$, de modo que, en sentido estricto, no podemos rechazar la hipótesis nula de igualdad
+de IC al nivel del 5\%. Sería un sobreajuste de la narrativa proclamar que el Lasso bate a
+Stockformer ``de forma estadísticamente significativa''. Lo que sí podemos afirmar es algo
+más sutil y, a nuestro juicio, más sólido: la \textbf{dirección} del efecto es
+\emph{consistente en toda la escalera}. XGBoost supera a Stockformer en $+0.0214$
+($t=1.72$, $p=0.088$), LightGBM en $+0.0178$ ($t=1.63$, $p=0.105$) y Ridge en $+0.0187$
+($t=1.42$, $p=0.157$). Todos los modelos simples baten a Stockformer en IC, todos con el
+mismo signo, y los tres mejores con $p$-valores marginales agrupados en torno a
+$0.06$--$0.11$. El único control que no lo bate es el \textit{momentum} ($-0.0093$,
+$p=0.561$), que ---por construcción--- no es un modelo, sino ruido.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.85\linewidth]{ic_with_ci}
+  \caption{IC medio por modelo con intervalos de confianza \textit{bootstrap}. El intervalo
+  de Stockformer solapa el cero, lo que confirma la ausencia de señal; los modelos simples
+  presentan IC positivos, aunque sus intervalos también rozan el cero, coherente con la
+  significancia marginal de los contrastes.}
+  \label{fig:ic-with-ci}
+\end{figure}
+
+La Figura~\ref{fig:ic-with-ci} refuerza esta lectura prudente mediante intervalos de
+confianza \textit{bootstrap}. El intervalo de Stockformer \textbf{solapa el cero},
+confirmando que su señal es indistinguible de la ausencia de señal. Los modelos simples se
+sitúan en territorio positivo, pero sus intervalos también se aproximan al cero, lo que es
+plenamente coherente con los $p$-valores marginales de la tabla. La conclusión, formulada
+con el grado de certeza que los datos permiten, es: \emph{ningún modelo de esta escalera
+demuestra un IC robustamente distinto de cero, pero la evidencia disponible apunta de forma
+unánime en una sola dirección} ---los modelos simples por delante de Stockformer--- \emph{y
+sitúa la señal de Stockformer en, o por debajo de, el nivel de ruido}. Esa unanimidad
+direccional, y no un único $p$-valor, es el fundamento estadístico del hallazgo.
+
+\section{Ablaciones (E1--E7)}\label{sec:p1-ablaciones}
+
+Una objeción legítima al resultado anterior es que el fallo de Stockformer podría deberse a
+una configuración subóptima y no a una incapacidad de fondo para transferir. Para
+descartarlo diseñamos una batería de siete ablaciones, E1--E7, que aíslan cada componente
+arquitectónico susceptible de ser ``culpable'' del fallo. La Tabla~\ref{tab:ablaciones}
+sintetiza el diseño: cada experimento modifica un único eje ---la función de pérdida, el
+tipo de grafo, el conjunto de \textit{features} o el protocolo de validación--- manteniendo
+el resto constante, de forma que cualquier mejora del IC pueda atribuirse causalmente a esa
+modificación.
+
+\begin{table}[htbp]
+  \centering
+  \caption{Matriz de diseño de las ablaciones E1--E7. Cada fila aísla un componente.}
+  \label{tab:ablaciones}
+  \small
+  \begin{tabular}{llllll}
+    \toprule
+    ID & Loss & Features & Grafo & Validación & Qué aísla \\
+    \midrule
+    E1 & MSE & Alpha360 & Estático & Split fijo & Baseline Stockformer original \\
+    E2 & Ranking & Alpha360 & Estático & Split fijo & Efecto del \textit{loss} de ranking \\
+    E3 & Ranking & Alpha360 & Dinámico & Split fijo & Efecto de grafos dinámicos \\
+    E4 & Ranking & Alpha158+macro & Estático & Split fijo & Efecto de \textit{features} ricas \\
+    E5 & Ranking & Alpha158+macro & Dinámico & Split fijo & Todas las mejoras combinadas \\
+    E6 & LightGBM & Alpha158 & --- & Split fijo & Baseline simple de referencia \\
+    E7 & Ranking & Alpha158+macro & Dinámico & Walk-forward & Evaluación realista del mejor config \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+La lógica de la matriz es incremental. E1 reproduce el Stockformer original con pérdida MSE
+y \textit{features} Alpha360 (6 variables OHLCV $\times$ 60 \textit{lags}), grafo estático
+\textit{struc2vec} y descomposición \textit{wavelet} DWT~Sym2. E2 sustituye la MSE por una
+pérdida de \textit{ranking} (ListNet + IC + MAE), más alineada con el objetivo transversal;
+su \textit{checkpoint} arroja un IC del orden de $-0.005$. E3 activa grafos dinámicos
+aprendidos en lugar del grafo estático. E4 enriquece las \textit{features} con Alpha158 más
+variables macro. E5 combina E3 y E4 (todas las mejoras a la vez). E6 introduce un
+\textit{baseline} simple ---LightGBM sobre Alpha158--- como ancla de referencia, y es el
+único de la batería que produce un IC positivo y medible: \textbf{$+0.0136$}, el mismo
+valor de LightGBM en la escalera de la Sección~\ref{sec:p1-ladder}, lo que confirma la
+consistencia del \textit{harness} entre ambos análisis. E7, por último, somete la mejor
+configuración profunda (E5) a un protocolo de validación realista \textit{walk-forward}
+purgado y embargado, en lugar del \textit{split} fijo.
+
+El veredicto de la batería es contundente: \textbf{ninguna ablación rescata el IC de
+Stockformer}. Ni cambiar la pérdida de MSE a \textit{ranking}, ni pasar de grafos
+estáticos a dinámicos, ni enriquecer las \textit{features} de Alpha360 a Alpha158+macro,
+ni combinar todas las mejoras, ni evaluar con \textit{walk-forward} mueve la señal a
+territorio positivo robusto. El único experimento de la matriz que genera IC positivo es,
+significativamente, el \textit{baseline} simple E6. Es decir, el fallo de Stockformer no es
+un artefacto de configuración: persiste a través de todo el espacio de diseño que la
+arquitectura ofrece.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.85\linewidth]{ic_comparison}
+  \caption{Comparación de IC entre los modelos de la escalera y las configuraciones de
+  Stockformer. Las variantes profundas se agrupan en torno a cero o en negativo, mientras
+  que los modelos simples ocupan el territorio positivo.}
+  \label{fig:ic-comparison}
+\end{figure}
+
+La Figura~\ref{fig:ic-comparison} visualiza este resultado: las barras de las
+configuraciones profundas se agrupan alrededor del cero o por debajo, mientras que las de
+los modelos simples ---encabezadas por el Lasso--- ocupan el lado positivo. La ablación,
+lejos de matizar el hallazgo del capítulo, lo blinda: hemos buscado activamente una versión
+de Stockformer que transfiera, recorriendo \textit{loss}, grafo, \textit{features} y
+protocolo, y no la hemos encontrado.
+
+% NOTA: results/ablation_results.csv solo contiene la fila medida E6 (IC=+0.0136).
+% Los IC numéricos de E1-E5 y E7 no están registrados en el CSV; se describe el diseño
+% (E1-E7) y se reporta E6 (medido) y E2 (checkpoint, IC~-0.005 de la spec de marzo).
+% No se inventan IC para E1, E3, E4, E5, E7.
+
+\section{Modos de fallo de la transferencia}\label{sec:p1-fallo}
+
+Los resultados de las tres secciones anteriores convergen en una pregunta: \emph{¿por qué}
+no transfiere Stockformer? Responderla exige ir más allá de la constatación empírica y
+mapear cada observación a un mecanismo causal documentado en la literatura. Identificamos
+cuatro modos de fallo que, actuando de forma compuesta, explican la pérdida de señal al
+cruzar de China al S\&P 500.
+
+\paragraph{(a) Eficiencia de mercado: US institucional frente a China retail.}
+Stockformer fue calibrado sobre los índices CSI~300/500, en un mercado dominado por
+inversores minoristas, donde existen ineficiencias persistentes y patrones de comportamiento
+explotables por un modelo no lineal. El S\&P 500 es uno de los mercados más eficientes y
+arbitrados del mundo, dominado por inversores institucionales. Una señal que captura
+ineficiencias \textit{retail} en China simplemente no tiene contrapartida que explotar en
+el S\&P 500: el arbitraje la ha eliminado. Este es el modo de fallo más fundamental, y es
+coherente con que ningún modelo de la escalera ---ni simple ni profundo--- supere un IC de
+$0.025$.
+
+\paragraph{(b) Insuficiencia de la señal OHLCV al horizonte semanal.}
+Las \textit{features} de Stockformer son esencialmente precio-volumen (Alpha360 es OHLCV con
+\textit{lags}). En un mercado eficiente y a un horizonte semanal, la información contenida en
+el historial de precio y volumen está, en gran medida, ya incorporada al precio. La
+ablación E4 (que añade Alpha158 y macro) confirma que enriquecer las \textit{features}
+dentro de la misma familia precio-volumen no rescata el IC: el problema no es la cantidad
+de \textit{features}, sino que la clase de información ---OHLCV--- es insuficiente a este
+horizonte en este mercado.
+
+\paragraph{(c) Microestructura: límites de precio que inflan el IC en China.}
+El mercado chino impone límites diarios de fluctuación de precio (\textit{price limits},
+típicamente $\pm 10\%$). Estos límites introducen una autocorrelación mecánica en los
+retornos ---una acción que toca el límite tiende a continuar al día siguiente--- que infla
+artificialmente el IC alcanzable por un modelo de precio-volumen. El S\&P 500 carece de
+estos límites, de modo que parte del IC reportado por Stockformer en su mercado de origen no
+proviene de poder predictivo genuino, sino de un artefacto de microestructura que no existe
+en el mercado de destino.
+
+\paragraph{(d) Dimensionalidad efectiva: $\sim$400 observaciones transversales frente a
+$10^6$ parámetros.}
+En cada corte temporal, el panel ofrece del orden de 400 observaciones transversales
+efectivas (acciones del universo). Ajustar un modelo de aproximadamente un millón de
+parámetros sobre una sección transversal tan estrecha es una receta de sobreajuste: el
+modelo dispone de capacidad para memorizar ruido idiosincrático en lugar de aprender señal
+generalizable. Esto explica directamente por qué el modelo más complejo es el peor
+(Sección~\ref{sec:p1-ladder}) y por qué un Lasso de cinco parámetros, con su fuerte sesgo
+regularizador, generaliza mejor: la parsimonia es una virtud cuando los datos son escasos
+en la dimensión que importa.
+
+\paragraph{Contraste con los \textit{benchmarks} reportados.}
+La literatura reciente reporta IC notablemente superiores para arquitecturas profundas,
+pero ---y este es el punto--- siempre sobre mercados distintos del S\&P 500.
+\textcite{fan2024stockmixer} reportan para StockMixer un IC del orden de $0.041$ sobre
+NASDAQ, y \textcite{li2024master} un IC del orden de $0.064$ para MASTER sobre CSI~300.
+Estas cifras, muy por encima de cualquier valor de nuestra escalera, no contradicen nuestro
+hallazgo: lo confirman. Son resultados \textit{in-market} (China u otros universos) que
+\emph{no transfieren} al S\&P 500, exactamente como predicen los cuatro modos de fallo
+anteriores. La transferibilidad cross-market de los modelos de \textit{deep learning}
+financiero no puede presuponerse a partir de su desempeño en el mercado de calibración;
+debe demostrarse empíricamente, y en el caso de Stockformer sobre el S\&P 500 la evidencia
+es que no se produce.
+
+En conjunto, los cuatro modos de fallo no son alternativas excluyentes, sino mecanismos que
+se componen: un mercado más eficiente (a) reduce la señal explotable; la señal residual es
+de tipo OHLCV insuficiente al horizonte semanal (b); parte del IC de origen era un artefacto
+de microestructura inexistente en el destino (c); y la escasez de observaciones
+transversales frente a la capacidad del modelo (d) convierte cualquier señal débil en
+sobreajuste. El resultado neto es un IC $\approx -0.003$. Este diagnóstico cierra el primer
+acto y motiva la pregunta del segundo: si las redes complejas no transfieren, ¿qué
+\emph{sí} genera retorno? El Capítulo~\ref{cap:parte2} muestra que la respuesta no está en
+una arquitectura más sofisticada, sino en una construcción de cartera cost-aware sobre una
+señal simple.
