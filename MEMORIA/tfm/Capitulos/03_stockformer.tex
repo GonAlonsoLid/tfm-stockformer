@@ -1,13 +1,266 @@
 \chapter{Stockformer: arquitectura original}\label{cap:stockformer}
 
-\section{Conjunto de variables Alpha360}      % TODO redactar
+El modelo Stockformer, propuesto por Ma et al.~\cite{ma2024stockformer} para el
+mercado de acciones \textit{A-shares} chino, articula en una sola red neuronal varios componentes
+que en la literatura suelen aparecer por separado: una representación densa de
+precio y volumen, una descomposición de la señal en frecuencias, un codificador
+espacio-temporal basado en atención, un grafo estático de relaciones entre acciones
+y un cabezal de predicción multitarea. Este capítulo describe esa arquitectura
+original tal y como está implementada, sin entrar todavía en la cuestión de su
+transferibilidad al mercado estadounidense, que se aborda en el
+capítulo~\ref{cap:parte1}. El objetivo es que el lector comprenda con precisión
+\emph{qué} se adapta y \emph{qué} se conserva en la Parte~I, de modo que la posterior
+discusión de resultados pueda atribuirse a decisiones concretas de diseño. La
+exposición sigue el flujo de datos del modelo: de las variables de entrada
+(sección~\ref{sec:alpha360}) hacia la descomposición wavelet
+(sección~\ref{sec:dwt}), el codificador de doble canal (sección~\ref{sec:encoder}),
+la inyección del grafo (sección~\ref{sec:graph}) y, finalmente, los cabezales de
+salida (sección~\ref{sec:heads}). El capítulo se cierra con los resultados que el
+trabajo original reporta y los supuestos de microestructura de mercado que los
+sustentan (sección~\ref{sec:original-results}).
 
-\section{Descomposición wavelet (DWT Sym2)}      % TODO redactar
+\section{Conjunto de variables Alpha360}\label{sec:alpha360}
 
-\section{Encoder espacio-temporal de doble canal}      % TODO redactar
+La entrada del modelo no son los precios brutos, sino un conjunto de variables
+derivadas conocido como \textit{Alpha360}. La idea, heredada de la biblioteca Qlib
+y adoptada de forma generalizada en la literatura de predicción bursátil
+\cite{gu2020empirical}, consiste en describir cada acción mediante un \emph{perfil
+temporal} compacto: en lugar de modelar la serie de precios completa, se resume la
+historia reciente de cada activo en un vector de tamaño fijo que captura cómo se ha
+movido el precio y el volumen a lo largo de las últimas semanas de cotización.
 
-\section{Embeddings de grafo (struc2vec)}      % TODO redactar
+Concretamente, se parten de seis campos de mercado --apertura (\textit{open}),
+máximo (\textit{high}), mínimo (\textit{low}), cierre (\textit{close}), precio medio
+ponderado por volumen (\textit{vwap}) y volumen (\textit{volume})-- y se construyen,
+para cada uno, $60$ variables correspondientes a $60$ desfases temporales
+(\textit{lags}) $d = 1, 2, \dots, 60$. El producto $6 \times 60 = 360$ da nombre al
+conjunto. Cada variable se define como un cociente respecto a un valor de
+referencia reciente. Para los cinco campos de precio, el denominador es el cierre
+desfasado $d$ jornadas:
+\[
+\text{CLOSE}_d = \frac{\text{Close}_t}{\text{Close}_{t-d}}, \quad
+\text{OPEN}_d = \frac{\text{Open}_t}{\text{Close}_{t-d}}, \quad
+\text{VWAP}_d = \frac{(\text{High}_t + \text{Low}_t + \text{Close}_t)/3}{\text{Close}_{t-d}},
+\]
+con expresiones análogas para máximo y mínimo. El volumen, por su distinta escala,
+se normaliza contra su propio pasado, $\text{VOL}_d = \text{Volume}_t /
+\text{Volume}_{t-d}$. El vwap se aproxima mediante el precio típico
+$(\text{High}+\text{Low}+\text{Close})/3$ cuando no se dispone de un vwap
+transaccional verdadero.
 
-\section{Cabezas multitarea}      % TODO redactar
+Esta parametrización tiene dos propiedades deseables. La primera es la
+\emph{normalización por el valor más reciente}: al dividir por un precio de
+referencia próximo, cada variable expresa una variación relativa y no un nivel
+absoluto, de manera que acciones de muy distinto precio nominal resultan
+comparables y el perfil es aproximadamente invariante a la escala del activo. La
+segunda es que, recorriendo los $60$ desfases, el vector resultante describe
+implícitamente la \emph{trayectoria reciente} de cada acción --su tendencia,
+aceleración y patrón de volumen-- sin necesidad de un modelo recurrente explícito.
 
-\section{Resultados originales y supuestos de mercado}      % TODO redactar
+En la implementación que sirve de base a este trabajo, cada una de las $360$
+variables se estandariza además de forma \emph{transversal} (\textit{cross-sectional
+z-score}): para cada jornada se resta la media y se divide por la desviación típica
+calculadas sobre todas las acciones de ese día. Esta normalización por sección es
+deliberada y se realiza por filas (a través de los activos), nunca por columnas (a
+lo largo del tiempo), porque una estandarización temporal incorporaría información
+futura y constituiría una fuga de datos. Los valores no definidos --divisiones por
+cero o cocientes infinitos-- se reemplazan por cero, que tras la estandarización
+coincide con la media transversal. Por construcción, el desfase máximo $d=60$
+invalida las primeras $60$ jornadas de la muestra (donde el pasado requerido no
+existe), que se descartan antes de alimentar el modelo.
+
+\section{Descomposición wavelet (DWT Sym2)}\label{sec:dwt}
+
+Una de las señas de identidad del Stockformer es que no procesa la señal de entrada
+de forma monolítica, sino que la descompone previamente en una componente de baja
+frecuencia y otra de alta frecuencia mediante la \emph{transformada wavelet
+discreta} (\textit{Discrete Wavelet Transform}, DWT). La motivación es la clásica
+separación entre señal y ruido: la componente de baja frecuencia recoge la
+\emph{tendencia} suave y persistente del precio, mientras que la de alta frecuencia
+concentra las fluctuaciones rápidas y el ruido de microestructura. Tratar ambas por
+canales distintos permite que el modelo aprenda dinámicas diferenciadas para cada
+escala temporal, en lugar de promediarlas en una única representación.
+
+La transformada empleada utiliza la wavelet \emph{Symlet-2} (\textit{sym2}) con un
+único nivel de descomposición ($J=1$). Las Symlet son una familia de wavelets de
+soporte compacto, casi simétricas, derivadas de la construcción de Daubechies; la
+teoría de multirresolución que las sustenta se debe a Mallat~\cite{mallat1989theory}.
+Sobre cada serie temporal de la ventana de entrada, la transformada directa
+produce un conjunto de coeficientes de aproximación (baja frecuencia) y otro de
+coeficientes de detalle (alta frecuencia).
+
+Un aspecto importante de la implementación es que la descomposición no se queda en
+el dominio de los coeficientes, sino que cada banda se \emph{reconstruye} de vuelta
+al dominio temporal original mediante la transformada inversa, anulando la otra
+banda. Es decir, la componente de baja frecuencia $X_L$ se obtiene aplicando la
+inversa con los coeficientes de detalle puestos a cero, y la de alta frecuencia
+$X_H$ haciendo lo propio con los coeficientes de aproximación. El resultado son dos
+series del mismo tamaño que la original --una suavizada y otra con solo el residuo
+de alta frecuencia-- que suman aproximadamente la señal de partida. Estas dos
+series, $X_L$ y $X_H$, son las que alimentan los dos canales del codificador. La
+misma descomposición se aplica también a la variable objetivo, generando un par de
+etiquetas $(Y_L, Y_H)$ coherente con la separación de canales.
+
+\section{Encoder espacio-temporal de doble canal}\label{sec:encoder}
+
+El núcleo del modelo es un codificador (\textit{encoder}) que procesa en paralelo
+las dos bandas de frecuencia y que, en cada bloque, combina dos ejes de
+información: el \emph{temporal} (la dinámica de cada acción a lo largo de la ventana
+de \textit{lookback}) y el \emph{espacial} (las relaciones de cada acción con las
+demás del universo). En la configuración base, la ventana de entrada cubre $T_1=20$
+jornadas y se apilan $L=2$ bloques codificadores de dimensión interna $128$.
+
+Antes de entrar al codificador, las dos bandas se proyectan a la dimensión interna
+del modelo mediante sendas capas de inicio (\textit{start embedding}) y se les suma
+un \textit{embedding} temporal que codifica el día de la semana y la posición dentro
+de la ventana. Durante el entrenamiento se inyecta además un pequeño ruido gaussiano
+sobre ambas bandas, que actúa como regularización implícita.
+
+Cada bloque del codificador trata las dos bandas de manera asimétrica, reflejando su
+distinta naturaleza:
+
+\begin{itemize}
+  \item La \textbf{banda de baja frecuencia} $X_L$ se procesa con \emph{atención
+    temporal} (\textit{self-attention} sobre el eje del tiempo). La atención emplea
+    una \emph{máscara causal} triangular inferior, de modo que la representación de
+    cada jornada solo puede atender a jornadas presentes y pasadas, nunca futuras
+    --una salvaguarda explícita contra la fuga de información temporal.
+  \item La \textbf{banda de alta frecuencia} $X_H$ se procesa con una red
+    \emph{convolucional temporal} (\textit{Temporal Convolutional Network}, TCN) de
+    convoluciones dilatadas y causales, más adecuada para capturar patrones locales
+    de corta escala que la atención global.
+\end{itemize}
+
+Tras el tratamiento temporal, ambas bandas pasan por un componente \emph{espacial}
+de \emph{atención dispersa} (\textit{sparse spatial attention}) que opera entre
+acciones: para cada activo, calcula puntuaciones de atención frente al resto del
+universo y agrega información de los demás. La variante implementada incorpora una
+operación de \emph{copia} que, para cada acción, selecciona la acción que más le
+atiende y propaga su representación, en lugar de una mezcla densa de todos los
+pares; esto reduce el coste de memoria respecto a una atención completa entre
+acciones. Cada uno de los dos canales dispone de su propio módulo espacial, y la
+salida se conecta de forma residual con la entrada del bloque.
+
+A la salida de los $L$ bloques, una capa de \emph{fusión adaptativa}
+(\textit{adaptive fusion}) combina ambos canales. Esta fusión es de nuevo un
+mecanismo de atención, pero cruzado: las consultas (\textit{queries}) proceden de la
+banda de baja frecuencia y las claves y valores de la de alta frecuencia, de manera
+que el modelo aprende a modular la tendencia con la información de detalle. La fusión
+opera ya sobre el horizonte de predicción $T_2=2$, al que las dos bandas se han
+reducido mediante una proyección convolucional desde las $T_1=20$ jornadas de
+entrada. El resultado son dos representaciones por acción --la fusionada y la propia
+de la banda de baja frecuencia-- que se pasan a los cabezales de salida.
+
+\section{Embeddings de grafo (struc2vec)}\label{sec:graph}
+
+El componente espacial descrito en la sección anterior necesita un conocimiento
+\emph{a priori} de qué acciones están relacionadas. El Stockformer no lo aprende
+desde cero, sino que lo inyecta a través de un \emph{grafo estático} de relaciones
+entre acciones, precomputado y codificado en \textit{embeddings} de nodo mediante el
+algoritmo \emph{struc2vec} \cite{ribeiro2017struc2vec}.
+
+El grafo se construye a partir de la matriz de correlaciones de los retornos: se
+calcula la correlación de Pearson entre cada par de acciones sobre el periodo de
+entrenamiento y se retienen como aristas los pares cuya correlación supera en valor
+absoluto un umbral (en la implementación, $|\rho| > 0{,}3$). El resultado es una
+lista de aristas ponderadas que define la topología del universo.
+
+Sobre esa topología se aplica struc2vec, un método de aprendizaje de
+representaciones de nodos que, a diferencia de enfoques basados en proximidad como
+\textit{node2vec}, mide la \emph{similitud estructural}: dos acciones reciben
+\textit{embeddings} próximos si ocupan posiciones topológicamente análogas en el
+grafo (por ejemplo, ambas como nodos centrales muy conectados o ambas periféricas),
+aunque no estén directamente vinculadas entre sí. El algoritmo genera una jerarquía
+de similitudes estructurales, realiza caminatas aleatorias (\textit{random walks})
+sobre el grafo de contexto resultante y entrena un modelo tipo \textit{skip-gram}
+para producir un vector por acción. En la configuración base, cada acción se
+representa con un \textit{embedding} de dimensión $128$.
+
+Estos vectores se inyectan en el codificador como una \emph{codificación posicional
+espacial}: en cada módulo de atención entre acciones, el \textit{embedding} de grafo
+se proyecta a la dimensión interna del modelo y se \emph{suma} a la representación de
+cada acción antes de computar las consultas, claves y valores. De este modo, la
+estructura de relaciones del mercado condiciona a quién atiende cada activo, sin que
+el grafo tenga que recalcularse durante el entrenamiento --de ahí su carácter
+estático.
+
+\section{Cabezas multitarea}\label{sec:heads}
+
+El Stockformer no es un modelo de regresión puro: aprende de forma \emph{multitarea}
+(\textit{multi-task}), con dos cabezales de salida que comparten el mismo cuerpo
+codificador pero optimizan objetivos distintos:
+
+\begin{itemize}
+  \item Un \textbf{cabezal de regresión}, que predice el retorno futuro de cada
+    acción (la magnitud de la señal).
+  \item Un \textbf{cabezal de clasificación}, que predice la \emph{dirección} o
+    tendencia del activo (señal discreta de subida o bajada), formulado como un
+    problema de clasificación sobre un número fijo de clases.
+\end{itemize}
+
+Cada cabezal es una pequeña red \textit{feed-forward} y, en la implementación, se
+aplica a las \emph{dos} representaciones que entrega el codificador --la fusionada y
+la de la banda de baja frecuencia--, de manera que la señal de regresión y la de
+clasificación se obtienen por partida doble. La función de pérdida combina los dos
+objetivos: una \emph{entropía cruzada} (\textit{cross-entropy}) para la cabeza de
+clasificación y un \emph{error absoluto medio enmascarado} (\textit{masked MAE}) para
+la de regresión, donde el enmascarado descarta las posiciones sin etiqueta válida.
+La pérdida total es una suma ponderada de ambos términos, lo que obliga al cuerpo
+compartido a aprender una representación útil simultáneamente para anticipar el signo
+y la magnitud del movimiento.
+
+El supuesto subyacente es que la tarea de clasificación direccional actúa como una
+señal auxiliar que regulariza la regresión: ordenar correctamente las acciones por
+dirección es un objetivo más robusto al ruido que estimar el retorno exacto, y su
+gradiente ayuda a estabilizar el aprendizaje. Conviene anticipar aquí que, en la
+adaptación al S\&P~500 estudiada en la Parte~I, este objetivo multitarea se sustituye
+por una pérdida de \textit{ranking} transversal --una combinación de pérdida
+listwise tipo \emph{ListNet} \cite{cao2007learning}, un término que optimiza
+directamente el coeficiente de información (\textit{Information Coefficient}, IC) y un
+término MAE--, por estar mejor alineada con el objetivo último de seleccionar
+acciones; la motivación de ese cambio se detalla en el capítulo~\ref{cap:metodologia}.
+
+\section{Resultados originales y supuestos de mercado}\label{sec:original-results}
+
+En su evaluación original sobre los índices chinos CSI~300 y CSI~500,
+Ma et al.~\cite{ma2024stockformer} reportan un poder predictivo notablemente positivo, con un
+coeficiente de información (IC) transversal claramente superior al de los modelos de
+referencia y, a partir de él, carteras \textit{long-short} con ratios de Sharpe
+atractivos. Esa magnitud no es anómala dentro de su régimen: en el mismo mercado
+chino, el transformer MASTER alcanza un IC en torno a $0{,}064$ sobre CSI~300
+\cite{li2024master}, un orden de magnitud que en mercados desarrollados rara vez se
+sostiene fuera de muestra. La cuestión, por tanto, no es si el modelo funciona en su
+entorno original --lo hace--, sino \emph{por qué} funciona allí y si esas condiciones
+se reproducen en el S\&P~500.
+
+La respuesta apunta a la microestructura del mercado de \textit{A-shares}, cuyas
+particularidades favorecen sistemáticamente las señales de momento y reversión que
+capturan las variables Alpha360:
+
+\begin{itemize}
+  \item \textbf{Dominio del inversor minorista.} El mercado chino está fuertemente
+    dominado por inversores \textit{retail}, cuyo comportamiento gregario y sesgado
+    genera patrones de precio más persistentes y predecibles que los de un mercado
+    institucionalizado.
+  \item \textbf{Menor eficiencia informativa.} La incorporación de información a los
+    precios es más lenta, de modo que las señales técnicas conservan poder
+    predictivo durante más tiempo antes de ser arbitradas.
+  \item \textbf{Límites diarios de precio.} Las \textit{A-shares} están sujetas a
+    bandas de fluctuación diaria (típicamente $\pm 10\%$) que detienen la
+    cotización al tocar el límite. Estos topes introducen autocorrelación mecánica
+    en los retornos: una acción que toca el límite superior tiende a continuar al
+    alza la jornada siguiente. Un modelo puede \emph{aprender} esa regularidad e
+    inflar artificialmente su IC, pero esa señal es en buena medida
+    \emph{no ejecutable}: precisamente cuando el modelo querría comprar, la acción
+    está bloqueada en el límite y no hay contrapartida disponible.
+\end{itemize}
+
+Estos tres rasgos hacen del mercado chino un entorno benigno para un modelo como el
+Stockformer. El S\&P~500, en cambio, es uno de los mercados más líquidos,
+institucionalizados y eficientes del mundo, sin límites diarios de precio y con
+costes de transacción y arbitraje que erosionan rápidamente cualquier señal técnica.
+Ninguno de los supuestos anteriores se sostiene. Esta asimetría es la que motiva la
+pregunta central del capítulo~\ref{cap:parte1}: ¿transfiere el Stockformer su
+desempeño cuando se le retira el régimen de mercado que lo hacía funcionar? Y, de no
+hacerlo, ¿cuánto de su arquitectura es realmente necesario? El resto de la memoria
+se ocupa de responder ambas preguntas con honestidad empírica.
