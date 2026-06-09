@@ -1,127 +1,127 @@
-# Stockformer S&P500 — TFM Adaptation
+# TFM — Transferencia cross-market de Stockformer al S&P 500
 
-Adaptation of the **Stockformer** model (originally trained on Chinese A-share markets) to the **S&P 500** universe, developed as a Master's thesis (TFM). The goal is to evaluate whether the architecture — wavelet-based feature decomposition, multi-task self-attention, and Alpha360-style price/volume factors — generalises to US equity markets.
+Trabajo Fin de Máster. Estudia, en dos partes, si un modelo de *deep learning* financiero
+calibrado en un mercado transfiere a otro estructuralmente distinto, y, cuando no lo hace,
+qué genera realmente el retorno neto.
 
-## What this project does
+- **Parte I (RQ1):** ¿transfiere **Stockformer** (arquitectura *wavelet-transformer-grafo*,
+  ~10⁶ parámetros, calibrada sobre acciones chinas A-shares) al S&P 500 a horizonte semanal?
+  Mediante una *complexity ladder* y una auditoría anti-fuga limpia, la respuesta es **no**:
+  su IC *out-of-sample* cae a ≈ −0,003 y lo bate un Lasso de cinco coeficientes (+0,0238).
+- **Parte II (RQ2):** ¿qué genera el retorno neto? Una atribución etapa a etapa señala la
+  **construcción de cartera cost-aware**, y una búsqueda disciplinada de señal encuentra un
+  factor concreto con contenido: el **momentum residual**. El pipeline `momentum residual +
+  ensemble` con construcción cost-aware da un Sharpe neto robusto de 0,72 (t = 1,82) sobre
+  un *walk-forward* de 311 semanas — mejora apreciable, al borde de la significancia.
 
-The original Stockformer paper introduced a stock ranking model combining:
-- Wavelet transform for multi-scale temporal feature extraction
-- Multi-task self-attention (price prediction + trend classification)
-- 360 price/volume ratio features (Alpha360) as model inputs
+La memoria completa (LaTeX) está en `MEMORIA/tfm/`.
 
-This repository adapts that pipeline end-to-end for the S&P 500:
-
-1. **Data collection** — downloads daily OHLCV for S&P 500 constituents via yfinance (2018–2024)
-2. **Feature engineering** — reconstructs 360 Alpha360-style price/volume ratio features from raw OHLCV
-3. **Graph embedding** — builds Struc2Vec structural embeddings from a return-correlation graph
-4. **Model training** — trains the Stockformer architecture on the S&P 500 dataset
-5. **Evaluation** — computes IC/ICIR metrics and runs a daily-rebalanced portfolio backtest vs SPY
-
-## Based on
-
-Ma, Bohan; Xue, Yushan; Lu, Yuan & Chen, Jing. (2025). "Stockformer: A price-volume factor stock selection model based on wavelet transform and multi-task self-attention networks". *Expert Systems with Applications*, 273, 126803. DOI: [https://doi.org/10.1016/j.eswa.2025.126803](https://doi.org/10.1016/j.eswa.2025.126803)
-
-## File Structure
+## Estructura del repositorio
 
 ```
-scripts/
-├── build_pipeline.py        # Data pipeline orchestrator (steps 1–5)
-├── build_alpha360.py        # Alpha360 feature builder (invoked by build_pipeline.py)
-├── sp500_pipeline/          # Step scripts: download, normalize, serialize, graph embedding
-├── run_inference.py         # Standalone inference on saved checkpoint
-├── compute_ic.py            # IC / ICIR evaluation
-└── run_backtest.py          # Portfolio backtest vs SPY
+MEMORIA/tfm/            Memoria del TFM (LaTeX). Compilar con build.sh
+├── Capitulos/          8 capítulos
+├── Apendices/          Anexo B (tablas completas)
+├── tablas/             Fragmentos LaTeX de tablas (generados desde results/*.csv)
+├── figuras/            Figuras de la memoria (PNG)
+├── main.tex, preambulo.tex, main.bib
+└── build.sh            latexmk a convergencia (backend bibtex)
 
-config/
-└── Multitask_Stock_SP500.conf   # All paths and hyperparameters for the S&P500 run
+lib/                    Módulos compartidos del pipeline de retornos
+                        (data_panel, weekly_panel, portfolio, neutralize, ...)
 
-data/
-└── Stock_SP500_2018-01-01_2024-01-01/   # Created by build_pipeline.py
-    ├── ohlcv/               # Parquet files (one per ticker)
-    ├── features/            # 360 Alpha360-style price/volume ratio CSVs
-    ├── flow.npz             # Normalized return sequences
-    ├── trend_indicator.npz  # Trend label arrays
-    └── 128_corr_struc2vec_adjgat.npy  # Graph embeddings
+scripts/                Pipeline de reproducción (ver "Reproducir resultados")
+└── sp500_pipeline/     Descarga OHLCV y embeddings de grafo (Struc2Vec)
 
-app.py                       # Streamlit interface
-MultiTask_Stockformer_train.py  # Model training entry point
+Stockformermodel/       Implementación del modelo Stockformer (Parte I)
+MultiTask_Stockformer_train.py   Entrenamiento de Stockformer (GPU)
+config/                 Configs de entrenamiento de Stockformer
+
+results/                Cifras canónicas (CSV) que alimentan las tablas de la memoria
+cpt/                    Checkpoints entrenados de Stockformer
+output/                 Salida de inferencia de Stockformer
+tests/                  Tests del pipeline (pytest)
+
+data/                   Panel S&P 500 (~7 GB, externo — no versionado, ver .gitignore)
+_local/                 Material local fuera del repo (demo, planning, refs, infra DGX)
 ```
 
-## Quick Start
+> `data/` y `_local/` no se versionan (`.gitignore`). El panel de datos se reconstruye con
+> el pipeline; `_local/` guarda material auxiliar (app Streamlit, notebooks, PDFs de
+> referencia, bundle de la DGX) que no forma parte de la memoria.
 
-Reproduce the full pipeline from a fresh clone in seven steps.
+## Cómputo
 
-### 1. Install dependencies
+El entrenamiento y la evaluación de **Stockformer requieren GPU** y se ejecutaron en la
+estación NVIDIA DGX de la Universidad. El resto del trabajo (la *complexity ladder* de
+modelos simples, la estrategia semanal y los análisis de robustez) corre **en CPU**.
+
+## Compilar la memoria
+
+```sh
+cd MEMORIA/tfm && ./build.sh        # -> main.pdf
+```
+
+Si el árbol tiene `.aux` viejos, `latexmk -C` antes de `build.sh` evita un falso aviso de
+convergencia.
+
+## Reproducir resultados
 
 ```sh
 pip install -r requirements.txt
 ```
 
-### 2. Build data pipeline (download → features → embeddings)
+**1. Datos** (descarga OHLCV, features Alpha360/158, fundamentales, embeddings de grafo):
 
 ```sh
 python scripts/build_pipeline.py --config config/Multitask_Stock_SP500.conf
 ```
 
-This single command runs all five steps:
-- Downloads S&P 500 OHLCV data via yfinance
-- Normalizes and splits the dataset
-- Serializes `flow.npz` and `trend_indicator.npz`
-- Builds Struc2Vec graph embeddings
-- Generates 360 Alpha360-style price/volume ratio features
-
-On re-runs, completed steps are skipped automatically (sentinel-based idempotency).
-
-### 3. Train the model
+**2. Stockformer** (GPU) — entrenamiento e inferencia:
 
 ```sh
 python MultiTask_Stockformer_train.py --config config/Multitask_Stock_SP500.conf
+python scripts/run_inference.py        --config config/Multitask_Stock_SP500.conf
 ```
 
-> **GPU required for reasonable runtime.** The training script runs on CPU but will be extremely slow. [Kaggle](https://www.kaggle.com/) provides free GPU notebooks suitable for this workload. For a quick smoke test (2 epochs), add `--max_epoch 2`.
-
-### 4. Run inference
+**3. Parte I — complexity ladder y significancia** (CPU):
 
 ```sh
-python scripts/run_inference.py --config config/Multitask_Stock_SP500.conf
+python scripts/run_cpu_ladder.py
+python scripts/run_ladder_analysis.py
+python scripts/run_power_signtest.py
 ```
 
-Generates prediction CSVs in `output/` using the saved checkpoint.
-
-### 5. Compute IC / ICIR evaluation metrics
+**4. Parte II — estrategia semanal, robustez y construcción** (CPU):
 
 ```sh
-python scripts/compute_ic.py
+python scripts/run_weekly_strategy.py
+python scripts/run_weekly_robustness.py --init_train 200 --step 26
+python scripts/run_construction.py
+python scripts/run_pars_us.py
 ```
 
-Prints Spearman IC, ICIR, and Pearson IC for the test period.
-
-### 6. Run portfolio backtest
+**5. RQ2 — búsqueda de señal y pipeline ganador** (CPU):
 
 ```sh
-python scripts/run_backtest.py
+python scripts/run_signal_search.py     # ronda 1 (reversal, momentum, ...)
+python scripts/run_signal_search2.py    # ronda 2 (familia momentum)
+python scripts/run_signal_search3.py    # ronda 3 (ensemble + momentum residual, ventana justa)
+python scripts/run_signal_search4.py    # ronda 4 (multi-factor con fundamentales)
+python scripts/pipeline_rq2.py          # pipeline concreto: momentum residual + cost-aware
+python scripts/build_rq2_table.py       # tabla LaTeX de la búsqueda (tab:rq2-signal-search)
 ```
 
-Builds a daily-rebalanced top-K portfolio, computes returns vs SPY, and saves `backtest_results.csv` and `backtest_positions.csv`.
-
-### 7. Launch the Streamlit interface
+**6. Tablas LaTeX** a partir de los CSV:
 
 ```sh
-streamlit run app.py
+python scripts/build_latex_tables.py
 ```
 
-Opens an interactive browser interface for exploring predictions and backtest results.
-
----
-
-## Citation
-
-If you build on this work or the original Stockformer model, please cite the original paper:
+## Cita (modelo original)
 
 ```
-Ma, B., Xue, Y., Lu, Y., & Chen, J. (2025).
-Stockformer: A price-volume factor stock selection model based on
-wavelet transform and multi-task self-attention networks.
-Expert Systems with Applications, 273, 126803.
-https://doi.org/10.1016/j.eswa.2025.126803
+Ma, B., Xue, Y., Lu, Y., & Chen, J. (2025). Stockformer: A price-volume factor stock
+selection model based on wavelet transform and multi-task self-attention networks.
+Expert Systems with Applications, 273, 126803. https://doi.org/10.1016/j.eswa.2025.126803
 ```

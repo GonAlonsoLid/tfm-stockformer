@@ -1,0 +1,6 @@
+metric,value
+mean_ic,0.013645218999246886
+std_ic,0.122958708159925
+ic_ir,0.1109739944689348
+pct_positive,50.4
+n_test_dates,250.0

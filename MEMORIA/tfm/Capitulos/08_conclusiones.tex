@@ -3,32 +3,32 @@
 \section{Conclusiones}
 
 Este trabajo se planteó dos preguntas de investigación encadenadas, y cada una de las
-dos partes de su cuerpo empírico responde a una. La primera ---¿transfiere un modelo de
+dos partes de su cuerpo empírico responde a una. La primera (¿transfiere un modelo de
 \textit{deep learning} financiero calibrado en un mercado a otro mercado estructuralmente
-distinto?--- recibe en el Capítulo~\ref{cap:parte1} una respuesta negativa e inequívoca.
+distinto?) recibe en el Capítulo~\ref{cap:parte1} una respuesta negativa y clara.
 Stockformer, una arquitectura de en torno a un millón de parámetros que rinde sobre acciones
 chinas A-shares, no transfiere su capacidad predictiva al S\&P 500 a horizonte semanal: su
 coeficiente de información \textit{out-of-sample} cae a $\approx -0{,}003$, una correlación de
 rangos estadísticamente indistinguible de cero, y es batido por un Lasso de apenas cinco
-coeficientes que alcanza un IC de $+0{,}0238$. La batería de ablaciones E1--E7 demuestra,
-además, que este fracaso no se debe a un defecto puntual de configuración: ninguna corrección
-aislada ---pérdida de \textit{ranking}, grafos dinámicos, \textit{features} enriquecidas o
-\textit{walk-forward}--- rescata la señal, porque los modos de fallo se componen. La no
-transferibilidad es robusta porque está sobredeterminada.
+coeficientes que alcanza un IC de $+0{,}0238$. Además, este fracaso no se debe a un defecto
+puntual de configuración. La idea de fondo es sencilla: como los modos de fallo se componen, no
+es plausible que ninguna corrección aislada (grafos dinámicos, \textit{features} enriquecidas o
+\textit{walk-forward}) rescate la señal. La no transferibilidad es robusta porque está
+sobredeterminada.
 
-La segunda pregunta ---si no es la capacidad del modelo, ¿qué genera entonces el retorno
-neto?--- recibe en el Capítulo~\ref{cap:parte2} una respuesta constructiva, pero formulada
-con la honestidad que exige el dato. La palanca del retorno neto no es la predicción, sino la
-\emph{construcción de cartera consciente del coste} (\textit{cost-aware}). La atribución etapa
-a etapa es categórica: con un IC semanal de la señal de apenas $0{,}0033$ a lo largo de todo el
-\textit{walk-forward}, el retorno no puede proceder del poder predictivo; la neutralización
-factorial por sí sola resta Sharpe, y es la gestión explícita del coste de transacción dentro
-de la optimización la que rescata el resultado. Ahora bien, ese resultado es modesto. El Sharpe
-neto de $0{,}95$ medido sobre una única ventana de 52 semanas es un estimador de altísima
-varianza; el estimador defendible, el del \textit{walk-forward} sobre 215 semanas, es de
-$0{,}58 \pm 0{,}49$, cuyo cociente respecto a su error estándar queda muy por debajo del umbral
-de significancia convencional. No podemos rechazar la hipótesis de que el Sharpe poblacional de
-la estrategia sea nulo. La significancia económica es, con franqueza, límite.
+La segunda pregunta (si no es la capacidad del modelo, ¿qué genera entonces el retorno
+neto?) recibe en el Capítulo~\ref{cap:parte2} una respuesta constructiva y concreta. La palanca
+principal del retorno neto no es la predicción, sino la \emph{construcción de cartera consciente
+del coste} (\textit{cost-aware}): la atribución etapa a etapa muestra que, con un IC de la señal
+aprendida de apenas $0{,}0033$, el retorno no procede del poder predictivo, sino de la gestión
+explícita del coste de transacción dentro de la optimización. Una búsqueda disciplinada de señal
+precisa esa respuesta: el reversal y los fundamentales no aportan, pero el momentum residual, un
+factor simple con contenido real, combinado con esa construcción eleva el Sharpe neto robusto a
+$0{,}72$ ($t = 1{,}82$) sobre una ventana \textit{walk-forward} de 311 semanas, frente al $0{,}38$
+de la base en la misma ventana (el $0{,}58$ del \textit{walk-forward} de 215 semanas era, en
+parte, ventana favorable). Aun así, el resultado es modesto: con $t = 1{,}82$ no se puede rechazar
+la hipótesis de que el Sharpe poblacional sea nulo. La significancia económica es, por tanto,
+límite.
 
 Tomadas en conjunto, las dos respuestas articulan una doble contribución. La primera es de
 naturaleza empírica: evidencia documentada de la \emph{no transferibilidad cross-market} de un
@@ -37,24 +37,40 @@ modelo de \textit{deep learning} financiero, un caso que conecta con el fenómen
 de \textcite{gu2020empirical} de que la ganancia del \textit{machine learning} en
 \textit{asset pricing} procede de la regularización antes que de la profundidad arquitectónica.
 La segunda es de naturaleza metodológica y práctica: un \textit{pipeline} reproducible que
-cuantifica, con honestidad, dónde reside ---y dónde no--- la palanca del Sharpe neto. La
+cuantifica, con honestidad, dónde reside, y dónde no, la palanca del Sharpe neto. La
 lección transversal del trabajo es una variante disciplinada del principio
 \textit{simpler-is-better}: en el régimen más eficiente y arbitrado del espacio de
-posibilidades ---\textit{large-cap} estadounidense, rebalanceo semanal, datos públicos---, la
+posibilidades (\textit{large-cap} estadounidense, rebalanceo semanal, datos públicos), la
 parsimonia del modelo no es una concesión estética sino la respuesta correcta a una sección
-transversal estrecha, y el retorno que sobrevive a los costes nace de cómo se construye la
-cartera, no de cuánta capacidad tiene el predictor.
+transversal estrecha, y el retorno que sobrevive a los costes nace de una señal-factor simple
+(el momentum residual) y de cómo se construye la cartera, no de cuánta capacidad tiene el
+predictor.
+
+La fuerza de estas conclusiones reside en una jerarquía de
+evidencia de tres niveles, no en un único contraste. En el primer nivel, el más sólido y que
+no depende de ningún $p$-valor, hay dos hechos: el IC de Stockformer indistinguible de cero,
+certificado por una auditoría anti-fuga limpia que garantiza que el cero es genuino, y la
+atribución etapa a etapa sobre la ventana completa de 215 semanas, que localiza mecánicamente
+el retorno marginal en la construcción cost-aware. En el segundo nivel, de carácter
+direccional pero no concluyente, está la superioridad consistente de los modelos simples
+sobre Stockformer (unánime en signo, pero con $p$-valores que no cruzan el $5\%$ y una
+potencia que, como cuantifica el efecto mínimo detectable, es insuficiente para el tamaño de
+efecto que el régimen permite) y un Sharpe neto cuyo intervalo de confianza incluye el cero.
+En el tercer nivel, de contexto, está la calibración de magnitudes frente a la literatura,
+que sitúa las cifras de este trabajo en la banda esperable para este régimen. La contribución
+descansa sobre el primer nivel; el segundo y el tercero la enmarcan, pero el trabajo no los
+presenta como pruebas que no son.
 
 \section{Trabajo futuro}
 
 Las limitaciones delimitadas en el Capítulo~\ref{cap:discusion} no son únicamente fronteras de
-validez: señalan las direcciones más fértiles de continuación. Las ordenamos por prioridad.
+validez: señalan las direcciones más fértiles de continuación. Se ordenan por prioridad.
 
 \paragraph{Flujo de inferencia live.} La línea más importante, y la que separa este
 trabajo de un mero ejercicio de \textit{backtest}, es el paso del retrospectivo histórico a la
 predicción de posiciones reales. Un sistema operativo exige tres componentes que el diseño
-actual aún no integra de extremo a extremo: la recolección de datos en vivo ---OHLCV y
-fundamentales \textit{point-in-time}--- al cierre de cada semana; la generación de la cartera
+actual aún no integra de extremo a extremo: la recolección de datos en vivo (OHLCV y
+fundamentales \textit{point-in-time}) al cierre de cada semana; la generación de la cartera
 objetivo de la semana siguiente a partir de la señal y de la optimización \textit{cost-aware};
 y un protocolo de validación \textit{forward} que contraste las posiciones efectivamente
 generadas contra los retornos realizados, semana a semana y en tiempo real. Solo esta
@@ -73,14 +89,14 @@ honesta deben mantenerse: el objetivo es medir si el sentimiento añade IC genui
 
 \paragraph{Optimización extremo a extremo y frecuencias mayores.} El diseño actual desacopla
 predicción y construcción en dos etapas (\textit{predict-then-optimize}). Una optimización
-diferenciable de extremo a extremo ---en la que el objetivo de cartera consciente del coste
-retroalimente directamente el entrenamiento del predictor--- podría alinear ambas fases y
-explotar mejor la palanca de construcción ya identificada. Esta dirección resulta especialmente
-prometedora a frecuencias de rebalanceo superiores a la semanal, donde el coste de transacción
+diferenciable de extremo a extremo (en la que el objetivo de cartera consciente del coste
+retroalimente directamente el entrenamiento del predictor) podría alinear ambas fases y
+explotar mejor la palanca de construcción ya identificada. Esta dirección es
+de particular interés a frecuencias de rebalanceo superiores a la semanal, donde el coste de transacción
 es más vinculante y, por tanto, la ventaja de internalizarlo en el aprendizaje es mayor.
 
 \paragraph{Meta-aprendizaje y ensembles más ricos.} Finalmente, ante la no estacionariedad de
-los regímenes de mercado ---reflejada en el amplio error estándar del Sharpe robusto---, cabe
+los regímenes de mercado (reflejada en el amplio error estándar del Sharpe robusto), cabe
 explorar esquemas de meta-aprendizaje que adapten el modelo a la deriva de distribución, como
 DoubleAdapt, así como \textit{ensembles} más ricos que combinen las predicciones de la escalera
 de complejidad. El principio rector debe seguir siendo el de esta tesis: incrementar la
@@ -91,26 +107,28 @@ capacidad solo donde exista evidencia de señal que aprender, nunca por defecto.
 Más allá del caso particular del S\&P 500, los hallazgos de este trabajo tienen una implicación
 general para el \textit{machine learning} financiero \textit{cross-market}. La transferencia de
 un modelo de \textit{deep learning} entre mercados con microestructuras distintas no es un
-problema de adaptación incremental ---reentrenar, ajustar hiperparámetros, enriquecer las
-\textit{features} dentro de la misma clase de información---, sino que requiere una
-rearquitectura fundamental. Las ablaciones de la Parte~I lo demuestran de forma experimental:
-cuando los modos de fallo se componen, las correcciones marginales no se acumulan hasta rescatar
-la señal. Pretender portar un modelo de un mercado minorista e ineficiente a uno
+problema de adaptación incremental (reentrenar, ajustar hiperparámetros, enriquecer las
+\textit{features} dentro de la misma clase de información), sino que requiere una
+rearquitectura fundamental. El análisis de la Parte~I lo sostiene: cuando los modos de fallo se
+componen, las correcciones marginales no se acumulan hasta rescatar la señal. Portar un modelo
+de un mercado minorista e ineficiente a uno
 \textit{large-cap} eficiente mediante ajustes superficiales es presuponer, sin evidencia, una
 transferibilidad que el régimen de destino no concede.
 
 La segunda implicación reordena las prioridades de quien busca retorno neto en este régimen. El
-valor no reside en la capacidad del modelo ---el predictor más complejo de la escalera fue el
-peor---, sino en los datos y en la construcción. Por el lado de los datos, la frontera está en
-incorporar fuentes de información genuinamente ortogonales al precio ---sentimiento, datos
-alternativos, volatilidad implícita--- antes que en aumentar la expresividad sobre la misma clase
-de información ya saturada. Por el lado de la construcción, la evidencia es directa: la gestión
+valor no reside en la capacidad del modelo (el predictor más complejo de la escalera fue el
+peor), sino en la señal-factor y en la construcción. Por el lado de la señal, lo que aporta
+contenido no es un predictor más expresivo sobre la misma clase de información (la señal
+aprendida sobre precio-volumen tiene un IC casi nulo), sino un factor simple y bien elegido,
+el momentum residual. La frontera siguiente está en incorporar fuentes genuinamente
+ortogonales al precio (sentimiento, datos alternativos, volatilidad implícita), no en añadir
+expresividad sobre la información ya saturada. Por el lado de la construcción, la evidencia es directa: la gestión
 explícita del coste de transacción es la única etapa del \textit{pipeline} que añade Sharpe neto
-positivo. La conclusión para el profesional es, por tanto, contraintuitiva respecto al énfasis
+positivo. Para el profesional, la lección es contraintuitiva respecto al énfasis
 arquitectónico dominante en la literatura: en el segmento más arbitrado del mercado, el esfuerzo
 marginal rinde más invertido en mejores datos y en una construcción de cartera consciente de
-costes que en una arquitectura de predicción más sofisticada. Y la conclusión para el
-investigador honesto es complementaria: reportar el estimador robusto con su incertidumbre,
+costes que en una arquitectura de predicción más sofisticada. Y en el plano de la investigación
+la lección es complementaria: conviene reportar el estimador robusto con su incertidumbre,
 atribuir el retorno a su fuente real y resistir la tentación de presentar como descubrimiento lo
 que un protocolo limpio revela como ruido bien construido. Esa disciplina, más que cualquier
-cifra concreta, es lo que este trabajo reivindica.
+cifra concreta, es lo que este trabajo defiende.

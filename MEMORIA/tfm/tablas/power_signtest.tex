@@ -1,0 +1,17 @@
+\begin{table}[htbp]
+\centering
+\caption{Contraste direccional del rank-IC diario frente a Stockformer (comparaci\'on pareada por d\'ia, $n$ d\'ias comunes). Test de signos temporal (binomial exacto, dos colas), Wilcoxon, intervalo de confianza al 95\% de la diferencia media de IC ($\Delta$IC) y efecto m\'inimo detectable (MDE) al 80\% de potencia. Ning\'un modelo cruza $0{,}05$: la superioridad es direccional, no concluyente, y todos los $\Delta$IC observados caen por debajo de su MDE.}
+\label{tab:power-signtest}
+\small
+\begin{tabular}{lrrrrr}
+\toprule
+Modelo & \% d\'ias $>$SF & $p$ signos & $p$ Wilcoxon & $\Delta$IC [IC 95\%] & MDE$_{80}$ \\
+\midrule
+Ridge & 50.8 & 0.845 & 0.254 & $+0.0187$ [-0.0072, +0.0446] & 0.0369 \\
+Lasso & 55.1 & 0.134 & 0.108 & $+0.0319$ [-0.0019, +0.0657] & 0.0481 \\
+ElasticNet & 53.8 & 0.268 & 0.183 & $+0.0251$ [-0.0073, +0.0575] & 0.0461 \\
+LightGBM & 53.8 & 0.268 & 0.164 & $+0.0178$ [-0.0038, +0.0393] & 0.0306 \\
+XGBoost & 52.5 & 0.474 & 0.200 & $+0.0214$ [-0.0032, +0.0459] & 0.0349 \\
+\bottomrule
+\end{tabular}
+\end{table}

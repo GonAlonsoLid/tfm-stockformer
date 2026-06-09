@@ -1,14 +1,14 @@
 \chapter{Stockformer: arquitectura original}\label{cap:stockformer}
 
 El modelo Stockformer, propuesto por Ma et al.~\cite{ma2024stockformer} para el
-mercado de acciones \textit{A-shares} chino, articula en una sola red neuronal varios componentes
+mercado de acciones \textit{A-shares} chino, reúne en una sola red neuronal varios componentes
 que en la literatura suelen aparecer por separado: una representación densa de
 precio y volumen, una descomposición de la señal en frecuencias, un codificador
 espacio-temporal basado en atención, un grafo estático de relaciones entre acciones
 y un cabezal de predicción multitarea. Este capítulo describe esa arquitectura
 original tal y como está implementada, sin entrar todavía en la cuestión de su
 transferibilidad al mercado estadounidense, que se aborda en el
-capítulo~\ref{cap:parte1}. El objetivo es que el lector comprenda con precisión
+capítulo~\ref{cap:parte1}. La intención es dejar claro
 \emph{qué} se adapta y \emph{qué} se conserva en la Parte~I, de modo que la posterior
 discusión de resultados pueda atribuirse a decisiones concretas de diseño. La
 exposición sigue el flujo de datos del modelo: de las variables de entrada
@@ -29,7 +29,7 @@ temporal} compacto: en lugar de modelar la serie de precios completa, se resume 
 historia reciente de cada activo en un vector de tamaño fijo que captura cómo se ha
 movido el precio y el volumen a lo largo de las últimas semanas de cotización.
 
-Concretamente, se parten de seis campos de mercado --apertura (\textit{open}),
+Concretamente, se parte de seis campos de mercado --apertura (\textit{open}),
 máximo (\textit{high}), mínimo (\textit{low}), cierre (\textit{close}), precio medio
 ponderado por volumen (\textit{vwap}) y volumen (\textit{volume})-- y se construyen,
 para cada uno, $60$ variables correspondientes a $60$ desfases temporales
@@ -60,10 +60,10 @@ aceleración y patrón de volumen-- sin necesidad de un modelo recurrente explí
 En la implementación que sirve de base a este trabajo, cada una de las $360$
 variables se estandariza además de forma \emph{transversal} (\textit{cross-sectional
 z-score}): para cada jornada se resta la media y se divide por la desviación típica
-calculadas sobre todas las acciones de ese día. Esta normalización por sección es
-deliberada y se realiza por filas (a través de los activos), nunca por columnas (a
+calculadas sobre todas las acciones de ese día. Esta normalización por sección se
+realiza por filas (a través de los activos), nunca por columnas (a
 lo largo del tiempo), porque una estandarización temporal incorporaría información
-futura y constituiría una fuga de datos. Los valores no definidos --divisiones por
+futura y sería una fuga de datos. Los valores no definidos --divisiones por
 cero o cocientes infinitos-- se reemplazan por cero, que tras la estandarización
 coincide con la media transversal. Por construcción, el desfase máximo $d=60$
 invalida las primeras $60$ jornadas de la muestra (donde el pasado requerido no
@@ -71,7 +71,7 @@ existe), que se descartan antes de alimentar el modelo.
 
 \section{Descomposición wavelet (DWT Sym2)}\label{sec:dwt}
 
-Una de las señas de identidad del Stockformer es que no procesa la señal de entrada
+El Stockformer no procesa la señal de entrada
 de forma monolítica, sino que la descompone previamente en una componente de baja
 frecuencia y otra de alta frecuencia mediante la \emph{transformada wavelet
 discreta} (\textit{Discrete Wavelet Transform}, DWT). La motivación es la clásica
@@ -116,7 +116,7 @@ un \textit{embedding} temporal que codifica el día de la semana y la posición 
 de la ventana. Durante el entrenamiento se inyecta además un pequeño ruido gaussiano
 sobre ambas bandas, que actúa como regularización implícita.
 
-Cada bloque del codificador trata las dos bandas de manera asimétrica, reflejando su
+Cada bloque del codificador trata las dos bandas de manera asimétrica, acorde con su
 distinta naturaleza:
 
 \begin{itemize}
@@ -212,7 +212,7 @@ y la magnitud del movimiento.
 El supuesto subyacente es que la tarea de clasificación direccional actúa como una
 señal auxiliar que regulariza la regresión: ordenar correctamente las acciones por
 dirección es un objetivo más robusto al ruido que estimar el retorno exacto, y su
-gradiente ayuda a estabilizar el aprendizaje. Conviene anticipar aquí que, en la
+gradiente ayuda a estabilizar el aprendizaje. Conviene recordar aquí que, en la
 adaptación al S\&P~500 estudiada en la Parte~I, este objetivo multitarea se sustituye
 por una pérdida de \textit{ranking} transversal --una combinación de pérdida
 listwise tipo \emph{ListNet} \cite{cao2007learning}, un término que optimiza
@@ -223,10 +223,10 @@ acciones; la motivación de ese cambio se detalla en el capítulo~\ref{cap:metod
 \section{Resultados originales y supuestos de mercado}\label{sec:original-results}
 
 En su evaluación original sobre los índices chinos CSI~300 y CSI~500,
-Ma et al.~\cite{ma2024stockformer} reportan un poder predictivo notablemente positivo, con un
-coeficiente de información (IC) transversal claramente superior al de los modelos de
+Ma et al.~\cite{ma2024stockformer} reportan un poder predictivo positivo, con un
+coeficiente de información (IC) transversal superior al de los modelos de
 referencia y, a partir de él, carteras \textit{long-short} con ratios de Sharpe
-atractivos. Esa magnitud no es anómala dentro de su régimen: en el mismo mercado
+altos. Esa magnitud no es anómala dentro de su régimen: en el mismo mercado
 chino, el transformer MASTER alcanza un IC en torno a $0{,}064$ sobre CSI~300
 \cite{li2024master}, un orden de magnitud que en mercados desarrollados rara vez se
 sostiene fuera de muestra. La cuestión, por tanto, no es si el modelo funciona en su
@@ -251,7 +251,7 @@ capturan las variables Alpha360:
     en los retornos: una acción que toca el límite superior tiende a continuar al
     alza la jornada siguiente. Un modelo puede \emph{aprender} esa regularidad e
     inflar artificialmente su IC, pero esa señal es en buena medida
-    \emph{no ejecutable}: precisamente cuando el modelo querría comprar, la acción
+    \emph{no ejecutable}: cuando el modelo querría comprar, la acción
     está bloqueada en el límite y no hay contrapartida disponible.
 \end{itemize}
 
@@ -263,4 +263,4 @@ Ninguno de los supuestos anteriores se sostiene. Esta asimetría es la que motiv
 pregunta central del capítulo~\ref{cap:parte1}: ¿transfiere el Stockformer su
 desempeño cuando se le retira el régimen de mercado que lo hacía funcionar? Y, de no
 hacerlo, ¿cuánto de su arquitectura es realmente necesario? El resto de la memoria
-se ocupa de responder ambas preguntas con honestidad empírica.
+se ocupa de responder ambas preguntas a partir de la evidencia empírica.

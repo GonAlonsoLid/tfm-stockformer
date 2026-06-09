@@ -1,8 +1,8 @@
 \chapter{Estado del arte}\label{cap:sota}
 
-Este capítulo construye el andamiaje intelectual sobre el que se apoya la tesis
+Este capítulo revisa la literatura sobre la que se apoya la tesis
 central del trabajo: que un modelo de aprendizaje profundo concebido y validado
-sobre el mercado chino ---\textit{Stockformer}--- no transfiere su capacidad
+sobre el mercado chino (\textit{Stockformer}) no transfiere su capacidad
 predictiva al S\&P~500, y que, en ese mercado, los modelos sencillos combinados
 con una construcción de cartera consciente de los costes superan a las
 arquitecturas complejas. La revisión se organiza en ocho secciones que recorren,
@@ -10,23 +10,23 @@ en orden, la eficiencia comparada de los mercados, la ingeniería de variables, 
 arquitecturas profundas, la descomposición de señal, el modelado de relaciones
 entre acciones, las funciones de pérdida para \textit{ranking}, la metodología de
 entrenamiento y, finalmente, la construcción y evaluación de cartera. Cada sección
-cierra explicitando la implicación para el presente trabajo.
+cierra con la implicación para el presente trabajo.
 
 \section{Eficiencia de mercado: China vs EE.UU.}
 
 La hipótesis de mercado eficiente sostiene que los precios incorporan con rapidez
 la información disponible, de modo que el componente predecible de los retornos
-futuros tiende a cero. Sin embargo, el grado de eficiencia no es uniforme entre
-mercados, y esta heterogeneidad es el primer pilar de la tesis: un modelo
+futuros tiende a cero. Ahora bien, el grado de eficiencia no es uniforme entre
+mercados, y de esa heterogeneidad parte la tesis: un modelo
 calibrado donde la ineficiencia es alta puede no encontrar señal donde la
 ineficiencia es baja.
 
-Los mercados de acciones \textit{A} de China constituyen el ejemplo paradigmático
+Los mercados de acciones \textit{A} de China son un ejemplo claro
 de mercado con ineficiencias estructurales explotables. Tres rasgos
 microestructurales lo explican. Primero, la composición del inversor: el grueso
 del volumen procede de inversores minoristas (\textit{retail}), cuyo
-comportamiento exhibe sesgos conductuales ---persecución de tendencias, sobrerreacción,
-operativa de corto plazo--- que generan patrones predecibles en la sección
+comportamiento exhibe sesgos conductuales (persecución de tendencias, sobrerreacción,
+operativa de corto plazo) que generan patrones predecibles en la sección
 cruzada de retornos. Segundo, los límites diarios de precio (\textit{price
 limits}, típicamente del $\pm 10$\,\%), que fragmentan la incorporación de
 información en varias sesiones y producen autocorrelaciones artificiales.
@@ -40,24 +40,24 @@ desarrollado casi exclusivamente sobre acciones \textit{A} chinas.
 por información de mercado, evaluado sobre los universos chinos CSI300 y CSI800; y
 \textcite{fan2024stockmixer} validan \textit{StockMixer} sobre conjuntos que
 incluyen el mercado chino. El propio \textit{Stockformer}
-\parencite{ma2024stockformer} se concibe y ajusta en ese contexto. La advertencia
-metodológica es central para esta tesis: parte del IC reportado en ese mercado es
-atribuible a operativa inejecutable ---por ejemplo, posiciones que solo serían
+\parencite{ma2024stockformer} se concibe y ajusta en ese contexto. Hay que tener
+en cuenta una advertencia: parte del IC reportado en ese mercado es
+atribuible a operativa inejecutable (por ejemplo, posiciones que solo serían
 rentables en sesiones donde el precio toca el límite diario y no hay
-contrapartida---, de modo que un IC nominalmente alto no se traduce en
+contrapartida), de modo que un IC nominalmente alto no se traduce en
 \textit{Sharpe} neto realizable.
 
 El S\&P~500 se sitúa en el extremo opuesto. Es un universo de gran
 capitalización, dominado por inversores institucionales, con venta en corto
 fluida, costes de transacción bajos y una densidad de arbitrajistas que elimina
 con rapidez cualquier patrón sistemático. En este entorno, la señal cross-seccional
-explotable es tenue y, sobre todo, frágil ante los costes. La consecuencia directa
+explotable es tenue y frágil ante los costes. La consecuencia directa
 es que la predecibilidad bruta es mucho menor y que cualquier ventaja predictiva
 debe sobrevivir a una estructura de costes realista para tener valor económico.
 
-La implicación para este trabajo es nítida: un modelo cuya arquitectura y cuyos
+La implicación para este trabajo es clara: un modelo cuya arquitectura y cuyos
 hiperparámetros se han optimizado para extraer señal de un mercado retail con
-límites de precio no tiene garantizada ---ni siquiera es esperable--- la
+límites de precio no tiene garantizada, ni siquiera es esperable, la
 transferencia a un mercado eficiente de gran capitalización. Esto motiva el
 experimento de transferencia que se desarrolla en el Capítulo~\ref{cap:parte1}.
 
@@ -69,9 +69,9 @@ a ser la palanca principal. La referencia fundacional es
 \textcite{gu2020empirical}, que sistematizan el problema de la valoración de
 activos como un problema de aprendizaje supervisado sobre un panel masivo de
 acciones estadounidenses (cerca de treinta mil acciones, 1957--2016) y un
-conjunto de unas 94 características por acción más interacciones sectoriales. Su
-hallazgo sobre la importancia relativa de las familias de variables es directamente
-operativo: el \textit{momentum} de precio, la reversión de corto plazo, la
+conjunto de unas 94 características por acción más interacciones sectoriales. Lo
+que encuentran sobre la importancia relativa de las familias de variables tiene
+una lectura práctica directa: el \textit{momentum} de precio, la reversión de corto plazo, la
 liquidez y la volatilidad concentran la mayor parte del poder predictivo,
 mientras que muchas variables fundamentales aportan poco de forma marginal una vez
 controladas las técnicas.
@@ -93,8 +93,8 @@ cinco factores de \textcite{famafrench2015five} añade rentabilidad operativa
 tamaño y valor; \textcite{novymarx2013other} muestra que la rentabilidad bruta
 sobre activos es un predictor de retornos tan potente como el valor contable, y
 \textcite{ang2006cross} documentan que la volatilidad idiosincrática (\textit{IVOL})
-está negativamente asociada a los retornos futuros ---el llamado enigma de la baja
-volatilidad---. Estas tres referencias justifican un núcleo reducido de variables
+está negativamente asociada a los retornos futuros (el llamado enigma de la baja
+volatilidad). Estas tres referencias justifican un núcleo reducido de variables
 fundamentales y de riesgo: rentabilidad/calidad, inversión y volatilidad
 idiosincrática.
 
@@ -112,20 +112,20 @@ que la elección de la arquitectura.
 \section{Arquitecturas de aprendizaje profundo}
 
 La narrativa dominante en la literatura aplicada de los últimos años postula que
-arquitecturas cada vez más expresivas ---\textit{transformers}, modelos de espacio
+arquitecturas cada vez más expresivas (\textit{transformers}, modelos de espacio
 de estados (\textit{state-space models}, SSM) tipo \textit{Mamba}, y modelos
-fundacionales de series temporales (\textit{time-series foundation models}, TSFM)---
-deberían mejorar de forma monótona la predicción de retornos. La evidencia más
-sólida contradice esta intuición, y es el segundo pilar de la tesis.
+fundacionales de series temporales (\textit{time-series foundation models}, TSFM))
+deberían mejorar de forma monótona la predicción de retornos. La evidencia
+disponible contradice esta intuición, y sobre ella se apoya el segundo pilar de la tesis.
 
-El resultado fundacional ---que aquí denominamos \textit{shallow beats deep}, lo
-superficial bate a lo profundo--- procede de \textcite{gu2020empirical}. Al
+El resultado fundacional (que aquí se denomina \textit{shallow beats deep}, lo
+superficial bate a lo profundo) procede de \textcite{gu2020empirical}. Al
 comparar una batería de modelos sobre el panel estadounidense, encuentran que las
 redes neuronales con pocas capas ocultas (NN3--NN4, es decir, tres o cuatro capas)
 obtienen el mejor desempeño fuera de muestra, mientras que añadir profundidad
 (NN5) lo empeora. Los árboles potenciados (\textit{gradient boosting}) y las redes
 superficiales dominan; la capacidad expresiva adicional se traduce en sobreajuste,
-no en señal. Esta observación es robusta precisamente porque la señal en retornos
+no en señal. Esta observación es robusta porque la señal en retornos
 es de muy baja relación señal-ruido.
 
 La evidencia más reciente extiende esta conclusión a la era de los modelos
@@ -139,10 +139,10 @@ muestra negativo. El mensaje es coherente con el anterior: en datos financieros 
 baja relación señal-ruido, la inducción de un modelo simple y regularizado es
 preferible a la flexibilidad de uno complejo.
 
-Conviene situar en su contexto la ``SOTA arquitectónica''. \textit{StockMixer}
+Conviene poner en contexto la ``SOTA arquitectónica''. \textit{StockMixer}
 \parencite{fan2024stockmixer} es relevante porque, pese a su nombre, es una
-arquitectura basada en perceptrones multicapa (\textit{MLP}) ---no un
-\textit{transformer}--- que mezcla información temporal, de indicador y de
+arquitectura basada en perceptrones multicapa (\textit{MLP}), no un
+\textit{transformer}, que mezcla información temporal, de indicador y de
 sección cruzada, y aun así alcanza resultados competitivos: un MLP bien diseñado
 basta. \textit{MASTER} \parencite{li2024master} es un \textit{transformer} guiado
 por mercado que captura dependencias entre acciones, con resultados fuertes pero,
@@ -178,7 +178,7 @@ arquitecturas como \textit{Stockformer}, esta descomposición se emplea para
 alimentar ramas separadas que modelan por separado las componentes de alta y baja
 frecuencia.
 
-El atractivo de este enfoque es innegable sobre el papel, pero introduce dos
+El enfoque es atractivo sobre el papel, pero introduce dos
 riesgos prácticos. El primero es metodológico: una transformada \textit{wavelet}
 aplicada de forma ingenua sobre toda la serie incurre en fuga de información
 (\textit{look-ahead}), porque los coeficientes en un instante dependen de
@@ -196,7 +196,7 @@ Capítulo~\ref{cap:stockformer}.
 
 \section{Modelado de relaciones entre acciones con grafos}
 
-El supuesto de independencia entre acciones es manifiestamente falso: las acciones
+El supuesto de independencia entre acciones es falso: las acciones
 comparten exposición a sectores, a factores y a cadenas de suministro, y sus
 retornos co-varían. Una parte sustancial de la literatura reciente, incluida la que
 da origen a \textit{Stockformer}, modela explícitamente estas relaciones mediante
@@ -207,11 +207,11 @@ Una vía para construir representaciones de nodos es \textit{struc2vec}
 \parencite{ribeiro2017struc2vec}, que aprende \textit{embeddings} a partir de la
 identidad estructural de los nodos: dos nodos con vecindarios topológicamente
 similares reciben representaciones próximas aunque estén lejanos en el grafo. Esto
-contrasta con métodos que solo capturan proximidad, y resulta atractivo para
+contrasta con métodos que solo capturan proximidad, y resulta útil para
 agrupar acciones por su papel estructural en la red de relaciones.
 
 La distinción metodológica clave es entre grafos estáticos y dinámicos. Un grafo
-estático ---por ejemplo, uno derivado de la pertenencia sectorial GICS--- es estable
+estático (por ejemplo, uno derivado de la pertenencia sectorial GICS) es estable
 y barato, pero no captura que las correlaciones entre acciones cambian con el
 régimen de mercado: se disparan en periodos de tensión y se relajan en periodos de
 calma. Un grafo dinámico, reestimado en cada ventana, captura esa variación a costa
@@ -222,8 +222,8 @@ expresividad--sobreajuste de las secciones anteriores.
 
 Para los fines de este trabajo, la lección operativa es que gran parte de la
 co-variación entre acciones puede capturarse de forma robusta con estructuras
-sencillas y económicamente interpretables ---el sector y la exposición a factores
-comunes--- sin necesidad de aprender un grafo dinámico. Esta idea reaparece en la
+sencillas y económicamente interpretables, el sector y la exposición a factores
+comunes, sin necesidad de aprender un grafo dinámico. Esta idea reaparece en la
 neutralización por sector y factores de la construcción de cartera
 (Capítulo~\ref{cap:parte2}).
 
@@ -250,8 +250,8 @@ una pérdida de ordenación puede mejorar la rentabilidad de la cartera respecto
 entrenar con MSE, incluso cuando el error de regresión empeora. Evidencia reciente
 en esta línea (preprint arXiv:2510.14156) reporta mejoras del orden de 150--200
 puntos básicos anuales al sustituir el MSE por pérdidas de \textit{ranking} de tipo
-\textit{listwise} o de margen en la predicción de retornos. La advertencia, no
-obstante, es importante: la pérdida debe optimizarse para el objetivo de cartera y
+\textit{listwise} o de margen en la predicción de retornos. Conviene recordar, no
+obstante, que la pérdida debe optimizarse para el objetivo de cartera y
 no para el IC, porque el mejor IC no coincide necesariamente con el mejor retorno
 neto una vez se introducen costes y restricciones de construcción.
 
@@ -285,9 +285,9 @@ cross-seccionales independientes. Como se señaló, en el S\&P~500 las observaci
 efectivas por fecha están altamente correlacionadas, de modo que el número efectivo
 de grados de libertad es mucho menor que el producto acciones $\times$ fechas
 sugeriría. \textcite{gu2020empirical} insisten en la necesidad de regularización
-fuerte y de validación estricta precisamente por esta razón. En este contexto, la
-búsqueda de hiperparámetros sobre el periodo de prueba ---o la selección del modelo
-\textit{a posteriori}--- equivale a un sobreajuste encubierto que infla las métricas
+fuerte y de validación estricta por esta razón. En este contexto, la
+búsqueda de hiperparámetros sobre el periodo de prueba, o la selección del modelo
+\textit{a posteriori}, equivale a un sobreajuste encubierto que infla las métricas
 reportadas.
 
 La implicación para este trabajo es que toda la comparación entre \textit{Stockformer}
@@ -298,7 +298,7 @@ interpretables los resultados de los Capítulos~\ref{cap:parte1} y~\ref{cap:part
 
 \section{Construcción y evaluación de cartera}
 
-La última sección conecta directamente con la parte constructiva de la tesis: una
+La última sección conecta con la parte constructiva de la tesis: una
 señal predictiva, por buena que sea, solo genera valor si se traduce en posiciones
 que sobreviven a los costes de transacción. Este es el tercer pilar del trabajo: en
 el S\&P~500, el retorno neto se gana en la construcción de la cartera, no en la
@@ -326,8 +326,8 @@ económicamente honesta.
 El tercer ingrediente es la conciencia de los costes y la dinámica de los regímenes.
 Una cartera optimizada sin penalizar la rotación (\textit{turnover}) genera costes
 que pueden anular toda la rentabilidad bruta; la optimización consciente de costes
----por ejemplo, incorporando una penalización $L_1$ sobre los cambios de
-posición y bandas de no operación--- es lo que convierte un \textit{Sharpe} neto
+(por ejemplo, incorporando una penalización $L_1$ sobre los cambios de
+posición y bandas de no operación) es lo que convierte un \textit{Sharpe} neto
 negativo en positivo (en esta línea se sitúa el preprint arXiv:2412.11575). A ello
 se suma el control del riesgo de cola asociado a las estrategias de momentum:
 \textcite{danielmoskowitz2016momentum} documentan que el momentum sufre desplomes
@@ -338,11 +338,11 @@ indicadores como el VIX; la evidencia sobre asignación sectorial consciente del
 régimen (preprint arXiv:2510.14986) reporta mejoras sustanciales de \textit{Sharpe}
 y reducción del \textit{drawdown} máximo al condicionar la exposición al régimen de
 volatilidad. Finalmente, la operativa a frecuencia semanal en lugar de diaria reduce
-la rotación de forma drástica y constituye, por sí sola, la palanca más eficaz para
+la rotación de forma drástica y es, por sí sola, la palanca más eficaz para
 preservar el retorno neto.
 
-La implicación para este trabajo es que la construcción de cartera ---encogimiento
+La implicación para este trabajo es que la construcción de cartera (encogimiento
 de covarianzas, neutralización factorial, optimización consciente de costes,
-rebalanceo semanal y solapamiento por régimen--- es el núcleo de la propuesta que
+rebalanceo semanal y solapamiento por régimen) es el núcleo de la propuesta que
 \emph{sí} genera retorno neto positivo en el S\&P~500, y se desarrolla en detalle en
 el Capítulo~\ref{cap:parte2}.

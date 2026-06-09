@@ -1,26 +1,27 @@
 El \textit{deep learning} se ha consolidado como herramienta dominante en la predicción
 bursátil, pero la capacidad predictiva de un modelo afinado en un mercado rara vez se verifica al
-trasladarlo a otro estructuralmente distinto. Esta tesis estudia, en dos actos, la transferencia
-\textit{cross-market} de un modelo de \textit{deep learning} financiero. En el primero, evalúa si
-Stockformer ---una arquitectura de en torno a un millón de parámetros, basada en
-\textit{wavelets}, \textit{transformers} y grafos, calibrada sobre acciones chinas A-shares---
-transfiere su poder predictivo al S\&P 500 a horizonte semanal. Para ello sitúa al modelo dentro
+trasladarlo a otro estructuralmente distinto. Esta tesis estudia la transferencia
+\textit{cross-market} de un modelo de \textit{deep learning} financiero, en dos partes. La primera
+evalúa si Stockformer (una arquitectura de en torno a un millón de parámetros, basada en
+\textit{wavelets}, \textit{transformers} y grafos, calibrada sobre acciones chinas A-shares)
+transfiere su poder predictivo al S\&P 500 a horizonte semanal. Para ello se sitúa al modelo dentro
 de una \textit{complexity ladder} que lo compara, bajo un mismo \textit{harness} de evaluación y
-una auditoría anti-fuga (\textit{leakage}) limpia, con modelos sustancialmente más simples. El
-veredicto es negativo e inequívoco: Stockformer no transfiere ---su coeficiente de información
-\textit{out-of-sample} cae a $\approx -0{,}003$, indistinguible de cero--- y es batido por un
-Lasso de apenas cinco coeficientes ($+0{,}0238$). Una batería de ablaciones muestra que el fallo
-está sobredeterminado: los modos de fallo se componen y ninguna corrección aislada rescata la
-señal.
+una auditoría anti-fuga (\textit{leakage}) limpia, con modelos más simples. El
+veredicto es negativo: Stockformer no transfiere (su coeficiente de información
+\textit{out-of-sample} cae a $\approx -0{,}003$, indistinguible de cero) y queda batido por un
+Lasso de apenas cinco coeficientes ($+0{,}0238$). El fallo está sobredeterminado: los modos
+de fallo se acumulan y ninguna corrección aislada de la arquitectura rescata la señal.
 
-El segundo acto pregunta, entonces, qué genera realmente el retorno neto. Mediante una estrategia
-semanal \textit{market-neutral} consciente del coste y una atribución etapa a etapa, se establece
-que la palanca no es la señal ---cuyo IC semanal es de apenas $0{,}0033$--- sino la construcción de
-cartera \textit{cost-aware}. El resultado se reporta con honestidad: el Sharpe neto de $0{,}95$
-sobre 52 semanas se contrasta con el estimador robusto de $0{,}58 \pm 0{,}49$ sobre un
-\textit{walk-forward} de 215 semanas, no distinguible de cero. La doble contribución del trabajo
-es así empírica ---evidencia de no transferibilidad \textit{cross-market}--- y metodológica ---un
-\textit{pipeline} reproducible que localiza la palanca del retorno en la construcción, no en la
+La segunda parte pregunta qué genera el retorno neto. Una atribución etapa a etapa muestra que
+la palanca principal es la construcción de cartera \textit{cost-aware}, no la capacidad de la
+señal aprendida (IC semanal $\approx 0{,}003$). Una búsqueda disciplinada de señal precisa la
+respuesta: el reversal y los fundamentales no aportan, pero el momentum residual, un factor
+simple con contenido, combinado con esa construcción eleva el Sharpe neto robusto a $0{,}72$
+($t = 1{,}82$) sobre un \textit{walk-forward} de 311 semanas, frente al $0{,}38$ de la base
+sobre la misma ventana. El resultado se reporta con cautela: la mejora es apreciable, pero
+sigue al borde de la significancia. La contribución del trabajo es doble, empírica (evidencia
+de no transferibilidad \textit{cross-market}) y metodológica: un \textit{pipeline} reproducible
+que sitúa la palanca del retorno en una señal-factor simple y en la construcción, no en la
 arquitectura.
 
 \vspace{1em}
@@ -28,19 +29,23 @@ arquitectura.
 \textbf{Abstract}
 
 \textit{Deep learning} has become the dominant tool in stock-return prediction, yet the
-predictive power of a model tuned on one market is seldom verified when transferred to a
+predictive power of a model tuned on one market is seldom verified when it is transferred to a
 structurally different one. This thesis studies the cross-market transfer of a financial
-deep-learning model in two acts. The first asks whether Stockformer ---a roughly one-million
-parameter wavelet-transformer-graph architecture calibrated on Chinese A-shares--- transfers its
+deep-learning model in two parts. The first asks whether Stockformer (a roughly one-million
+parameter wavelet-transformer-graph architecture calibrated on Chinese A-shares) transfers its
 predictive power to the S\&P 500 at a weekly horizon. Placed inside a complexity ladder under a
-unified evaluation harness and a clean anti-leakage audit, the verdict is unambiguously negative:
-Stockformer does not transfer ---its out-of-sample information coefficient falls to
-$\approx -0{,}003$, indistinguishable from zero--- and is beaten by a five-coefficient Lasso
-($+0{,}0238$). Ablations show the failure is overdetermined: failure modes compound. The second
-act asks what actually generates net return. Through a cost-aware weekly market-neutral strategy
-and a stage-by-stage attribution, the lever is shown to be cost-aware portfolio construction, not
-the signal (weekly IC $0{,}0033$). The result is reported honestly: a net Sharpe of $0{,}95$ over
-52 weeks contrasts with a robust estimate of $0{,}58 \pm 0{,}49$ over a 215-week walk-forward, not
-distinguishable from zero. The dual contribution is empirical ---evidence of cross-market
-non-transferability--- and methodological ---a reproducible pipeline locating the return lever in
-construction rather than architecture.
+unified evaluation harness and a clean anti-leakage audit, the verdict is negative:
+Stockformer does not transfer (its out-of-sample information coefficient falls to
+$\approx -0{,}003$, indistinguishable from zero) and is beaten by a five-coefficient Lasso
+($+0{,}0238$). The failure is overdetermined: failure modes compound and no isolated
+architectural fix rescues the signal. The second
+part asks what actually generates net return. A stage-by-stage attribution shows that the main
+lever is cost-aware portfolio construction, not the learned signal (weekly IC $\approx 0{,}003$).
+A disciplined signal search sharpens the answer: short-term reversal and fundamentals add
+nothing, but residual momentum, a simple factor with genuine content, combined with that
+construction raises the robust net Sharpe to $0{,}72$ ($t = 1{,}82$) over a 311-week
+walk-forward, against $0{,}38$ for the baseline on the same window. The result is reported
+honestly: an appreciable improvement that nonetheless remains at the edge of significance. The
+contribution is twofold, empirical (evidence of cross-market non-transferability) and
+methodological: a reproducible pipeline that locates the return lever in a simple factor signal
+and in construction, rather than in architecture.

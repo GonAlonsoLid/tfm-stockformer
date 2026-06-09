@@ -1,4 +1,4 @@
-# Python
+# --- Python ---
 __pycache__/
 *.py[cod]
 *.pyo
@@ -7,32 +7,46 @@ __pycache__/
 venv/
 .venv/
 
-# Jupyter
+# --- Jupyter ---
 .ipynb_checkpoints/
-*.ipynb_checkpoints
 
-# ML artifacts (generated — do not commit large binaries)
-cpt/
-runs/
-log/
-output/
-
-# Data (large; sourced externally)
+# --- Data (large; sourced externally, not versioned) ---
 data/
 
-# OS
-.DS_Store
-Thumbs.db
-
-# IDE
-.vscode/settings.json
-
-# Temp / scratch
+# --- Training logs / scratch (regenerable) ---
+runs/
+log/
 temp_struc2vec/
 
-# Large cluster bundle artifacts (generated, do not commit)
-cluster_bundle/panel.npz
-cluster_bundle/predictions/
-data/*/fundamentals.npz
-data/*/edgar_cache/
-data/*/realized_vol.npz
+# --- Result caches (regenerable; canonical numbers live in results/*.csv) ---
+results/figures/
+results/_wf_preds_*.npz
+
+# --- LaTeX build artifacts ---
+*.aux
+*.log
+*.toc
+*.out
+*.bbl
+*.blg
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+*.lof
+*.lot
+*.run.xml
+*.bcf
+
+# --- Local-only (kept on disk, intentionally out of the repo):
+#     demo (streamlit/notebooks/Backtest), internal planning docs, external
+#     reference PDFs, orphaned DGX bundle, and the reference TFG ---
+_local/
+
+# --- Internal planning / agent state (not part of the thesis) ---
+.planning/
+.claude/
+
+# --- OS / IDE ---
+.DS_Store
+Thumbs.db
+.vscode/settings.json

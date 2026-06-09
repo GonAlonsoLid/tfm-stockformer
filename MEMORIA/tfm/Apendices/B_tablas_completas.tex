@@ -2,9 +2,8 @@
 
 Este apéndice recoge las versiones de detalle completo de las tablas resumidas
 en el cuerpo de la memoria. Todos los fragmentos se generan automáticamente desde
-\texttt{results/*.csv} mediante \texttt{scripts/build\_latex\_tables.py}
-(ver Apéndice~\ref{ap:repro}), de modo que las cifras quedan ligadas a los CSV
-producidos por el pipeline.
+\texttt{results/*.csv} mediante \texttt{scripts/build\_latex\_tables.py}, de modo
+que las cifras quedan ligadas a los CSV producidos por el pipeline.
 
 \section{Complexity ladder completa}
 
@@ -40,10 +39,11 @@ refuerza que el cuello de botella es la señal, no la falta de datos.
 
 \input{tablas/robustez_realized}
 
-\section{Ablación de variantes}
+\section{Baseline simple de referencia}
 
-La Tabla~\ref{tab:ablation} recoge la ablación de variantes de entrada y modelo
-empleada como contraste durante el desarrollo (IC y métricas de error del
-baseline de LightGBM sobre Alpha158).
+La Tabla~\ref{tab:ablation} recoge el \textit{baseline} simple (LightGBM sobre
+Alpha158) empleado como contraste de referencia frente a Stockformer (IC y
+métricas de error). Reproduce el mismo valor de IC que LightGBM en la escalera de
+complejidad de la Parte~I, lo que confirma la consistencia del \textit{harness}.
 
 \input{tablas/ablation}
