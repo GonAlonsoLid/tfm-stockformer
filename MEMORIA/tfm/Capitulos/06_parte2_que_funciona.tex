@@ -404,7 +404,7 @@ en la construcción, y de que esa construcción, una vez es cost-aware, no se me
 sofisticación añadida. El principio \textit{simpler-is-better} no
 gobierna solo la elección del predictor: gobierna también la de la cartera.
 
-\section{Una señal con contenido: el momentum residual}\label{sec:p2-signal}
+\section{Búsqueda de señal: ¿dónde reside el contenido predictivo?}\label{sec:p2-signal}
 
 Las secciones anteriores mantuvieron la señal fija y mostraron que la palanca del Sharpe
 está en la construcción. Pero esa señal era la del \textit{ensemble} aprendido, cuyo IC
@@ -424,7 +424,12 @@ fuga de información y evaluado con la \emph{misma} construcción cost-aware y e
 protocolo \textit{walk-forward} del capítulo. Para estresar el resultado y disponer de más
 datos, la evaluación se amplía a una ventana de 311 semanas (2020--2026) que incluye el
 \textit{momentum-crash} de 2021 \autocite{danielmoskowitz2016momentum}, con un \textit{holdout}
-final de 104 semanas reservado. La Tabla~\ref{tab:rq2-signal-search} recoge el resultado.
+final de 104 semanas reservado. El conjunto de candidatos —los factores clásicos de esta sección y
+las señales adicionales de la Sección~\ref{sec:p2-modular}— se fijó \emph{antes} de mirar el
+\textit{holdout}; dada la multiplicidad de contrastes, ningún ganador se declara por su IC dentro de
+muestra, sino por su \textit{holdout} positivo y su coherencia económica, leído el listón de
+significancia a la luz de \textcite{harvey2016crosssection}. La Tabla~\ref{tab:rq2-signal-search}
+recoge el resultado de esta primera tanda.
 
 \input{tablas/rq2_signal_search}
 
@@ -478,3 +483,54 @@ deja de ser solo ``la construcción'': pasa a tener dos piezas concretas, el mom
 como señal y la construcción cost-aware que lo explota. Y refuerza, una vez más, el principio
 \textit{simpler-is-better}: el factor directo no solo bate a Stockformer, sino también a la
 señal aprendida que lo tenía entre sus entradas.
+
+\subsection{Transferencia modular y banco ampliado}\label{sec:p2-modular}
+
+La Parte~I mostró que el Stockformer no transfiere \emph{como un todo}. Cabe la pregunta
+inversa: ¿alguna de sus \emph{ideas} concretas —el grafo de relaciones entre acciones, la
+descomposición frecuencial—, destilada a una señal simple y \emph{causal} (sin la fuga del
+grafo construido sobre todo el histórico que detecta la Sección~\ref{sec:met-leakage}), aporta
+sobre el predictor \textit{shallow}? Y, ya puestos, ¿halla más contenido un banco más amplio de
+factores establecidos? Se destilan dos piezas de la arquitectura —una \textbf{señal de pares}
+(momentum de los vecinos más correlacionados, con grafo de correlación móvil solo de pasado) y
+una \textbf{señal de tendencia filtrada} (momentum de la componente de baja frecuencia, con un
+filtro causal)— y se añade un banco pre-registrado de seis factores: baja volatilidad
+idiosincrática \autocite{ang2006cross}, \textit{betting-against-beta}, momentum gestionado por
+volatilidad \autocite{barrososantaclara2015momentum}, estacionalidad, proximidad al máximo de
+52 semanas y \textit{trend}/momentum de series temporales. Todos se evalúan, solos y sumados al
+\textit{ensemble}, con la \emph{misma} construcción cost-aware y el \emph{mismo}
+\textit{walk-forward}. La Tabla~\ref{tab:rq2-modular} recoge el resultado.
+
+\input{tablas/rq2_modular_transfer}
+
+La lectura es nítida y refuerza las dos partes de la tesis:
+\begin{itemize}
+  \item \textbf{Las piezas de la arquitectura no rescatan valor.} La señal de pares es
+  \emph{anti}-predictiva (IC $-0{,}017$, Sharpe $-0{,}43$) y arrastra al \textit{ensemble} a
+  terreno negativo; la tendencia filtrada es apenas positiva (Sharpe $+0{,}29$) y, pese a un
+  \textit{holdout} llamativo ($+0{,}70$), no bate la base. Ni el grafo ni el filtrado
+  frecuencial —las dos señas de identidad del Stockformer— transfieren contenido al sustrato
+  eficiente, ni siquiera por piezas: es el veredicto de la Parte~I, ahora a nivel de
+  componente.
+  \item \textbf{Los factores defensivos fallan.} La baja volatilidad idiosincrática es el peor
+  candidato de toda la búsqueda (Sharpe $-1{,}02$, $t = -2{,}41$); el
+  \textit{betting-against-beta} ($-0{,}75$), la proximidad al máximo de 52 semanas ($-0{,}36$)
+  y la estacionalidad ($-0{,}26$) también restan. En este universo y ventana, ni la anomalía de
+  baja volatilidad ni la estacionalidad son explotables.
+  \item \textbf{El contenido vive en el momentum.} El \textbf{momentum gestionado por
+  volatilidad} es la mejor señal del banco: sumado al \textit{ensemble} alcanza un Sharpe neto
+  de $0{,}68$ ($t = 1{,}91$), con un \textit{holdout} de $+0{,}63$ y el IC más alto de la
+  búsqueda ($0{,}018$) —prácticamente la cifra del momentum residual—, y el \textit{trend}/%
+  momentum de series temporales deja un \textit{holdout} aún mayor ($+0{,}84$). Dos
+  construcciones distintas del momentum convergen en el mismo Sharpe ($\approx 0{,}7$) y en un
+  \textit{holdout} positivo: la señal que funciona es de \emph{familia momentum}, y el hallazgo
+  es robusto a cómo se la construya.
+\end{itemize}
+
+La conclusión cierra el arco del capítulo. Ningún candidato cruza el umbral estricto de
+$t > 2$ —tampoco lo hacía el momentum residual ($t = 1{,}82$)—: el techo honesto del régimen,
+con datos públicos, está en un Sharpe del orden de $0{,}7$. Pero la \emph{forma} de la respuesta
+a RQ2 queda nítida: el contenido predictivo no reside en la arquitectura profunda (que no
+transfiere ni entera ni por piezas) ni en los factores defensivos, sino en una señal simple de
+\emph{familia momentum} —corroborada por dos construcciones independientes— explotada por una
+construcción de cartera consciente del coste.
