@@ -108,3 +108,21 @@ def test_seasonality_signal_is_causal():
     dy2[d:] = rng.normal(0, 0.5, size=dy2[d:].shape)
     s2 = ts.seasonality_signal(dy2, d, dates)
     np.testing.assert_allclose(np.nan_to_num(s1), np.nan_to_num(s2), atol=1e-12)
+
+
+@pytest.mark.parametrize("fn", [
+    ts.low_ivol_signal, ts.bab_signal, ts.volmanaged_momentum_signal,
+    ts.fiftytwo_week_high_signal,
+])
+def test_magnitude_bench_signal_depends_on_last_past_row(fn):
+    # Tight boundary: a degenerate all-zero function would pass the causality test;
+    # these magnitude-sensitive signals must actually respond to daily_y[d-1].
+    rng = np.random.default_rng(12)
+    dy = rng.normal(0, 0.01, size=(500, 10))
+    d = 400
+    s1 = fn(dy, d)
+    dy3 = dy.copy()
+    dy3[d - 1] = dy3[d - 1] * 1000.0
+    s3 = fn(dy3, d)
+    assert not np.allclose(np.nan_to_num(s1), np.nan_to_num(s3), atol=1e-12), \
+        "signal must depend on the last past row daily_y[d-1]"
