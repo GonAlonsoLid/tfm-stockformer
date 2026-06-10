@@ -66,9 +66,11 @@ futura. Cada modelo tabular trabaja sobre la versión aplanada del panel
 las filas con cualquier valor ausente; los índices globales de fecha y acción de las
 filas de test se conservan para poder reconstruir las predicciones en el marco canónico
 \([\text{fechas} \times \text{tickers}]\). El conjunto de variables base (\textit{F-base})
-excluye las variables macroeconómicas, que son constantes en sección transversal y, por
-tanto, carecen de información de \textit{ranking}; el estándar acordado es que los
-\(F\!\approx\!375\) regresores idénticos alimenten a todos los modelos.
+está formado por las variables Alpha360 más los indicadores técnicos de Alpha158
+(sección~\ref{sec:met-variables}) y excluye las variables macroeconómicas, que son constantes en
+sección transversal y, por tanto, carecen de información de \textit{ranking}; el estándar acordado es
+que esos \(F\!\approx\!375\) regresores idénticos alimenten a todos los modelos, lineales y de árboles
+por igual.
 
 \paragraph{Evaluación temporal: walk-forward purgado y embargado.} Para la
 estrategia semanal de la Parte~II un único \textit{split} fijo sería insuficiente: el
@@ -291,9 +293,14 @@ La pérdida integra tres componentes complementarios:
 \end{itemize}
 La idea —optimizar para el objetivo de cartera (el \textit{ranking} transversal) y no para
 el error puntual— está respaldada por la evidencia de que las pérdidas de \textit{ranking}
-mejoran el rendimiento económico de las carteras frente al MSE. La pérdida multitarea del
-Stockformer (regresión más clasificación de signo) y la pérdida combinada
-ListNet$+$IC$+$MAE de los modelos de la Parte~II responden a este mismo principio.
+mejoran el rendimiento económico de las carteras frente al MSE. En el Stockformer (Parte~I) este
+principio se materializa en una pérdida \emph{híbrida}: el término de regresión es la combinación
+ListNet$+$IC$+$MAE y se conserva el cabezal auxiliar de clasificación de signo (entropía cruzada). Los
+modelos tabulares —Lasso, Ridge, \textit{ElasticNet}, LightGBM, XGBoost y el \textit{ensemble} de la
+Parte~II— no admiten una pérdida \textit{listwise} de este tipo: optimizan sus objetivos estándar
+(error cuadrático con penalización $L_1/L_2$ en los lineales, Huber/pseudo-Huber en los árboles). Lo
+que comparten con el Stockformer no es la función de pérdida, sino el \emph{objetivo} último —ordenar
+bien la sección transversal— y el instrumento con que se les mide a todos: el rank IC.
 
 \paragraph{Advertencia metodológica: mejor IC no es mejor retorno.} Conviene recordar
 una cautela que reaparece a lo largo de la memoria: \emph{el modelo de mejor IC no es
@@ -348,6 +355,15 @@ Más allá de la auditoría automatizada, se verificó por lectura de código qu
 (el \texttt{LAG\_BUFFER} de los \textit{baselines}) usan el \emph{mismo} desfase de 60 días
 para alinear variables y etiquetas: no hay desalineación entre \textit{pipelines} que pudiera
 favorecer espuriamente a unos modelos sobre otros.
+
+\paragraph{Descomposición \textit{wavelet}.} La misma lectura de código cubrió el tratamiento de la
+transformada \textit{wavelet} del Stockformer (capítulo~\ref{cap:stockformer}), señalada en el estado
+del arte como posible fuente de fuga. Se confirmó que la transformada se aplica de forma independiente
+sobre cada ventana ya segmentada, nunca sobre la serie completa: la descomposición de la \emph{entrada}
+solo reordena información estrictamente anterior al instante de predicción. La descomposición de la
+\emph{etiqueta}, $(Y_L, Y_H)$ --que sí mezclaría pasos futuros--, se computa pero \emph{no} se emplea
+como objetivo de entrenamiento (los cabezales se supervisan contra el retorno y el signo crudos), de
+modo que no introduce fuga en el optimizador ni en el IC reportado.
 
 La consecuencia metodológica es la que da credibilidad a toda la Parte~I: el IC
 \(\approx -0{,}003\) del Stockformer es un resultado genuino, no el síntoma de un

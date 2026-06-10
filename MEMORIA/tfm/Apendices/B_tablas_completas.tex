@@ -41,9 +41,10 @@ refuerza que el cuello de botella es la señal, no la falta de datos.
 
 \section{Baseline simple de referencia}
 
-La Tabla~\ref{tab:ablation} recoge el \textit{baseline} simple (LightGBM sobre
-Alpha158) empleado como contraste de referencia frente a Stockformer (IC y
-métricas de error). Reproduce el mismo valor de IC que LightGBM en la escalera de
-complejidad de la Parte~I, lo que confirma la consistencia del \textit{harness}.
+La Tabla~\ref{tab:ablation} recoge el \textit{baseline} de referencia: LightGBM sobre el
+mismo panel base de \(\sim\!375\) variables (Alpha360 más los indicadores técnicos de Alpha158) que
+emplea toda la escalera, como contraste frente a Stockformer (IC y métricas de error). Su IC coincide
+con el del LightGBM de la \textit{complexity ladder} de la Parte~I —es, de hecho, la misma
+configuración sobre los mismos insumos—, lo que sirve de control de consistencia del \textit{harness}.
 
 \input{tablas/ablation}

@@ -97,9 +97,22 @@ inversa con los coeficientes de detalle puestos a cero, y la de alta frecuencia
 $X_H$ haciendo lo propio con los coeficientes de aproximación. El resultado son dos
 series del mismo tamaño que la original --una suavizada y otra con solo el residuo
 de alta frecuencia-- que suman aproximadamente la señal de partida. Estas dos
-series, $X_L$ y $X_H$, son las que alimentan los dos canales del codificador. La
-misma descomposición se aplica también a la variable objetivo, generando un par de
-etiquetas $(Y_L, Y_H)$ coherente con la separación de canales.
+series, $X_L$ y $X_H$, son las que alimentan los dos canales del codificador.
+
+\paragraph{Causalidad de la descomposición y ausencia de fuga.} La transformada atañe al riesgo de
+\textit{look-ahead} señalado en el capítulo~\ref{cap:sota}. En la implementación se aplica de forma
+\emph{independiente sobre cada ventana ya segmentada} —la de entrada, de $T_1$ jornadas, y, por
+separado, la de etiquetas, de $T_2$ jornadas—, no sobre la serie completa ni mediante una transformada
+deslizante por fecha; por ello no incurre en la fuga que tendría una \textit{wavelet} calculada de una
+sola vez sobre todo el histórico. Dentro de cada ventana la reconstrucción es no causal (el valor en
+una posición puede depender de posiciones posteriores de \emph{esa misma ventana}), pero la ventana de
+entrada es estrictamente anterior al instante de predicción, de modo que reordenar información entre
+pasos pasados no introduce información futura. La misma descomposición se calcula sobre la variable
+objetivo, generando un par $(Y_L, Y_H)$; ahora bien, en la implementación final esas etiquetas
+descompuestas \emph{no} se usan como objetivo de entrenamiento —los cabezales se supervisan contra el
+retorno y el signo crudos—, por lo que la mezcla de pasos futuros que la \textit{wavelet} introduciría
+en $(Y_L, Y_H)$ es inerte: no llega al optimizador ni a la métrica de IC. Esta verificación se recoge
+en la auditoría de la sección~\ref{sec:met-leakage}.
 
 \section{Encoder espacio-temporal de doble canal}\label{sec:encoder}
 
@@ -212,13 +225,16 @@ y la magnitud del movimiento.
 El supuesto subyacente es que la tarea de clasificación direccional actúa como una
 señal auxiliar que regulariza la regresión: ordenar correctamente las acciones por
 dirección es un objetivo más robusto al ruido que estimar el retorno exacto, y su
-gradiente ayuda a estabilizar el aprendizaje. Conviene recordar aquí que, en la
-adaptación al S\&P~500 estudiada en la Parte~I, este objetivo multitarea se sustituye
-por una pérdida de \textit{ranking} transversal --una combinación de pérdida
-listwise tipo \emph{ListNet} \cite{cao2007learning}, un término que optimiza
-directamente el coeficiente de información (\textit{Information Coefficient}, IC) y un
-término MAE--, por estar mejor alineada con el objetivo último de seleccionar
-acciones; la motivación de ese cambio se detalla en el capítulo~\ref{cap:metodologia}.
+gradiente ayuda a estabilizar el aprendizaje. Conviene precisar aquí que, en la
+adaptación al S\&P~500 estudiada en la Parte~I, se modifica únicamente el \emph{término de
+regresión} de este objetivo multitarea: el MAE enmascarado se sustituye por una pérdida de
+\textit{ranking} transversal --una combinación de pérdida listwise tipo \emph{ListNet}
+\cite{cao2007learning}, un término que optimiza directamente el coeficiente de información
+(\textit{Information Coefficient}, IC) y un término MAE--, por estar mejor alineada con el objetivo
+último de seleccionar acciones. El cabezal de \emph{clasificación de signo} se conserva (entropía
+cruzada, con peso $0{,}5$ en la suma total), de modo que la pérdida efectiva es \emph{híbrida}
+—\textit{ranking} en la regresión más clasificación direccional auxiliar—, no una sustitución completa
+de la multitarea; la motivación de ese cambio se detalla en el capítulo~\ref{cap:metodologia}.
 
 \section{Resultados originales y supuestos de mercado}\label{sec:original-results}
 

@@ -188,13 +188,14 @@ el S\&P 500: el arbitraje la ha eliminado. Este es el modo de fallo más fundame
 coherente con que ningún modelo de la escalera, ni simple ni profundo, supere un IC de
 $0.025$.
 
-\paragraph{(b) Insuficiencia de la señal OHLCV al horizonte semanal.}
+\paragraph{(b) Insuficiencia de la señal OHLCV precio-volumen.}
 Las \textit{features} de Stockformer son esencialmente precio-volumen (Alpha360 es OHLCV con
-\textit{lags}). En un mercado eficiente y a un horizonte semanal, la información contenida en
+\textit{lags}). En un mercado eficiente, la información contenida en
 el historial de precio y volumen está, en gran medida, ya incorporada al precio. La propia
-escalera lo confirma: los modelos sobre Alpha158 (LightGBM, XGBoost) no superan a los
-lineales sobre un conjunto más reducido, de modo que enriquecer las \textit{features} dentro
-de la misma familia precio-volumen no rescata el IC. El problema no es la cantidad de
+escalera lo confirma: todos los modelos —lineales y de árboles— ven el mismo panel de
+\(\sim\!375\) variables (Alpha360 más los indicadores técnicos de Alpha158), y los árboles
+(LightGBM, XGBoost), pese a su mayor capacidad, no superan a los lineales sobre esos mismos
+insumos; enriquecer las \textit{features} dentro de la misma familia precio-volumen no rescata el IC. El problema no es la cantidad de
 \textit{features}, sino que la clase de información (OHLCV) es insuficiente a este
 horizonte en este mercado.
 
@@ -233,7 +234,7 @@ es que no se produce.
 
 En conjunto, los cuatro modos de fallo no son alternativas excluyentes, sino mecanismos que
 se componen: un mercado más eficiente (a) reduce la señal explotable; la señal residual es
-de tipo OHLCV insuficiente al horizonte semanal (b); parte del IC de origen era un artefacto
+de tipo OHLCV insuficiente a este horizonte (b); parte del IC de origen era un artefacto
 de microestructura inexistente en el destino (c); y la escasez de observaciones
 transversales frente a la capacidad del modelo (d) convierte cualquier señal débil en
 sobreajuste. El resultado neto es un IC $\approx -0.003$. Este diagnóstico cierra la

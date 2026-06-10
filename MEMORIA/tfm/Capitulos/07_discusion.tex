@@ -34,7 +34,7 @@ La explicación es un argumento clásico de sesgo-varianza, aplicado a la geomet
 particular del problema. La unidad de información estadística aquí no es la
 observación diaria, sino la \emph{sección transversal}: en cada corte temporal, el modelo
 dispone de del orden de 400 observaciones transversales efectivas, los nombres del
-universo, de las que extraer una ordenación. A horizonte semanal sobre \textit{large-cap}
+universo, de las que extraer una ordenación. En el \textit{large-cap}
 estadounidense, esas secciones están además fuertemente correlacionadas en el tiempo, de
 modo que el número de muestras \emph{independientes} es todavía menor. Ajustar un modelo de
 aproximadamente $10^{6}$ parámetros sobre una dimensión efectiva tan estrecha es, en
@@ -52,7 +52,7 @@ universal de las redes profundas. Stockformer fue calibrado sobre acciones china
 un mercado con ineficiencias \textit{retail} persistentes, no linealidades explotables y,
 como se discute en la Sección~\ref{sec:d-benchmarks}, artefactos de microestructura
 que inflan el IC alcanzable; en ese entorno, la capacidad adicional encuentra señal que
-ajustar. El S\&P 500 a horizonte semanal es el régimen inverso: un mercado eficiente y
+ajustar. El S\&P 500 \textit{large-cap} es el régimen inverso: un mercado eficiente y
 arbitrado donde la señal explotable es tenue y la sección transversal estrecha. En este
 régimen (señal débil, pocas muestras independientes), el
 sesgo regularizador de un modelo simple generaliza mejor que la flexibilidad de uno
@@ -78,9 +78,9 @@ entre nombres; las \textit{features} ricas amplían la información de entrada; 
 arreglos solo libera el cuello de botella que aborda, dejando intactos los demás. Si la
 señal explotable es escasa porque el mercado es eficiente (modo~a), de nada sirve alinear
 la pérdida con el \textit{ranking}: no hay orden genuino que ordenar mejor. Si la clase de
-información (OHLCV) es insuficiente al horizonte semanal (modo~b), enriquecer las
+información (OHLCV) es insuficiente a este horizonte (modo~b), enriquecer las
 \textit{features} \emph{dentro de esa misma clase} no añade señal, como muestra la escalera
-(los modelos sobre Alpha158 no superan a los lineales más simples). Si parte del IC del
+(los árboles, sobre el mismo panel de \(\sim\!375\) variables que los lineales, no los superan). Si parte del IC del
 mercado de origen era un artefacto de microestructura que
 no existe en el destino (modo~c), ningún cambio arquitectónico puede recuperar una señal
 que nunca fue transferible. Y si la dimensión transversal efectiva es de $\sim$400 frente a

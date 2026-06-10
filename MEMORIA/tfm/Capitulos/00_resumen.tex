@@ -4,12 +4,15 @@ trasladarlo a otro estructuralmente distinto. Esta tesis estudia la transferenci
 \textit{cross-market} de un modelo de \textit{deep learning} financiero, en dos partes. La primera
 evalúa si Stockformer (una arquitectura de en torno a un millón de parámetros, basada en
 \textit{wavelets}, \textit{transformers} y grafos, calibrada sobre acciones chinas A-shares)
-transfiere su poder predictivo al S\&P 500 a horizonte semanal. Para ello se sitúa al modelo dentro
+transfiere su poder predictivo al S\&P 500, evaluado a horizonte diario mediante el coeficiente de
+información (\textit{rank IC}) transversal; la estrategia de explotación de la Parte~II opera después
+a frecuencia semanal. Para ello se sitúa al modelo dentro
 de una \textit{complexity ladder} que lo compara, bajo un mismo \textit{harness} de evaluación y
 una auditoría anti-fuga (\textit{leakage}) limpia, con modelos más simples. El
 veredicto es negativo: Stockformer no transfiere (su coeficiente de información
-\textit{out-of-sample} cae a $\approx -0{,}003$, indistinguible de cero) y queda batido por un
-Lasso de apenas cinco coeficientes ($+0{,}0238$). El fallo está sobredeterminado: los modos
+\textit{out-of-sample} cae a $\approx -0{,}003$, indistinguible de cero) y es superado en IC por un
+Lasso de apenas cinco coeficientes ($+0{,}0238$), una ventaja direccional que no alcanza la
+significancia estadística al 5\,\%. El fallo está sobredeterminado: los modos
 de fallo se acumulan y ninguna corrección aislada de la arquitectura rescata la señal.
 
 La segunda parte pregunta qué genera el retorno neto. Una atribución etapa a etapa muestra que
@@ -33,11 +36,14 @@ predictive power of a model tuned on one market is seldom verified when it is tr
 structurally different one. This thesis studies the cross-market transfer of a financial
 deep-learning model in two parts. The first asks whether Stockformer (a roughly one-million
 parameter wavelet-transformer-graph architecture calibrated on Chinese A-shares) transfers its
-predictive power to the S\&P 500 at a weekly horizon. Placed inside a complexity ladder under a
+predictive power to the S\&P 500, evaluated at a daily horizon via the cross-sectional information
+coefficient (rank IC); the Part~II trading strategy then operates at a weekly frequency. Placed inside
+a complexity ladder under a
 unified evaluation harness and a clean anti-leakage audit, the verdict is negative:
 Stockformer does not transfer (its out-of-sample information coefficient falls to
-$\approx -0{,}003$, indistinguishable from zero) and is beaten by a five-coefficient Lasso
-($+0{,}0238$). The failure is overdetermined: failure modes compound and no isolated
+$\approx -0{,}003$, indistinguishable from zero) and is outperformed in IC by a five-coefficient Lasso
+($+0{,}0238$), a directional advantage that does not reach statistical significance at 5\%. The failure
+is overdetermined: failure modes compound and no isolated
 architectural fix rescues the signal. The second
 part asks what actually generates net return. A stage-by-stage attribution shows that the main
 lever is cost-aware portfolio construction, not the learned signal (weekly IC $\approx 0{,}003$).
