@@ -25,3 +25,32 @@ def xz(v: np.ndarray) -> np.ndarray:
     m = np.nanmean(v)
     s = np.nanstd(v)
     return (v - m) / s if s > 1e-12 else np.zeros_like(v)
+
+
+def peer_graph_signal(daily_y: np.ndarray, d: int,
+                      corr_window: int = 120, k: int = 15,
+                      mom_window: int = 21) -> np.ndarray:
+    """Causal peer-momentum (relational-graph transplant).
+
+    Builds a trailing correlation graph from daily_y[d-corr_window:d] (past only),
+    selects each stock's top-k |corr| peers, and returns the correlation-weighted
+    mean of those peers' own recent momentum (cumulative return over the last
+    mom_window days, also past only). Lead-lag / connected-stock momentum.
+    """
+    R = _trailing_returns(daily_y, d, corr_window)
+    if R is None:
+        return np.full(daily_y.shape[1], np.nan)
+    N = R.shape[1]
+    C = np.corrcoef(R, rowvar=False)
+    C = np.nan_to_num(C, nan=0.0)
+    np.fill_diagonal(C, 0.0)
+    own_mom = np.nan_to_num(daily_y[d - mom_window:d], nan=0.0).sum(axis=0)  # [N], past
+    out = np.full(N, np.nan)
+    kk = min(k, N - 1)
+    for i in range(N):
+        order = np.argsort(np.abs(C[i]))[-kk:]   # top-k peers by |corr|
+        wts = C[i, order]                        # signed correlation weights
+        denom = np.abs(wts).sum()
+        if denom > 1e-12:
+            out[i] = float((wts * own_mom[order]).sum() / denom)
+    return out

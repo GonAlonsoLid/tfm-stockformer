@@ -19,3 +19,22 @@ def test_xz_zero_mean_unit_std():
     z = ts.xz(np.array([1.0, 2.0, 3.0, 4.0]))
     assert abs(float(np.mean(z))) < 1e-9
     assert abs(float(np.std(z)) - 1.0) < 1e-9
+
+
+def test_peer_graph_signal_shape_and_nan_guard():
+    rng = np.random.default_rng(0)
+    dy = rng.normal(0, 0.01, size=(400, 12))
+    sig = ts.peer_graph_signal(dy, d=300)
+    assert sig.shape == (12,)
+    assert np.all(np.isnan(ts.peer_graph_signal(dy, d=10)))
+
+
+def test_peer_graph_signal_is_causal():
+    rng = np.random.default_rng(1)
+    dy = rng.normal(0, 0.01, size=(400, 12))
+    d = 300
+    s1 = ts.peer_graph_signal(dy, d)
+    dy2 = dy.copy()
+    dy2[d:] = rng.normal(0, 0.5, size=dy2[d:].shape)  # perturb only the FUTURE
+    s2 = ts.peer_graph_signal(dy2, d)
+    np.testing.assert_allclose(np.nan_to_num(s1), np.nan_to_num(s2), atol=1e-12)
