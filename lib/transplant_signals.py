@@ -76,3 +76,80 @@ def filtered_trend_signal(daily_y: np.ndarray, d: int,
         sm[t] = alpha * R[t] + (1.0 - alpha) * sm[t - 1]
     take = min(mom_window, R.shape[0])  # guard: never silently use more than `window` rows
     return sm[-take:].mean(axis=0)
+
+
+# ── Pre-registered bench (Lote 2): established factors, all causal f(daily_y, d) -> [N] ──
+
+def _market_beta(R: np.ndarray):
+    """Per-stock beta vs the equal-weight market over R[days, N]. Returns (mkt[days], beta[N])."""
+    mkt = R.mean(axis=1)
+    mc = mkt - mkt.mean()
+    var = float((mc ** 2).mean()) + 1e-12
+    Rc = R - R.mean(axis=0, keepdims=True)
+    beta = (Rc * mc.reshape(-1, 1)).mean(axis=0) / var
+    return mkt, beta
+
+
+def low_ivol_signal(daily_y: np.ndarray, d: int, window: int = 60) -> np.ndarray:
+    """Low idiosyncratic volatility (Ang et al. 2006): -std of residual-vs-market returns."""
+    R = _trailing_returns(daily_y, d, window)
+    if R is None:
+        return np.full(daily_y.shape[1], np.nan)
+    mkt, beta = _market_beta(R)
+    resid = R - np.outer(mkt, beta)
+    return -resid.std(axis=0)
+
+
+def bab_signal(daily_y: np.ndarray, d: int, window: int = 120) -> np.ndarray:
+    """Betting-against-beta (Frazzini-Pedersen 2014): -market beta (low beta preferred)."""
+    R = _trailing_returns(daily_y, d, window)
+    if R is None:
+        return np.full(daily_y.shape[1], np.nan)
+    _, beta = _market_beta(R)
+    return -beta
+
+
+def volmanaged_momentum_signal(daily_y: np.ndarray, d: int,
+                               mom_lo: int = 252, mom_hi: int = 21,
+                               vol_window: int = 126) -> np.ndarray:
+    """Volatility-managed momentum (Barroso-Santa-Clara 2015): 12-1 momentum / recent vol."""
+    momR = _trailing_returns(daily_y, d, mom_lo)
+    volR = _trailing_returns(daily_y, d, vol_window)
+    if momR is None or volR is None:
+        return np.full(daily_y.shape[1], np.nan)
+    mom = momR[:-mom_hi].sum(axis=0) if mom_hi > 0 else momR.sum(axis=0)
+    vol = volR.std(axis=0)
+    return mom / (vol + 1e-9)
+
+
+def fiftytwo_week_high_signal(daily_y: np.ndarray, d: int, window: int = 252) -> np.ndarray:
+    """Proximity to the 52-week high (George-Hwang 2004): price / trailing max price."""
+    R = _trailing_returns(daily_y, d, window)
+    if R is None:
+        return np.full(daily_y.shape[1], np.nan)
+    P = np.cumprod(1.0 + R, axis=0)
+    return P[-1] / (P.max(axis=0) + 1e-12)
+
+
+def ts_momentum_signal(daily_y: np.ndarray, d: int,
+                       horizons: tuple = (21, 63, 126, 252)) -> np.ndarray:
+    """Time-series/trend momentum (Moskowitz-Ooi-Pedersen 2012): mean sign of cum return."""
+    N = daily_y.shape[1]
+    if d - max(horizons) < 0:
+        return np.full(N, np.nan)
+    sigs = [np.sign(_trailing_returns(daily_y, d, h).sum(axis=0)) for h in horizons]
+    return np.mean(sigs, axis=0)
+
+
+def seasonality_signal(daily_y: np.ndarray, d: int, dates, min_obs: int = 20) -> np.ndarray:
+    """Same-calendar-month historical mean return (Heston-Sadka 2008). Causal: uses dates[:d]."""
+    N = daily_y.shape[1]
+    if d < 252:
+        return np.full(N, np.nan)
+    m = dates[d].month
+    months = np.array([dt.month for dt in dates[:d]])
+    mask = months == m
+    if mask.sum() < min_obs:
+        return np.full(N, np.nan)
+    R = np.nan_to_num(daily_y[:d][mask], nan=0.0)
+    return R.mean(axis=0)

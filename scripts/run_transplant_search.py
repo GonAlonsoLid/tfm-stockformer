@@ -27,6 +27,18 @@ STEP = 26
 HOLD_WEEKS = 104
 
 
+SIGNALS = {
+    "peer":     lambda dy, d, dates: ts.peer_graph_signal(dy, d),
+    "trend":    lambda dy, d, dates: ts.filtered_trend_signal(dy, d),
+    "low_ivol": lambda dy, d, dates: ts.low_ivol_signal(dy, d),
+    "bab":      lambda dy, d, dates: ts.bab_signal(dy, d),
+    "volmom":   lambda dy, d, dates: ts.volmanaged_momentum_signal(dy, d),
+    "high52":   lambda dy, d, dates: ts.fiftytwo_week_high_signal(dy, d),
+    "tsmom":    lambda dy, d, dates: ts.ts_momentum_signal(dy, d),
+    "season":   lambda dy, d, dates: ts.seasonality_signal(dy, d, dates),
+}
+
+
 def _ev(net: pd.Series) -> dict:
     net = pd.Series(net).dropna()
     return {"sharpe": sharpe(net), "t": nw_tstat(net)}
@@ -35,35 +47,33 @@ def _ev(net: pd.Series) -> dict:
 def main():
     panel = dp.load_panel(DATA_DIR)
     week = wp.build_weekly(panel)
+    dates = pd.DatetimeIndex(panel.dates)
     ens = get_long_ensemble(week, INIT_TRAIN, STEP)
     weeks = sorted(ens)
     dy = week.daily_y
     hold_dates = {week.dates_w[w] for w in weeks[-HOLD_WEEKS:]}
 
-    cand = {k: {} for k in
-            ["ensemble", "peer", "trend", "ens_peer", "ens_trend", "ens_peer_trend"]}
+    names = ["ensemble"] + list(SIGNALS) + [f"ens_{k}" for k in SIGNALS]
+    cand = {k: {} for k in names}
     for wk in weeks:
         d = int(week.rebal_idx[wk])
         e = ts.xz(ens[wk])
-        peer = ts.xz(ts.peer_graph_signal(dy, d))
-        trend = ts.xz(ts.filtered_trend_signal(dy, d))
-        e0, p0, t0 = np.nan_to_num(e), np.nan_to_num(peer), np.nan_to_num(trend)
+        e0 = np.nan_to_num(e)
         cand["ensemble"][wk] = e
-        cand["peer"][wk] = peer
-        cand["trend"][wk] = trend
-        cand["ens_peer"][wk] = e0 + p0
-        cand["ens_trend"][wk] = e0 + t0
-        cand["ens_peer_trend"][wk] = e0 + p0 + t0
+        for k, fn in SIGNALS.items():
+            s = ts.xz(fn(dy, d, dates))
+            cand[k][wk] = s
+            cand[f"ens_{k}"][wk] = e0 + np.nan_to_num(s)
 
     rows = []
-    for name, preds in cand.items():
-        bt = backtest_variant(week, preds, CONFIGS["full"]).copy()
+    for name in names:
+        bt = backtest_variant(week, cand[name], CONFIGS["full"]).copy()
         ish = np.array([dt in hold_dates for dt in bt.index])
         full, hold = _ev(bt["net"]), _ev(bt["net"][ish])
         rows.append({"signal": name, "sharpe": full["sharpe"], "t": full["t"],
                      "hold": hold["sharpe"], "turnover": float(bt["turnover"].mean()),
                      "ic": float(bt["ic"].dropna().mean())})
-        print(f"  {name:16s} Sharpe={full['sharpe']:+.2f} t={full['t']:+.2f} "
+        print(f"  {name:18s} Sharpe={full['sharpe']:+.2f} t={full['t']:+.2f} "
               f"hold={hold['sharpe']:+.2f} ic={rows[-1]['ic']:+.4f}")
 
     os.makedirs(RESULTS_DIR, exist_ok=True)

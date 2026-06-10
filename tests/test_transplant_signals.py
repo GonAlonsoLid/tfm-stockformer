@@ -1,4 +1,5 @@
 import numpy as np
+import pytest
 from lib import transplant_signals as ts
 
 
@@ -77,3 +78,33 @@ def test_filtered_trend_signal_positive_for_uptrend():
     dy[:, 1] = -0.002  # steady downtrend
     sig = ts.filtered_trend_signal(dy, d=180, window=120, halflife=10, mom_window=21)
     assert sig[0] > sig[1]
+
+
+@pytest.mark.parametrize("fn", [
+    ts.low_ivol_signal, ts.bab_signal, ts.volmanaged_momentum_signal,
+    ts.fiftytwo_week_high_signal, ts.ts_momentum_signal,
+])
+def test_bench_signal_is_causal(fn):
+    rng = np.random.default_rng(10)
+    dy = rng.normal(0, 0.01, size=(500, 10))
+    d = 400
+    s1 = fn(dy, d)
+    assert s1.shape == (10,)
+    dy2 = dy.copy()
+    dy2[d:] = rng.normal(0, 0.5, size=dy2[d:].shape)  # perturb only the FUTURE
+    s2 = fn(dy2, d)
+    np.testing.assert_allclose(np.nan_to_num(s1), np.nan_to_num(s2), atol=1e-12)
+
+
+def test_seasonality_signal_is_causal():
+    import pandas as pd
+    rng = np.random.default_rng(11)
+    dy = rng.normal(0, 0.01, size=(500, 10))
+    dates = pd.bdate_range("2018-01-01", periods=500)
+    d = 400
+    s1 = ts.seasonality_signal(dy, d, dates)
+    assert s1.shape == (10,)
+    dy2 = dy.copy()
+    dy2[d:] = rng.normal(0, 0.5, size=dy2[d:].shape)
+    s2 = ts.seasonality_signal(dy2, d, dates)
+    np.testing.assert_allclose(np.nan_to_num(s1), np.nan_to_num(s2), atol=1e-12)
