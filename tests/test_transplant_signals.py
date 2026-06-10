@@ -126,3 +126,37 @@ def test_magnitude_bench_signal_depends_on_last_past_row(fn):
     s3 = fn(dy3, d)
     assert not np.allclose(np.nan_to_num(s1), np.nan_to_num(s3), atol=1e-12), \
         "signal must depend on the last past row daily_y[d-1]"
+
+
+@pytest.mark.parametrize("fn", [ts.high_freq_reversal_signal, ts.lead_lag_signal])
+def test_arch_round2_signal_causal_and_boundary(fn):
+    rng = np.random.default_rng(20)
+    dy = rng.normal(0, 0.01, size=(500, 12))
+    d = 400
+    s1 = fn(dy, d)
+    assert s1.shape == (12,)
+    dy2 = dy.copy()
+    dy2[d:] = rng.normal(0, 0.5, size=dy2[d:].shape)  # future perturbation -> no change
+    s2 = fn(dy2, d)
+    np.testing.assert_allclose(np.nan_to_num(s1), np.nan_to_num(s2), atol=1e-12)
+    dy3 = dy.copy()
+    dy3[d - 1] = dy3[d - 1] * 1000.0  # last past row -> must change
+    s3 = fn(dy3, d)
+    assert not np.allclose(np.nan_to_num(s1), np.nan_to_num(s3), atol=1e-12)
+
+
+def test_sector_peer_momentum_causal_and_excludes_self():
+    rng = np.random.default_rng(21)
+    dy = rng.normal(0, 0.01, size=(300, 9))
+    sectors = np.array([0, 0, 0, 1, 1, 1, 2, 2, 2])
+    d = 250
+    s1 = ts.sector_peer_momentum_signal(dy, d, sectors)
+    assert s1.shape == (9,)
+    # causal: perturbing the future leaves it unchanged
+    dy2 = dy.copy()
+    dy2[d:] = rng.normal(0, 0.5, size=dy2[d:].shape)
+    s2 = ts.sector_peer_momentum_signal(dy2, d, sectors)
+    np.testing.assert_allclose(np.nan_to_num(s1), np.nan_to_num(s2), atol=1e-12)
+    # peer mean excludes self: with 3 stocks per sector, stock 0's signal is the mean of 1 and 2
+    mom = ts._trailing_returns(dy, d, 21).sum(axis=0)
+    assert s1[0] == pytest.approx((mom[1] + mom[2]) / 2)

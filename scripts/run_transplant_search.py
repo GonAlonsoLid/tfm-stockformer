@@ -36,7 +36,25 @@ SIGNALS = {
     "high52":   lambda dy, d, dates: ts.fiftytwo_week_high_signal(dy, d),
     "tsmom":    lambda dy, d, dates: ts.ts_momentum_signal(dy, d),
     "season":   lambda dy, d, dates: ts.seasonality_signal(dy, d, dates),
+    "highfreq_rev": lambda dy, d, dates: ts.high_freq_reversal_signal(dy, d),
+    "leadlag":  lambda dy, d, dates: ts.lead_lag_signal(dy, d),
 }
+
+
+def _load_sector_ids(tickers):
+    """Load data/<dir>/sector_map.json (if present) -> [N] int sector labels aligned to
+    `tickers`; returns None if the file is absent or no ticker has a known sector."""
+    import json
+    path = os.path.join(os.path.dirname(__file__), "..", DATA_DIR, "sector_map.json")
+    if not os.path.isfile(path):
+        return None
+    with open(path) as f:
+        smap = json.load(f)
+    names = [smap.get(t, "Unknown") for t in tickers]
+    if all(n == "Unknown" for n in names):
+        return None
+    uniq = {s: i for i, s in enumerate(sorted(set(names)))}
+    return np.array([uniq[n] for n in names])
 
 
 def _ev(net: pd.Series) -> dict:
@@ -53,14 +71,22 @@ def main():
     dy = week.daily_y
     hold_dates = {week.dates_w[w] for w in weeks[-HOLD_WEEKS:]}
 
-    names = ["ensemble"] + list(SIGNALS) + [f"ens_{k}" for k in SIGNALS]
+    active = dict(SIGNALS)
+    sector_ids = _load_sector_ids(week.tickers)
+    if sector_ids is not None:
+        active["secpeer"] = lambda dy, d, dates: ts.sector_peer_momentum_signal(dy, d, sector_ids)
+        print(f"  sector-peer ACTIVADO ({len(set(sector_ids.tolist()))} sectores)")
+    else:
+        print("  sector-peer DESACTIVADO (sin sector_map.json)")
+
+    names = ["ensemble"] + list(active) + [f"ens_{k}" for k in active]
     cand = {k: {} for k in names}
     for wk in weeks:
         d = int(week.rebal_idx[wk])
         e = ts.xz(ens[wk])
         e0 = np.nan_to_num(e)
         cand["ensemble"][wk] = e
-        for k, fn in SIGNALS.items():
+        for k, fn in active.items():
             s = ts.xz(fn(dy, d, dates))
             cand[k][wk] = s
             cand[f"ens_{k}"][wk] = e0 + np.nan_to_num(s)
