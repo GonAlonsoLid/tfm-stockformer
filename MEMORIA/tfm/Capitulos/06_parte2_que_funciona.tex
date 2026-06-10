@@ -491,10 +491,14 @@ inversa: ¿alguna de sus \emph{ideas} concretas —el grafo de relaciones entre 
 descomposición frecuencial—, destilada a una señal simple y \emph{causal} (sin la fuga del
 grafo construido sobre todo el histórico que detecta la Sección~\ref{sec:met-leakage}), aporta
 sobre el predictor \textit{shallow}? Y, ya puestos, ¿halla más contenido un banco más amplio de
-factores establecidos? Se destilan dos piezas de la arquitectura —una \textbf{señal de pares}
-(momentum de los vecinos más correlacionados, con grafo de correlación móvil solo de pasado) y
-una \textbf{señal de tendencia filtrada} (momentum de la componente de baja frecuencia, con un
-filtro causal)— y se añade un banco pre-registrado de seis factores: baja volatilidad
+factores establecidos? Se destilan \emph{cinco} señales de la arquitectura, que cubren sus dos
+componentes característicos. Del \textbf{grafo de relaciones} se derivan tres: pares por
+\emph{correlación} (momentum de los vecinos más correlacionados, con grafo móvil solo de pasado),
+\emph{lead-lag} direccional (los nombres que \emph{lideran} a cada acción, imitando la atención
+espacial asimétrica del modelo) y pares por \emph{sector} (\textit{industry momentum}). De la
+\textbf{descomposición wavelet} se derivan dos, una por banda: momentum de la \emph{tendencia}
+(baja frecuencia) y \emph{reversal} del residuo (alta frecuencia). A ellas se añade un banco
+pre-registrado de seis factores establecidos: baja volatilidad
 idiosincrática \autocite{ang2006cross}, \textit{betting-against-beta}, momentum gestionado por
 volatilidad \autocite{barrososantaclara2015momentum}, estacionalidad, proximidad al máximo de
 52 semanas y \textit{trend}/momentum de series temporales. Todos se evalúan, solos y sumados al
@@ -505,13 +509,16 @@ volatilidad \autocite{barrososantaclara2015momentum}, estacionalidad, proximidad
 
 La lectura es nítida y refuerza las dos partes de la tesis:
 \begin{itemize}
-  \item \textbf{Las piezas de la arquitectura no rescatan valor.} La señal de pares es
-  \emph{anti}-predictiva (IC $-0{,}017$, Sharpe $-0{,}43$) y arrastra al \textit{ensemble} a
-  terreno negativo; la tendencia filtrada es apenas positiva (Sharpe $+0{,}29$) y, pese a un
-  \textit{holdout} llamativo ($+0{,}70$), no bate la base. Ni el grafo ni el filtrado
-  frecuencial —las dos señas de identidad del Stockformer— transfieren contenido al sustrato
-  eficiente, ni siquiera por piezas: es el veredicto de la Parte~I, ahora a nivel de
-  componente.
+  \item \textbf{Ninguna pieza de la arquitectura rescata valor.} Las \emph{cinco} señales
+  destiladas fallan. El grafo no transfiere en ninguna de sus formas: los pares por correlación
+  son anti-predictivos (Sharpe $-0{,}43$), los pares por sector también ($-0{,}62$), y el
+  \emph{lead-lag} direccional —la variante con más respaldo teórico \autocite{lomackinlay1990when}—
+  es el peor de los tres y \emph{significativamente} erróneo (Sharpe $-0{,}97$, $t = -2{,}68$). La
+  wavelet tampoco: la banda de baja frecuencia (tendencia) es apenas positiva y no bate la base
+  ($+0{,}29$), y la de alta frecuencia (reversal) pierde dinero pese a un IC de ranking positivo
+  ($+0{,}016$). Las dos señas de identidad del Stockformer —su grafo y su descomposición
+  frecuencial— no transfieren contenido al sustrato eficiente, ni enteras (Parte~I) ni por piezas:
+  el veredicto es ahora exhaustivo a nivel de componente.
   \item \textbf{Los factores defensivos fallan.} La baja volatilidad idiosincrática es el peor
   candidato de toda la búsqueda (Sharpe $-1{,}02$, $t = -2{,}41$); el
   \textit{betting-against-beta} ($-0{,}75$), la proximidad al máximo de 52 semanas ($-0{,}36$)

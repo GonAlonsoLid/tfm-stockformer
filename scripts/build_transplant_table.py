@@ -15,8 +15,11 @@ OUT = os.path.join(ROOT, "MEMORIA", "tfm", "tablas", "rq2_modular_transfer.tex")
 
 LABEL = {
     "ensemble": "Ensemble ML (base)",
-    "peer": "Pares / grafo (causal)",
-    "trend": "Tendencia filtrada (causal)",
+    "peer": r"Grafo: pares por correlaci\'on",
+    "leadlag": "Grafo: lead-lag direccional",
+    "secpeer": "Grafo: pares por sector",
+    "trend": "Wavelet: tendencia (baja frec.)",
+    "highfreq_rev": "Wavelet: reversal (alta frec.)",
     "low_ivol": r"Baja vol.\ idiosincr\'atica (IVOL)",
     "bab": "Betting-against-beta",
     "volmom": r"Momentum gestionado por vol.",
@@ -26,7 +29,8 @@ LABEL = {
 }
 GROUPS = [
     ("Predictor base", ["ensemble"]),
-    ("Destiladas de la arquitectura del Stockformer", ["peer", "trend"]),
+    ("Destiladas de la arquitectura del Stockformer",
+     ["peer", "leadlag", "secpeer", "trend", "highfreq_rev"]),
     ("Banco de factores establecidos (pre-registrado)",
      ["low_ivol", "bab", "volmom", "high52", "tsmom", "season"]),
 ]
@@ -38,8 +42,9 @@ def main():
         r"\begin{table}[htbp]",
         r"\centering",
         r"\caption{B\'usqueda de se\~nal ampliada: se\~nales destiladas de la arquitectura del "
-        r"Stockformer (grafo de pares y tendencia filtrada, ambas causales) y banco "
-        r"pre-registrado de factores establecidos, cada una \emph{sola} y \emph{combinada} con el "
+        r"Stockformer (su grafo en tres formas --correlaci\'on, lead-lag direccional y sector-- y "
+        r"su wavelet en las dos bandas) y banco pre-registrado de factores establecidos, cada una "
+        r"\emph{sola} y \emph{combinada} con el "
         r"\textit{ensemble} de \textit{features} (columnas $+$ens). Misma construcci\'on "
         r"cost-aware y \textit{walk-forward} de 311 semanas (\textit{holdout}: 104) que la "
         r"Tabla~\ref{tab:rq2-signal-search}. List\'on pre-registrado: $t_{\text{NW}}>2$ y "
