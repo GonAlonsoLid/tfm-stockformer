@@ -57,7 +57,10 @@ semanal.
 el retorno neto de costes en el S\&P 500? Esto es: una vez aislada la contribución de la señal
 predictiva, ¿cuál de las etapas del \textit{pipeline} (la calidad de la predicción, la
 neutralización factorial o la construcción de cartera consciente del coste) es la que aporta
-Sharpe neto positivo?
+Sharpe neto positivo? Y, de forma complementaria, ¿puede una \emph{búsqueda de señal disciplinada}
+—sobre el predictor de \textit{features} existente y sin renunciar a él— localizar señales simples
+con contenido genuino, incluidas señales destiladas de los propios sesgos inductivos del Stockformer,
+que aporten por encima de esa base?
 
 La segunda pregunta solo cobra sentido a la luz de la respuesta a la primera, y por eso ambas se
 abordan de forma secuencial. La Parte~I (Capítulo~\ref{cap:parte1}) responde a RQ1; la Parte~II
@@ -94,7 +97,11 @@ favorable de 52 semanas es un estimador de altísima varianza; el estimador defe
 distinguible de cero. Una búsqueda disciplinada de señal precisa la respuesta a RQ2: el momentum
 residual, un factor simple con contenido, combinado con esa construcción eleva el Sharpe robusto a
 $0{,}72$ ($t = 1{,}82$) sobre una ventana más larga de 311 semanas en la que la propia base cae a
-$0{,}38$; la mejora es apreciable, aunque permanece al borde de la significancia.
+$0{,}38$; la mejora es apreciable, aunque permanece al borde de la significancia. Esa búsqueda de
+señal —pre-registrada, validada en un \textit{holdout} reservado y reportada en su totalidad— es por
+sí misma un eje de la contribución: complementa al predictor de \textit{features} en lugar de
+sustituirlo, y somete a prueba si las ideas concretas de una arquitectura que no transfiere en bloque,
+reducidas a señales simples y causales, rescatan algo de valor sobre el sustrato eficiente.
 
 La honestidad metodológica forma parte de la contribución. Todo el cuerpo empírico
 descansa sobre una auditoría anti-fuga (\textit{leakage}) limpia (seis verificaciones, las seis
