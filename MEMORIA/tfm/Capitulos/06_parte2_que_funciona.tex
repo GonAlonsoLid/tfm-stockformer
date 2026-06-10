@@ -424,12 +424,12 @@ fuga de información y evaluado con la \emph{misma} construcción cost-aware y e
 protocolo \textit{walk-forward} del capítulo. Para estresar el resultado y disponer de más
 datos, la evaluación se amplía a una ventana de 311 semanas (2020--2026) que incluye el
 \textit{momentum-crash} de 2021 \autocite{danielmoskowitz2016momentum}, con un \textit{holdout}
-final de 104 semanas reservado. El conjunto de candidatos —los factores clásicos de esta sección y
-las señales adicionales de la Sección~\ref{sec:p2-modular}— se fijó \emph{antes} de mirar el
-\textit{holdout}; dada la multiplicidad de contrastes, ningún ganador se declara por su IC dentro de
-muestra, sino por su \textit{holdout} positivo y su coherencia económica, leído el listón de
-significancia a la luz de \textcite{harvey2016crosssection}. La Tabla~\ref{tab:rq2-signal-search}
-recoge el resultado de esta primera tanda.
+final de 104 semanas reservado. El conjunto de candidatos, los factores clásicos de esta sección y
+las señales adicionales de la Sección~\ref{sec:p2-modular}, se fijó antes de mirar el
+\textit{holdout}. Como se contrastan muchas señales, ningún ganador se declara por su IC dentro de
+muestra, sino por su \textit{holdout} positivo y su coherencia económica, con el listón de
+significancia que recomienda \textcite{harvey2016crosssection}. La Tabla~\ref{tab:rq2-signal-search}
+recoge esta primera tanda.
 
 \input{tablas/rq2_signal_search}
 
@@ -486,58 +486,54 @@ señal aprendida que lo tenía entre sus entradas.
 
 \subsection{Transferencia modular y banco ampliado}\label{sec:p2-modular}
 
-La Parte~I mostró que el Stockformer no transfiere \emph{como un todo}. Cabe la pregunta
-inversa: ¿alguna de sus \emph{ideas} concretas —el grafo de relaciones entre acciones, la
-descomposición frecuencial—, destilada a una señal simple y \emph{causal} (sin la fuga del
-grafo construido sobre todo el histórico que detecta la Sección~\ref{sec:met-leakage}), aporta
-sobre el predictor \textit{shallow}? Y, ya puestos, ¿halla más contenido un banco más amplio de
-factores establecidos? Se destilan \emph{cinco} señales de la arquitectura, que cubren sus dos
-componentes característicos. Del \textbf{grafo de relaciones} se derivan tres: pares por
-\emph{correlación} (momentum de los vecinos más correlacionados, con grafo móvil solo de pasado),
-\emph{lead-lag} direccional (los nombres que \emph{lideran} a cada acción, imitando la atención
-espacial asimétrica del modelo) y pares por \emph{sector} (\textit{industry momentum}). De la
-\textbf{descomposición wavelet} se derivan dos, una por banda: momentum de la \emph{tendencia}
-(baja frecuencia) y \emph{reversal} del residuo (alta frecuencia). A ellas se añade un banco
-pre-registrado de seis factores establecidos: baja volatilidad
-idiosincrática \autocite{ang2006cross}, \textit{betting-against-beta}, momentum gestionado por
-volatilidad \autocite{barrososantaclara2015momentum}, estacionalidad, proximidad al máximo de
-52 semanas y \textit{trend}/momentum de series temporales. Todos se evalúan, solos y sumados al
-\textit{ensemble}, con la \emph{misma} construcción cost-aware y el \emph{mismo}
-\textit{walk-forward}. La Tabla~\ref{tab:rq2-modular} recoge el resultado.
+La Parte~I mostró que el Stockformer no transfiere como un todo. Queda la pregunta inversa:
+si alguna de sus ideas concretas, el grafo de relaciones o la descomposición frecuencial,
+reducida a una señal simple y causal, aporta algo sobre el predictor \textit{shallow}. La
+causalidad importa aquí: el grafo se reconstruye con una ventana móvil de solo pasado, sin la
+fuga del grafo sobre todo el histórico que detecta la Sección~\ref{sec:met-leakage}. Se prueban
+cinco señales, que cubren los dos componentes que definen al modelo. Del grafo salen tres: pares
+por correlación (momentum de los vecinos más correlacionados), \textit{lead-lag} direccional
+(los nombres que anticipan a cada acción, en la línea de la atención espacial asimétrica) y pares
+por sector (\textit{industry momentum}). De la wavelet salen dos, una por banda: momentum de la
+tendencia (baja frecuencia) y reversal del residuo (alta frecuencia). A ellas se suma un banco
+pre-registrado de seis factores establecidos: baja volatilidad idiosincrática
+\autocite{ang2006cross}, \textit{betting-against-beta}, momentum gestionado por volatilidad
+\autocite{barrososantaclara2015momentum}, estacionalidad, proximidad al máximo de 52 semanas y
+\textit{trend} de series temporales. Todas se evalúan igual, solas y sumadas al \textit{ensemble},
+con la misma construcción y el mismo \textit{walk-forward}. La Tabla~\ref{tab:rq2-modular} recoge
+el resultado.
 
 \input{tablas/rq2_modular_transfer}
 
-La lectura es nítida y refuerza las dos partes de la tesis:
+La tabla deja cuatro lecturas:
 \begin{itemize}
-  \item \textbf{Ninguna pieza de la arquitectura rescata valor.} Las \emph{cinco} señales
-  destiladas fallan. El grafo no transfiere en ninguna de sus formas: los pares por correlación
-  son anti-predictivos (Sharpe $-0{,}43$), los pares por sector también ($-0{,}62$), y el
-  \emph{lead-lag} direccional —la variante con más respaldo teórico \autocite{lomackinlay1990when}—
-  es el peor de los tres y \emph{significativamente} erróneo (Sharpe $-0{,}97$, $t = -2{,}68$). La
-  wavelet tampoco: la banda de baja frecuencia (tendencia) es apenas positiva y no bate la base
-  ($+0{,}29$), y la de alta frecuencia (reversal) pierde dinero pese a un IC de ranking positivo
-  ($+0{,}016$). Las dos señas de identidad del Stockformer —su grafo y su descomposición
-  frecuencial— no transfieren contenido al sustrato eficiente, ni enteras (Parte~I) ni por piezas:
-  el veredicto es ahora exhaustivo a nivel de componente.
-  \item \textbf{Los factores defensivos fallan.} La baja volatilidad idiosincrática es el peor
-  candidato de toda la búsqueda (Sharpe $-1{,}02$, $t = -2{,}41$); el
-  \textit{betting-against-beta} ($-0{,}75$), la proximidad al máximo de 52 semanas ($-0{,}36$)
-  y la estacionalidad ($-0{,}26$) también restan. En este universo y ventana, ni la anomalía de
-  baja volatilidad ni la estacionalidad son explotables.
-  \item \textbf{El contenido vive en el momentum.} El \textbf{momentum gestionado por
-  volatilidad} es la mejor señal del banco: sumado al \textit{ensemble} alcanza un Sharpe neto
-  de $0{,}68$ ($t = 1{,}91$), con un \textit{holdout} de $+0{,}63$ y el IC más alto de la
-  búsqueda ($0{,}018$) —prácticamente la cifra del momentum residual—, y el \textit{trend}/%
-  momentum de series temporales deja un \textit{holdout} aún mayor ($+0{,}84$). Dos
-  construcciones distintas del momentum convergen en el mismo Sharpe ($\approx 0{,}7$) y en un
-  \textit{holdout} positivo: la señal que funciona es de \emph{familia momentum}, y el hallazgo
-  es robusto a cómo se la construya.
+  \item El \textbf{grafo} no transfiere en ninguna de sus formas. Los pares por correlación son
+  anti-predictivos (Sharpe neto $-0{,}43$) y los pares por sector también ($-0{,}62$). El
+  \textit{lead-lag} direccional, la variante con más respaldo teórico \autocite{lomackinlay1990when},
+  es el peor de los tres: un Sharpe de $-0{,}97$ con un $t$ de $-2{,}68$. En este universo, los
+  nombres que lideran a otros no anticipan su movimiento, lo invierten.
+  \item La \textbf{wavelet} tampoco aporta. La banda de baja frecuencia (tendencia) queda apenas
+  positiva y no bate la base (Sharpe $+0{,}29$); la de alta frecuencia (reversal) pierde dinero
+  pese a un IC de ranking positivo ($+0{,}016$). Los dos componentes que definen al Stockformer,
+  su grafo y su descomposición frecuencial, no transfieren contenido al S\&P 500 ni enteros
+  (Parte~I) ni por piezas.
+  \item Los \textbf{factores defensivos} fallan. La baja volatilidad idiosincrática es el peor
+  candidato de toda la búsqueda (Sharpe $-1{,}02$, $t$ $-2{,}41$); el \textit{betting-against-beta}
+  ($-0{,}75$), la proximidad al máximo de 52 semanas ($-0{,}36$) y la estacionalidad ($-0{,}26$)
+  también restan. En este universo y ventana, ni la baja volatilidad ni la estacionalidad son
+  explotables.
+  \item El \textbf{momentum} es lo único con contenido. El momentum gestionado por volatilidad es
+  la mejor señal del banco: sumado al \textit{ensemble} da un Sharpe neto de $0{,}68$ ($t = 1{,}91$),
+  un \textit{holdout} de $+0{,}63$ y el IC más alto de la búsqueda ($0{,}018$), casi la cifra del
+  momentum residual. El \textit{trend} de series temporales deja un \textit{holdout} todavía mayor
+  ($+0{,}84$). Dos construcciones distintas del momentum dan el mismo Sharpe, en torno a $0{,}7$,
+  y un \textit{holdout} positivo: la señal que funciona es de familia momentum, y el resultado no
+  depende de cómo se la construya.
 \end{itemize}
 
-La conclusión cierra el arco del capítulo. Ningún candidato cruza el umbral estricto de
-$t > 2$ —tampoco lo hacía el momentum residual ($t = 1{,}82$)—: el techo honesto del régimen,
-con datos públicos, está en un Sharpe del orden de $0{,}7$. Pero la \emph{forma} de la respuesta
-a RQ2 queda nítida: el contenido predictivo no reside en la arquitectura profunda (que no
-transfiere ni entera ni por piezas) ni en los factores defensivos, sino en una señal simple de
-\emph{familia momentum} —corroborada por dos construcciones independientes— explotada por una
-construcción de cartera consciente del coste.
+Ningún candidato cruza el umbral estricto de $t>2$, que tampoco cruzaba el momentum residual
+($t=1{,}82$). Con datos públicos, el techo de este régimen está en un Sharpe en torno a $0{,}7$.
+Pero la respuesta a RQ2 sí queda definida: el contenido predictivo no está en la arquitectura
+profunda, que no transfiere ni entera ni por piezas, ni en los factores defensivos, sino en una
+señal simple de familia momentum, confirmada por dos construcciones independientes y explotada
+por una construcción de cartera consciente del coste.
