@@ -38,13 +38,14 @@ def peer_graph_signal(daily_y: np.ndarray, d: int,
     mom_window days, also past only). Lead-lag / connected-stock momentum.
     """
     R = _trailing_returns(daily_y, d, corr_window)
-    if R is None:
+    own_R = _trailing_returns(daily_y, d, mom_window)
+    if R is None or own_R is None:
         return np.full(daily_y.shape[1], np.nan)
     N = R.shape[1]
     C = np.corrcoef(R, rowvar=False)
     C = np.nan_to_num(C, nan=0.0)
     np.fill_diagonal(C, 0.0)
-    own_mom = np.nan_to_num(daily_y[d - mom_window:d], nan=0.0).sum(axis=0)  # [N], past
+    own_mom = own_R.sum(axis=0)  # [N] cumulative past momentum (guarded, strictly < d)
     out = np.full(N, np.nan)
     kk = min(k, N - 1)
     for i in range(N):
@@ -73,4 +74,5 @@ def filtered_trend_signal(daily_y: np.ndarray, d: int,
     sm[0] = R[0]
     for t in range(1, R.shape[0]):
         sm[t] = alpha * R[t] + (1.0 - alpha) * sm[t - 1]
-    return sm[-mom_window:].mean(axis=0)
+    take = min(mom_window, R.shape[0])  # guard: never silently use more than `window` rows
+    return sm[-take:].mean(axis=0)

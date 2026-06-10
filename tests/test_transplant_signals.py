@@ -38,6 +38,12 @@ def test_peer_graph_signal_is_causal():
     dy2[d:] = rng.normal(0, 0.5, size=dy2[d:].shape)  # perturb only the FUTURE
     s2 = ts.peer_graph_signal(dy2, d)
     np.testing.assert_allclose(np.nan_to_num(s1), np.nan_to_num(s2), atol=1e-12)
+    # ...but it MUST depend on the last past row (tight boundary, no fencepost off-by-one)
+    dy3 = dy.copy()
+    dy3[d - 1] = dy3[d - 1] * 1000.0
+    s3 = ts.peer_graph_signal(dy3, d)
+    assert not np.allclose(np.nan_to_num(s1), np.nan_to_num(s3), atol=1e-12), \
+        "signal must depend on the last past row daily_y[d-1]"
 
 
 def test_filtered_trend_signal_shape_and_nan_guard():
@@ -57,6 +63,12 @@ def test_filtered_trend_signal_is_causal():
     dy2[d:] = rng.normal(0, 0.5, size=dy2[d:].shape)
     s2 = ts.filtered_trend_signal(dy2, d)
     np.testing.assert_allclose(np.nan_to_num(s1), np.nan_to_num(s2), atol=1e-12)
+    # ...but it MUST depend on the last past row (tight boundary, no fencepost off-by-one)
+    dy3 = dy.copy()
+    dy3[d - 1] = dy3[d - 1] * 1000.0
+    s3 = ts.filtered_trend_signal(dy3, d)
+    assert not np.allclose(np.nan_to_num(s1), np.nan_to_num(s3), atol=1e-12), \
+        "signal must depend on the last past row daily_y[d-1]"
 
 
 def test_filtered_trend_signal_positive_for_uptrend():
