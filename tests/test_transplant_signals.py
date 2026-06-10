@@ -38,3 +38,30 @@ def test_peer_graph_signal_is_causal():
     dy2[d:] = rng.normal(0, 0.5, size=dy2[d:].shape)  # perturb only the FUTURE
     s2 = ts.peer_graph_signal(dy2, d)
     np.testing.assert_allclose(np.nan_to_num(s1), np.nan_to_num(s2), atol=1e-12)
+
+
+def test_filtered_trend_signal_shape_and_nan_guard():
+    rng = np.random.default_rng(2)
+    dy = rng.normal(0, 0.01, size=(400, 8))
+    sig = ts.filtered_trend_signal(dy, d=300)
+    assert sig.shape == (8,)
+    assert np.all(np.isnan(ts.filtered_trend_signal(dy, d=5)))
+
+
+def test_filtered_trend_signal_is_causal():
+    rng = np.random.default_rng(3)
+    dy = rng.normal(0, 0.01, size=(400, 8))
+    d = 300
+    s1 = ts.filtered_trend_signal(dy, d)
+    dy2 = dy.copy()
+    dy2[d:] = rng.normal(0, 0.5, size=dy2[d:].shape)
+    s2 = ts.filtered_trend_signal(dy2, d)
+    np.testing.assert_allclose(np.nan_to_num(s1), np.nan_to_num(s2), atol=1e-12)
+
+
+def test_filtered_trend_signal_positive_for_uptrend():
+    dy = np.zeros((200, 2))
+    dy[:, 0] = 0.002   # steady uptrend
+    dy[:, 1] = -0.002  # steady downtrend
+    sig = ts.filtered_trend_signal(dy, d=180, window=120, halflife=10, mom_window=21)
+    assert sig[0] > sig[1]

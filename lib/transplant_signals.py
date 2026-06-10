@@ -54,3 +54,23 @@ def peer_graph_signal(daily_y: np.ndarray, d: int,
         if denom > 1e-12:
             out[i] = float((wts * own_mom[order]).sum() / denom)
     return out
+
+
+def filtered_trend_signal(daily_y: np.ndarray, d: int,
+                          window: int = 120, halflife: float = 10.0,
+                          mom_window: int = 21) -> np.ndarray:
+    """Causal filtered-trend momentum (wavelet / dual-frequency transplant).
+
+    Extracts the low-frequency (trend) component of each stock's return series via a
+    one-sided causal EWMA over daily_y[d-window:d] (strictly past), then takes the mean
+    of the most recent mom_window smoothed (denoised) returns.
+    """
+    R = _trailing_returns(daily_y, d, window)
+    if R is None:
+        return np.full(daily_y.shape[1], np.nan)
+    alpha = 1.0 - 0.5 ** (1.0 / halflife)
+    sm = np.empty_like(R)
+    sm[0] = R[0]
+    for t in range(1, R.shape[0]):
+        sm[t] = alpha * R[t] + (1.0 - alpha) * sm[t - 1]
+    return sm[-mom_window:].mean(axis=0)
