@@ -1,5 +1,31 @@
 # Registro de cambios de la memoria
 
+## Sexta ronda (11 de junio de 2026): auditoría de la bibliografía
+
+Verificadas contra la fuente original las 30 referencias citadas (autores, revista,
+volumen, páginas, año, URLs). Resultado:
+
+- 28 correctas sin cambios (los clásicos de finanzas, XGBoost, LightGBM, Qlib, StockMixer
+  AAAI 38(8) 8389-8397, MASTER AAAI 38(1) 162-170, Newey-West, Stockformer ESWA 273
+  126803 / arXiv:2401.06139, y las URLs de S&P DJI, SEC EDGAR, CRSP y Yahoo, todas
+  activas).
+- CORREGIDA rahimikia2025machine: la entrada anterior ("Machine learning for realised
+  volatility forecasting under cross-market regimes", con Poon, J. Financial Econometrics
+  "en prensa") no existe con esos datos. El artículo real que respalda lo que el texto
+  afirma (CatBoost/LightGBM baten a redes y a modelos fundacionales zero-shot, R² fuera
+  de muestra negativo) es: Rahimikia, Ni y Wang, "Re(Visiting) Time Series Foundation
+  Models in Finance", arXiv:2511.18578 (2025). Entrada sustituida y frase de §2.3
+  ajustada al contenido real.
+- CORREGIDA la atribución a ranking2025loss (Kwiatkowski y Chudziak, arXiv:2510.14156,
+  CIKM 2025; el artículo existe): el texto le atribuía "mejoras de 150 a 200 puntos
+  básicos anuales", cifra que no aparece en el artículo. Frase de §2.6 reescrita con lo
+  que el artículo sí hace (comparación sistemática de pérdidas puntuales/por pares/por
+  listas sobre el S&P 500, con ventaja de las pérdidas de ordenación).
+- spdji2025methodology actualizada a la edición vigente (junio de 2026).
+- Entradas en main.bib sin citar (no se imprimen): kirtac2024sentiment, regimefolio2025,
+  costaware2024portfolios, harvey2016crosssection, rae2005dpd. Se pueden borrar o
+  recitar; tal cual no afectan al PDF.
+
 ## Quinta ronda (11 de junio de 2026)
 
 - La significancia estadística ya no tiene apartado propio: la antigua sección 5.2

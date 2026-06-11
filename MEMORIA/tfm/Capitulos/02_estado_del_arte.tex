@@ -95,12 +95,12 @@ estimadores, porque la capacidad expresiva adicional acaba en sobreajuste, no en
 patrón se conoce en la literatura como el predominio de lo superficial sobre lo profundo
 (en inglés, shallow beats deep).
 
-La evidencia más reciente extiende esta conclusión a los modelos fundacionales. El trabajo
-de \textcite{rahimikia2025machine} sobre predicción en regímenes entre mercados va en la
-misma línea, ya que los métodos de potenciación de árboles como CatBoost y LightGBM
-\autocite{ke2017lightgbm} baten de forma consistente tanto a redes profundas como a
-modelos fundacionales de series temporales. En ese aspecto, los modelos fundacionales llegan a dar un
-$R^2$ fuera de muestra negativo. En datos financieros
+La evidencia más reciente extiende esta conclusión a los modelos fundacionales. El
+estudio de \textcite{rahimikia2025machine} sobre modelos fundacionales de series
+temporales en mercados financieros globales va en la misma línea, ya que los métodos de
+potenciación de árboles como CatBoost y LightGBM \autocite{ke2017lightgbm} baten de forma
+consistente tanto a redes neuronales como a esos modelos fundacionales aplicados sin
+reentrenamiento, que llegan a dar un $R^2$ fuera de muestra negativo. En datos financieros
 con poca señal frente al ruido, un modelo simple y regularizado rinde mejor que la
 flexibilidad de uno complejo.
 
@@ -172,11 +172,12 @@ que hace el error cuadrático medio.
 Llevar estas ideas a la predicción de retornos sugiere que entrenar con una pérdida de
 ordenación puede mejorar la rentabilidad de la cartera frente a entrenar con error
 cuadrático, incluso cuando el error de regresión empeora. Evidencia reciente en esta línea
-\autocite{ranking2025loss} reporta mejoras del orden de 150 a 200 puntos básicos anuales
-al sustituir el error cuadrático por pérdidas de ordenación por listas o de margen. La
-pérdida, eso sí, debe optimizarse para el objetivo de cartera y no para el IC, porque el
-mejor IC no coincide siempre con el mejor retorno neto una vez que entran los costes y las
-restricciones de construcción.
+\autocite{ranking2025loss} compara de forma sistemática pérdidas puntuales, por pares y
+por listas con un modelo de atención sobre el S\&P 500, y encuentra que las pérdidas de
+ordenación mejoran la selección de cartera por rangos frente a las pérdidas de error
+puntual. La pérdida, eso sí, debe optimizarse para el objetivo de cartera y no para el IC,
+porque el mejor IC no coincide siempre con el mejor retorno neto una vez que entran los
+costes y las restricciones de construcción.
 
 \section{Metodología de entrenamiento}
 
