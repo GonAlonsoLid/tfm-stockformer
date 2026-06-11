@@ -1,50 +1,32 @@
 \chapter{Tablas completas}\label{ap:tablas}
 
-Este apéndice recoge las versiones de detalle completo de las tablas resumidas
-en el cuerpo de la memoria. Todos los fragmentos se generan automáticamente desde
-\texttt{results/*.csv} mediante \texttt{scripts/build\_latex\_tables.py}, de modo
-que las cifras quedan ligadas a los CSV producidos por el pipeline.
+Este apéndice recoge las versiones de detalle completo de las tablas resumidas en el
+cuerpo de la memoria. Todos los fragmentos se generan automáticamente a partir de los
+resultados del estudio, de modo que las cifras quedan ligadas a los datos producidos por
+el código.
 
-\section{Complexity ladder completa}
+\section{Escalera de complejidad completa}
 
-La Tabla~\ref{tab:ladder-full} muestra todas las métricas evaluadas para cada
-peldaño de la escalera de complejidad, incluido el Stockformer en la cúspide:
-IC medio, su desviación, IR, $t$-estadístico, $p$-valor, porcentaje de días
-positivos, intervalo de confianza bootstrap del IC, IC de Pearson, y las métricas
-de la cartera long-short (Sharpe, retorno anualizado, máximo drawdown, beta,
-rotación y tiempo de cómputo). Es la evidencia central del resultado
-``simpler-is-better'': los modelos lineales y de árboles igualan o superan al
-transformer en IC con una fracción de los parámetros.
+La Tabla~\ref{tab:ladder-full} muestra todas las métricas evaluadas para cada peldaño de
+la escalera de complejidad, incluido el Stockformer en la cúspide: IC medio, su
+desviación, ICIR, estadístico $t$, $p$-valor, porcentaje de días positivos, intervalo de
+confianza por remuestreo del IC, IC de Pearson, y las métricas de la cartera de posiciones
+largas y cortas (Sharpe, retorno anualizado, caída máxima, beta, rotación y tiempo de
+cómputo). Las definiciones de los términos figuran en la Tabla~\ref{tab:notacion}.
 
 \begin{table}[htbp]
 \centering
-\caption{Resultados completos de la complexity ladder}
+\caption{Resultados completos de la escalera de complejidad.}
 \label{tab:ladder-full}
 \resizebox{\textwidth}{!}{%
   \input{tablas/ladder_full_body}%
 }
 \end{table}
 
-\section{Robustez con datos adicionales}
+\section{Control de consistencia del marco de evaluación}
 
-Las dos tablas siguientes documentan los resultados \emph{negativos honestos} de
-añadir información extra al pipeline semanal. La Tabla~\ref{tab:rob-fund} reporta
-la robustez walk-forward al concatenar fundamentales point-in-time de SEC EDGAR
-(Tier B); la Tabla~\ref{tab:rob-realized} hace lo propio con las variables de
-realized-vol / IVOL (Tier C). En ambos casos el Sharpe neto out-of-sample no
-mejora respecto a la línea base (Tabla~\ref{tab:weekly-robustness}), lo que
-refuerza que el cuello de botella es la señal, no la falta de datos.
-
-\input{tablas/robustez_fund}
-
-\input{tablas/robustez_realized}
-
-\section{Baseline simple de referencia}
-
-La Tabla~\ref{tab:ablation} recoge el \textit{baseline} de referencia: LightGBM sobre el
-mismo panel base de \(\sim\!375\) variables (Alpha360 más los indicadores técnicos de Alpha158) que
-emplea toda la escalera, como contraste frente a Stockformer (IC y métricas de error). Su IC coincide
-con el del LightGBM de la \textit{complexity ladder} de la Parte~I —es, de hecho, la misma
-configuración sobre los mismos insumos—, lo que sirve de control de consistencia del \textit{harness}.
-
-\input{tablas/ablation}
+Como control de consistencia del marco de evaluación, el modelo LightGBM de referencia
+sobre el panel base de 375 variables (Alpha360 más los indicadores técnicos de Alpha158)
+reproduce exactamente el IC de $0{,}0136$ que ya figura para ese modelo en la
+Tabla~\ref{tab:ladder-full}; al tratarse de la misma configuración sobre los mismos
+insumos, no se reporta por separado.

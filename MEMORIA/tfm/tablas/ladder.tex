@@ -1,9 +1,17 @@
 \begin{table}[htbp]
-\caption{Complexity ladder: IC, parámetros y Sharpe por modelo (split único, 250 días).}
+\centering
+\caption{Escalera de complejidad: número de parámetros, IC medio, ICIR, estadístico $t$ y
+$p$-valor del contraste de media de IC nula, y Sharpe neto de la cartera de deciles (coste
+de 10 puntos básicos por lado), por modelo. Partición única; ventana de prueba del 14 de
+marzo de 2025 al 12 de marzo de 2026 (250 días para todos los modelos salvo Stockformer,
+evaluado sobre los 236 días de su serie, que arranca el 3 de abril de 2025). Por esa
+diferencia de ventana, las comparaciones entre modelos se hacen sobre los días comunes en
+la Tabla~\ref{tab:significancia}. Definiciones en la Tabla~\ref{tab:notacion}.}
 \label{tab:ladder}
+\small
 \begin{tabular}{llrrrrrr}
 \toprule
-model & family & n\_params & ic\_mean & icir & tstat & pvalue & sharpe \\
+Modelo & Familia & Parám. & IC & IC-IR & $t$ & $p$ & Sharpe \\
 \midrule
 zero & sanity & 0 &  &  &  &  &  \\
 momentum & sanity & 0 & -0.0128 & -0.0670 & -1.0589 & 0.2907 & -1.4289 \\
@@ -13,6 +21,7 @@ lasso & linear & 5 & 0.0238 & 0.0951 & 1.5035 & 0.1340 & 0.9099 \\
 elasticnet & linear & 19 & 0.0157 & 0.0687 & 1.0864 & 0.2784 & -0.0607 \\
 lightgbm & trees & 31 & 0.0136 & 0.1110 & 1.7547 & 0.0805 & 0.2062 \\
 xgboost & trees & 9600 & 0.0141 & 0.0926 & 1.4639 & 0.1445 & -1.8505 \\
+stockformer & transformer & 1\,041\,755 & -0.0033 & -0.0227 & -0.3492 & 0.7273 & -4.9526 \\
 \bottomrule
 \end{tabular}
 \end{table}

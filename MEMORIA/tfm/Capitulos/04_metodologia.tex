@@ -1,120 +1,136 @@
 \chapter{Metodología}\label{cap:metodologia}
 
-Este capítulo describe la metodología compartida por las dos partes empíricas de la
-memoria. El trabajo se desarrolla en dos pasos: primero el intento de
-transferir el modelo Stockformer (capítulo~\ref{cap:stockformer}) al mercado
-estadounidense (Parte~I, capítulo~\ref{cap:parte1}) y después la construcción de una
-estrategia que sí genera retorno neto (Parte~II, capítulo~\ref{cap:parte2}). Ambos
-pasos descansan sobre una misma infraestructura de datos, variables, evaluación
-y control de fugas de información. Describirla una sola vez, antes de presentar los
-resultados, hace que la comparación entre modelos sea homogénea: todos
-ven exactamente los mismos datos, la misma alineación temporal y el mismo instrumento
-de medida, y lo único que cambia de un modelo a otro es el modelo. Esta exigencia
-—\emph{idénticos insumos, solo cambia el estimador}— es el eje metodológico
-del trabajo: es lo que vuelve interpretable cualquier
-diferencia de rendimiento observada.
+Este capítulo describe la metodología que comparten las dos partes empíricas de la
+memoria. El trabajo tiene dos pasos: primero se evalúa la transferencia del modelo
+Stockformer (capítulo~\ref{cap:stockformer}) al universo del S\&P 500 (Parte~I,
+capítulo~\ref{cap:parte1}) y después se estudia el origen del retorno neto de una
+estrategia semanal sobre ese mismo universo (Parte~II, capítulo~\ref{cap:parte2}). Los dos
+pasos usan una misma infraestructura de datos, variables, evaluación y control de fugas de
+información. Describirla una sola vez, antes de los resultados, hace homogénea la
+comparación entre modelos, porque todos ven los mismos datos, la misma alineación temporal
+y el mismo instrumento de medida, y lo único que cambia de un modelo a otro es el modelo. El
+capítulo se cierra con dos elementos que condicionan la lectura de todo lo que sigue, una
+tabla de notación y siglas (Tabla~\ref{tab:notacion}) y una sección de amenazas a la
+validez (Sección~\ref{sec:met-amenazas}).
 
-La presentación sigue el flujo del \textit{pipeline}: del dato bruto al panel
-(sección~\ref{sec:met-datos}), de éste a las variables explicativas
-(sección~\ref{sec:met-variables}), de las variables al instrumento de evaluación
-(sección~\ref{sec:met-harness}), y de ahí al diseño experimental que organiza toda la
-Parte~I —la \textit{complexity ladder} (sección~\ref{sec:met-ladder})—. Las dos
-últimas secciones tratan dos decisiones metodológicas transversales: la elección de
-una función de pérdida orientada al \textit{ranking} (sección~\ref{sec:met-loss}) y la
-auditoría anti-\textit{leakage} que respalda la credibilidad de la conclusión negativa
-(sección~\ref{sec:met-leakage}).
+\section{El universo de datos del S\&P 500 con cobertura completa}\label{sec:met-datos}
 
-\section{Datos: universo S\&P 500 y panel}\label{sec:met-datos}
+El universo de estudio se construye a partir de los componentes del índice S\&P 500. El
+índice mide el segmento de gran capitalización del mercado estadounidense y se usa
+habitualmente como aproximación de ese mercado, no como el mercado completo
+\autocite{spdji2025methodology}; las conclusiones del trabajo se refieren, por tanto, a
+ese segmento y no al mercado estadounidense en su conjunto. De los componentes actuales
+del índice se conservan las 477 acciones con cobertura completa de precios en la ventana
+considerada. Los datos de mercado (apertura, máximo, mínimo, cierre y volumen) se
+descargan de Yahoo Finance \autocite{yahoofinance} y se guardan como ficheros Parquet por
+valor, con un calendario de negociación común. El panel cubre desde el 2 de enero de 2018
+hasta el 12 de marzo de 2026, 2.059 días de negociación.
 
-El universo de estudio es el conjunto de componentes del índice S\&P~500, de los que
-se conservan las \(\sim\!477\) acciones con cobertura completa de precios en la ventana
-considerada. Los datos de mercado —apertura, máximo, mínimo, cierre y volumen
-(\textit{OHLCV})— se descargan de \texttt{yfinance} y se almacenan como ficheros
-Parquet por \textit{ticker}, uno por acción, con un calendario de negociación común. La
-elección del S\&P~500 tiene un motivo: el modelo Stockformer fue calibrado sobre
-acciones chinas \textit{A-shares} (índices CSI~300/500), un mercado cuya microestructura
-—límites diarios de precio, fuerte presencia minorista, restricciones a la venta en
-corto— difiere de la del mercado estadounidense. La pregunta de
-transferencia \textit{cross-market} solo cobra sentido si el destino es un mercado
-amplio, líquido y eficiente como el S\&P~500.
+Esta construcción del universo tiene dos consecuencias que conviene dejar establecidas
+desde ahora. La primera es un sesgo de supervivencia, ya que al usar los componentes
+actuales con cobertura completa no se reconstruye la composición histórica del índice ni se incluyen
+los valores excluidos durante el periodo. Una base de investigación como CRSP, que
+documenta valores activos e inactivos, bajas de cotización e historial libre de sesgo de
+supervivencia \autocite{crsp2025stock}, evitaría este problema; al no estar disponible
+para este trabajo, el sesgo se asume y se discute como amenaza a la validez en la
+Sección~\ref{sec:met-amenazas}. La segunda consecuencia es la elección del mercado de
+destino. El Stockformer se calibró sobre acciones chinas de clase A (índices CSI~300 y
+CSI~500), un mercado cuya microestructura (límites diarios de precio, presencia minorista
+alta, restricciones a la venta en corto) es muy distinta de la del segmento de gran
+capitalización estadounidense, lo que convierte al S\&P 500 en un caso exigente para la
+transferencia.
 
-A partir de los ficheros OHLCV se construye un \textbf{panel transversal} de la forma
-\([T, N, F]\): para cada uno de los \(T\) días de negociación y cada una de las \(N\)
-acciones del universo, un vector de \(F\) variables explicativas. La etiqueta a predecir
-es el retorno futuro a un día, \(y_{t,i} = \text{Close}_{t+1,i}/\text{Close}_{t,i}-1\),
-almacenado como una matriz \([T, N]\) alineada con el panel de variables. La carga
-canónica de este panel está implementada en \texttt{lib/data\_panel.py}, que ofrece una
-estructura inmutable (\texttt{Panel}) con las variables, las etiquetas, el calendario, la
-lista de \textit{tickers} y los índices de corte del \textit{split} temporal.
+A partir de los ficheros de precios se construye un panel transversal de la forma
+\([T, N, F]\), donde para cada uno de los \(T\) días de negociación y cada una de las
+\(N\) acciones del universo se guarda un vector de \(F\) variables explicativas. La
+etiqueta a predecir es el retorno futuro a un día,
+\(y_{t,i} = \text{Close}_{t+1,i}/\text{Close}_{t,i}-1\), guardado como una matriz
+\([T, N]\) alineada con el panel de variables. El Stockformer opera internamente con un
+horizonte de \(T_2=2\) pasos, pero la predicción operativa que entra en el coeficiente de
+información y en la cartera es la del último paso, alineada con esta etiqueta a un día. El
+panel se carga en una estructura inmutable con las variables, las etiquetas, el
+calendario, la lista de valores y los índices de corte de la partición temporal.
 
-\paragraph{Alineación variable--etiqueta.} El invariante anti-leakage central del
-panel es el desfase (\textit{offset}) de \texttt{ALPHA360\_LAG~=~60} días entre las
-variables y las etiquetas. Las variables Alpha360 requieren un \textit{buffer} de 60
-retardos (\textit{lags}) para estar definidas, de modo que las primeras 60 filas del
-panel bruto se descartan; las etiquetas se desplazan en consonancia, emparejando
-\(y_{t+60}\) con \(X_t\). Este mismo desfase se aplica de forma idéntica a todas las
-ramas del trabajo —la del Stockformer y la de los modelos tabulares— y es lo
-que verifica la auditoría de la sección~\ref{sec:met-leakage}.
+\paragraph{Alineación variable-etiqueta.} El invariante central contra fugas de
+información del panel es el desfase de 60 filas entre la rejilla bruta de precios y el
+panel emparejado. Las variables Alpha360 necesitan 60 retardos para estar definidas, así
+que las primeras 60 filas del panel bruto se descartan, y la primera fila de variables
+corresponde al día 60 del calendario original. La etiqueta se recorta con el mismo
+desfase, de manera que esa fila se empareja con su propia etiqueta del mismo día, el
+retorno a un día \(y_{60}=\text{Close}_{61}/\text{Close}_{60}-1\). Las variables
+observadas el día \(t\) se asocian al retorno a un día
+\(y_t=\text{Close}_{t+1}/\text{Close}_t-1\); el 60 es solo el número de filas que se
+descartan, no un horizonte de predicción. Este mismo desfase se aplica a todas las ramas
+del trabajo (la del Stockformer y la de los modelos tabulares) y es lo que verifica la
+auditoría de la sección~\ref{sec:met-leakage}.
 
-\paragraph{Split fijo estándar.} Para la comparación de modelos de la Parte~I se
-emplea un \textit{split} temporal fijo en proporciones \(0{,}75/0{,}125/0{,}125\)
-(entrenamiento, validación y test) sobre la longitud post-alineación. Todas las
-estadísticas de normalización se estiman \emph{solo} sobre el tramo de entrenamiento y
-se aplican después a validación y test, evitando cualquier filtración de información
-futura. Cada modelo tabular trabaja sobre la versión aplanada del panel
-(\texttt{flatten\_split}), en la que cada fila es un par (fecha, acción) y se descartan
-las filas con cualquier valor ausente; los índices globales de fecha y acción de las
-filas de test se conservan para poder reconstruir las predicciones en el marco canónico
-\([\text{fechas} \times \text{tickers}]\). El conjunto de variables base (\textit{F-base})
-está formado por las variables Alpha360 más los indicadores técnicos de Alpha158
-(sección~\ref{sec:met-variables}) y excluye las variables macroeconómicas, que son constantes en
-sección transversal y, por tanto, carecen de información de \textit{ranking}; el estándar acordado es
-que esos \(F\!\approx\!375\) regresores idénticos alimenten a todos los modelos, lineales y de árboles
-por igual.
+\paragraph{Partición fija estándar.} Para la comparación de modelos de la Parte~I se
+emplea una partición temporal fija en proporciones \(0{,}75/0{,}125/0{,}125\)
+(entrenamiento, validación y prueba). El panel alineado tiene 1.999 días y arranca el 29
+de marzo de 2018, tras descartar las 60 filas iniciales; sobre esa longitud, las
+proporciones sitúan los cortes en entrenamiento del 29 de marzo de 2018 al 13 de marzo de
+2024 (1.499 días), validación del 14 de marzo de 2024 al 13 de marzo de 2025 (250 días) y
+prueba del 14 de marzo de 2025 al 12 de marzo de 2026 (250 días). Todas las estadísticas
+de normalización se estiman solo sobre el tramo de entrenamiento y se aplican después a
+validación y prueba, para que no se filtre información futura. Cada modelo trabaja sobre
+la versión aplanada del panel, en la que cada fila es un par (fecha, acción), y se
+descartan las filas con cualquier valor ausente. El conjunto de variables base son las
+variables Alpha360 más los indicadores técnicos de Alpha158
+(sección~\ref{sec:met-variables}); excluye las variables macroeconómicas, que son
+constantes en sección transversal y no aportan información de ordenación. Esos 375
+regresores idénticos alimentan a todos los modelos, lineales y de árboles por igual.
 
-\paragraph{Evaluación temporal: walk-forward purgado y embargado.} Para la
-estrategia semanal de la Parte~II un único \textit{split} fijo sería insuficiente: el
-riesgo es atribuir a la estrategia un rendimiento que dependa de una ventana favorable.
-Por ello la evaluación temporal de la Parte~II sigue un protocolo \textit{walk-forward}
-con reentrenamiento periódico (implementado en \texttt{scripts/run\_weekly\_robustness.py}):
-se entrena el modelo sobre una ventana inicial (\(\sim\!200\) semanas, unos cuatro años),
-se predice \textit{fuera de muestra} hasta el siguiente reentrenamiento (cada
-\(\sim\!26\) semanas, semestralmente) y se concatenan todos los tramos fuera de muestra
-en una única curva de \textit{equity} sobre la que se reportan el Sharpe neto global y
-por segmentos anuales. El protocolo es \emph{purgado} —entre el final del tramo de
-entrenamiento y el inicio del de predicción media siempre el horizonte de la etiqueta,
-de modo que ninguna observación de entrenamiento solape con el periodo evaluado— y
-\emph{embargado} —el modelo nunca observa información posterior al instante de la
-decisión—. Esta cautela frente al solapamiento temporal de etiquetas es práctica
-estándar en \textit{machine learning} financiero \cite{deprado2018advances}.
+\paragraph{Evaluación con avance temporal.} Para la estrategia semanal de la Parte~II una
+única partición fija no basta, porque podría atribuirse a la estrategia un rendimiento que
+dependa de una ventana favorable. Por ello la evaluación de la Parte~II sigue un protocolo
+de avance temporal (en inglés, walk-forward) con reentrenamiento periódico. Se entrena el
+modelo sobre una ventana inicial (unas 200 semanas, cuatro años, hasta finales de 2021),
+se predice fuera de muestra hasta el siguiente reentrenamiento (cada 26 semanas) y se
+concatenan todos los tramos fuera de muestra en una única curva de capital sobre la que se
+reportan el Sharpe neto global y por segmentos anuales. Sobre el panel completo, de unas
+427 semanas, se emplean dos calibraciones de este mismo protocolo. La principal arranca
+con una ventana inicial de unas 200 semanas y concatena 215 semanas fuera de muestra, de
+finales de enero de 2022 al 6 de marzo de 2026 (Tabla~\ref{tab:weekly-robustness}). La
+búsqueda de señal de la Parte~II parte antes, con una ventana inicial de unas 104 semanas,
+para disponer de una ventana fuera de muestra más larga, de 311 semanas (del 27 de marzo
+de 2020 al 6 de marzo de 2026), que incluye el desplome de momentum de 2021; de ellas, las
+104 últimas se reservan como muestra de reserva (en inglés, holdout), que no se usa para
+seleccionar señales sino solo para confirmar el signo del resultado. En ambos casos la
+ventana inicial más las semanas fuera de muestra suman la longitud del panel.
 
-\paragraph{Por qué la complejidad admisible está acotada.} Una observación cuantitativa
-gobierna toda la estrategia de modelado. Aunque el panel contiene \(\sim\!477\) acciones
-y centenares de fechas —decenas de miles de pares (fecha, acción)—, las observaciones
-transversales \emph{efectivas} son muchas menos. Las acciones de un mismo día
-comparten un factor de mercado dominante y comovimientos sectoriales: están fuertemente
-correlacionadas dentro de cada fecha. El número de fechas independientes es, en la
-práctica, del orden de unos pocos cientos; con \(\sim\!477\) acciones \(\times\) \(\sim\!400\)
-semanas, la información transversal efectiva es de unas \(\sim\!400\) observaciones, no de
-las decenas de miles que sugiere el conteo ingenuo. La consecuencia metodológica es
-directa: un modelo con muchos parámetros sobreajusta el ruido idiosincrásico antes de
-capturar señal real. Este límite —que motiva la hipótesis \textit{simpler-is-better} de la
-sección~\ref{sec:met-ladder} y la consigna de \emph{consolidar variables, no acumularlas}
-de la sección~\ref{sec:met-variables}— es coherente con la literatura de \textit{asset
-pricing} con \textit{machine learning}, donde los modelos superficiales tienden a batir a
-los profundos \cite{gu2020empirical}.
+El protocolo es purgado, porque entre el final del tramo de entrenamiento y el inicio del
+de predicción media siempre el horizonte de la etiqueta, así que ninguna observación de
+entrenamiento solapa con el periodo evaluado. Y es embargado porque el modelo nunca ve
+información posterior al instante de la decisión. Tratar así el solapamiento temporal de
+etiquetas es práctica estándar en aprendizaje automático financiero
+\autocite{deprado2018advances}.
+
+\paragraph{Por qué la complejidad admisible está acotada.} Hay un dato cuantitativo que
+condiciona toda la estrategia de modelado. Aunque el panel tiene 477 acciones y centenares
+de fechas (decenas de miles de pares fecha-acción), las observaciones transversales
+efectivas son muchas menos. Las acciones de un mismo día comparten un factor de mercado
+dominante y comovimientos sectoriales, y están muy correlacionadas dentro de cada fecha;
+el número de fechas independientes es, en la práctica, del orden de unos pocos cientos,
+y los grados de libertad efectivos quedan muy por debajo de lo que sugiere la entrada al
+modelo. Un modelo con muchos parámetros sobreajusta el ruido idiosincrásico antes de
+capturar señal real. Este límite motiva la hipótesis de parsimonia de la
+sección~\ref{sec:met-ladder} y la consigna de consolidar variables en lugar de
+acumularlas de la sección~\ref{sec:met-variables}, y es coherente con la literatura de
+valoración de activos con aprendizaje automático, donde los modelos superficiales tienden
+a batir a los profundos \autocite{gu2020empirical}.
 
 \section{Ingeniería de variables}\label{sec:met-variables}
 
 El conjunto de variables explicativas se organiza en tres familias, todas calculadas a
-partir de los datos OHLCV y de unas pocas series macroeconómicas, y todas sometidas a un
-mismo protocolo de higiene transversal sin fuga de información.
+partir de los datos de precio y volumen y de unas pocas series macroeconómicas, y todas
+sometidas a un mismo protocolo de limpieza sin fuga de información.
 
-\paragraph{Alpha360.} La familia principal reproduce la formulación Alpha360, también
-empleada por el Stockformer original. Se generan \(6 \times 60 = 360\) variables por acción
-y día: para cada uno de seis campos de precio/volumen y cada retardo \(d \in \{1,\dots,60\}\),
-un cociente que normaliza el campo actual por el cierre (o el volumen) de \(d\) días atrás.
-Concretamente, con \(\text{VWAP}=(\text{High}+\text{Low}+\text{Close})/3\),
+\paragraph{Alpha360.} La familia principal reproduce la formulación Alpha360
+\autocite{yang2020qlib}, también empleada por el Stockformer original. Se generan
+\(6 \times 60 = 360\) variables por acción y día: para cada uno de seis campos de precio y
+volumen y cada retardo \(d \in \{1,\dots,60\}\), un cociente que normaliza el campo actual
+por el cierre (o el volumen) de \(d\) días atrás. Concretamente, con
+\(\text{VWAP}=(\text{High}+\text{Low}+\text{Close})/3\):
 \begin{itemize}
   \item \(\text{CLOSE\_d}d = \text{Close}_t / \text{Close}_{t-d}\),
   \item \(\text{OPEN\_d}d = \text{Open}_t / \text{Close}_{t-d}\),
@@ -124,251 +140,282 @@ Concretamente, con \(\text{VWAP}=(\text{High}+\text{Low}+\text{Close})/3\),
   \item \(\text{VOL\_d}d = \text{Volume}_t / \text{Volume}_{t-d}\).
 \end{itemize}
 Estos cocientes codifican de forma compacta momentum, reversión y dinámica de volumen a
-distintos horizontes. El cálculo (\texttt{scripts/build\_alpha360.py}) emplea división
-segura ante denominadores nulos, sustituye infinitos y ausentes, y descarta el
-\textit{buffer} de 60 filas iniciales para garantizar que todos los cocientes estén
-definidos —el mismo \texttt{LAG\_BUFFER} que fija la alineación variable--etiqueta de la
-sección anterior—.
+distintos horizontes. El cálculo usa división segura ante denominadores nulos, sustituye
+infinitos y ausentes, y descarta las 60 filas iniciales para que todos los cocientes estén
+definidos.
 
-\paragraph{Alpha158 (indicadores técnicos).} Como complemento, un segundo conjunto
-(\texttt{scripts/build\_alpha158.py}) añade indicadores de análisis técnico estándar:
-RSI a 6/12/24 días, anchura y \%B de bandas de Bollinger, señal e histograma del MACD,
-\textit{Average True Range} normalizado por precio, \textit{Rate of Change} a 5/10/20
-días y volatilidad realizada a 5/10/20 días anualizada. Cada indicador se calcula por
-acción y se normaliza con el mismo procedimiento transversal, alineándose al rango de
-fechas de Alpha360.
+\paragraph{Alpha158 (indicadores técnicos).} Como complemento, un segundo conjunto añade
+indicadores de análisis técnico estándar: el RSI a 6, 12 y 24 días, la anchura y la
+posición relativa de las bandas de Bollinger, la señal y el histograma del MACD, el rango
+verdadero medio normalizado por precio, la tasa de cambio a 5, 10 y 20 días y la
+volatilidad realizada a 5, 10 y 20 días anualizada. Cada indicador se calcula por acción,
+se normaliza con el mismo procedimiento transversal y se alinea al rango de fechas de
+Alpha360.
 
-\paragraph{Variables macroeconómicas.} Una tercera familia
-(\texttt{scripts/build\_macro\_features.py}) incorpora el estado del régimen de mercado
-que el precio individual no captura: nivel del VIX, su cambio a 5 días y su
-\textit{z-score} a 20 días, así como el \textit{term spread} entre los tipos a 10 años y
-a corto plazo (TNX$-$IRX) y su cambio a 5 días. Estas series se normalizan con un
-\textit{z-score} temporal de ventana móvil de 60 días —sin mirar al futuro— y se
-replican (\textit{broadcast}) a todas las acciones de cada fecha. Por construcción son
-constantes en sección transversal y, por ello, se excluyen del conjunto base usado para
-el \textit{ranking} de acciones (su valor está en el \textit{overlay} de régimen de la
-Parte~II, no en la predicción transversal).
+\paragraph{Variables macroeconómicas.} Una tercera familia incorpora el estado del régimen
+de mercado que el precio individual no captura: nivel del VIX, su cambio a 5 días y su
+puntuación estandarizada a 20 días, así como la pendiente de tipos entre los bonos a 10
+años y el corto plazo y su cambio a 5 días. Estas series se normalizan con una puntuación
+estandarizada temporal de ventana móvil de 60 días, sin mirar al futuro, y se replican a
+todas las acciones de cada fecha. Por construcción son constantes en sección transversal
+y, por ello, se excluyen del conjunto base usado para la ordenación de acciones.
 
-\paragraph{Higiene transversal sin leakage.} Lo que importa aquí es el orden y la
-dirección del procesamiento. Toda normalización se aplica
-\emph{por fecha} y \emph{en sección transversal} (a lo largo de las acciones, eje de
-\textit{tickers}), nunca a lo largo del tiempo: normalizar en el eje temporal usaría
+\paragraph{Limpieza transversal sin fugas.} Aquí importan el orden y la dirección del
+procesamiento. Toda normalización se aplica por fecha y en sección transversal (a lo largo
+de las acciones), nunca a lo largo del tiempo, porque normalizar en el eje temporal usaría
 estadísticas que mezclan pasado y futuro e introduciría fuga de información de
-anticipación (\textit{look-ahead}). El procedimiento de higiene, descrito en la propuesta
-de \textit{pipeline} de retornos, encadena para cada fecha:
-\begin{enumerate}
-  \item \textbf{Winsorización} al 1/99 para acotar el efecto de valores extremos;
-  \item \textbf{Gaussian-rank} (transformación del rango a cuantiles gaussianos),
-        preferible al \textit{z-score} simple para variables con colas pesadas como
-        fundamentales o sentimiento;
-  \item \textbf{Neutralización} del residuo frente a \(\log(\text{mcap})\) y al sector
-        GICS, de modo que la variable no codifique implícitamente una apuesta de tamaño o
-        de sector.
-\end{enumerate}
-En la implementación de Alpha360/Alpha158 la normalización transversal se materializa como
-\textit{z-score} por fila, con relleno a cero —el valor neutro, igual a la media
-transversal tras estandarizar— para infinitos y ausentes. La consigna general, dictada
-por el límite de \(\sim\!400\) observaciones efectivas de la sección anterior, es
-\emph{consolidar} en unas pocas decenas de variables informativas en lugar de acumular
-centenares, para no sobreajustar.
+anticipación. El procedimiento encadena, para cada fecha: primero, una winsorización al
+1/99 para acotar el efecto de valores extremos; segundo, una transformación del rango a
+cuantiles gaussianos, preferible a la estandarización simple para variables con colas
+pesadas; y tercero, la neutralización del residuo frente al logaritmo de la capitalización
+y al sector GICS \autocite{spdji2025methodology}, de modo que la variable no codifique
+implícitamente una apuesta de tamaño o de sector. En la implementación de Alpha360 y
+Alpha158 la normalización transversal se aplica como puntuación estandarizada por fila,
+con relleno a cero (el valor neutro tras estandarizar) para infinitos y ausentes. La
+consigna general, que viene del límite de observaciones efectivas de la sección anterior,
+es consolidar unas pocas decenas de variables informativas en lugar de acumular
+centenares.
 
-\section{Harness de evaluación}\label{sec:met-harness}
+\section{Marco de evaluación}\label{sec:met-harness}
 
-Todos los modelos se miden con un único instrumento de evaluación
-(\texttt{lib/eval\_harness.py}), compartido por modelos lineales, árboles, MLP,
-StockMixer y Stockformer. Que la medida sea idéntica para todos hace la
-comparación homogénea y reproducible. El \textit{harness} recibe dos paneles alineados
-—la predicción y la etiqueta realizada, ambos en el marco \([\text{fechas} \times
-\text{tickers}]\)— y devuelve el conjunto completo de métricas usado en la memoria. La
-metodología sigue la práctica establecida en \textit{asset pricing} con \textit{machine
-learning} \cite{gu2020empirical}.
+Todos los modelos se miden con un único instrumento de evaluación (un marco común, en
+inglés harness), compartido por los modelos lineales, los de árboles y el Stockformer. Que
+la medida sea idéntica para todos hace la comparación consistente. El marco recibe dos
+paneles alineados (la predicción y la etiqueta realizada, ambos en el formato fechas por
+valores) y devuelve el conjunto completo de métricas que usa la memoria. La metodología
+sigue la práctica habitual en valoración de activos con aprendizaje automático
+\autocite{gu2020empirical}.
 
-\paragraph{Métricas de poder predictivo.} La métrica primaria es el rank IC
-(\textit{Information Coefficient}): la correlación de Spearman, en sección transversal y
-para cada fecha, entre el \textit{score} predicho y el retorno realizado. Días con menos
-de dos pares válidos o con predicciones/etiquetas constantes —sin información de
-\textit{ranking}— se marcan como indefinidos. A partir de la serie diaria de IC se
-calculan su media, su desviación, el \textbf{ICIR} (media sobre desviación, una medida de
-estabilidad de la señal), el porcentaje de días con IC positivo y el número de días
-válidos. Se reportan también el IC de Pearson y, en otras secciones, métricas puntuales
-auxiliares (precisión direccional, MAE y RMSE), si bien la métrica que gobierna las
-decisiones es el rank IC por su correspondencia directa con el objetivo de \textit{ranking}
-de la cartera.
+\paragraph{Métricas de poder predictivo.} La métrica primaria es el coeficiente de
+información de rangos (rank IC): la correlación de Spearman, en sección transversal y para
+cada fecha, entre la puntuación predicha y el retorno realizado. Los días con menos de dos
+pares válidos o con predicciones o etiquetas constantes se marcan como indefinidos. A
+partir de la serie diaria de IC se calculan su media, su desviación, el cociente entre
+ambas (ICIR, una medida de estabilidad de la señal), el porcentaje de días con IC positivo
+y el número de días válidos. Se reportan también el IC de Pearson y, en otras secciones,
+métricas puntuales auxiliares (precisión direccional y errores absoluto y cuadrático). La
+métrica que gobierna las decisiones es el rank IC, porque se corresponde de forma directa
+con el objetivo de ordenación de la cartera.
 
-\paragraph{Inferencia: bootstrap y contrastes.} Sobre la serie diaria de IC se construye
-un \textbf{intervalo de confianza \textit{bootstrap}} para la media del IC, remuestreando
-días de negociación con reemplazo (determinista a semilla fija, 2000 réplicas en las
-ejecuciones de la \textit{ladder}). Para contrastar si una señal tiene poder predictivo
-genuino se aplica un \textbf{contraste t} de una muestra sobre la serie diaria de IC
-(\(H_0\!:\) media del IC \(=0\)). Para comparar dos modelos entre sí se emplea un
-\textbf{contraste t pareado} sobre la diferencia diaria de sus series de IC, alineadas en
-las fechas comunes; este contraste pareado es el que sustenta las afirmaciones de
-significancia entre modelos de la Parte~I.
+\paragraph{Inferencia con remuestreo y contrastes.} Sobre la serie diaria de IC se
+construye un intervalo de confianza por remuestreo con reemplazo de días de negociación
+(2.000 réplicas) para la media del IC. Para contrastar si una señal tiene poder predictivo
+se aplica un contraste t de una muestra sobre la serie diaria de IC (hipótesis nula: media
+del IC igual a cero). Para comparar dos modelos entre sí se emplea un contraste t pareado
+sobre la diferencia diaria de sus series de IC, alineadas en las fechas comunes; este
+contraste pareado es el que sustenta las afirmaciones de significancia entre modelos de la
+Parte~I.
 
-\paragraph{Backtest long-short por deciles.} El harness incluye un
-\textit{backtest} factorial \textit{long-short} \textit{dollar-neutral}: cada día se
-ordenan las acciones por \textit{score}, se compra el decil superior (peso equiponderado
-que suma \(+1\)) y se vende en corto el decil inferior (que suma \(-1\)); el retorno
-realizado usa la propia etiqueta, de modo que el \textit{backtest} es plenamente
+\paragraph{Cartera de contraste por deciles.} El marco incluye una simulación histórica de
+una cartera de posiciones largas y cortas neutral en dólares. Cada día se ordenan las
+acciones por puntuación, se compra el decil superior y se vende en corto el decil
+inferior; el retorno realizado usa la propia etiqueta, de modo que la simulación es
 reproducible sin necesidad de descargar precios. El retorno neto resta el coste de
-\textit{turnover} (10~puntos básicos por lado en la \textit{ladder}). Un predictor sin
-habilidad, con \textit{scores} constantes, no toma posición alguna. De la serie de
-retornos se derivan las métricas de rendimiento —retorno anualizado, ratio de Sharpe (con
-\(r_f=0\) y desviación muestral), \textit{max drawdown}, retorno total y \(\alpha/\beta\)
-frente a un proxy de mercado equiponderado—. La advertencia metodológica, desarrollada en
-la sección~\ref{sec:met-loss}, es que el modelo de mejor IC no es necesariamente el de
-mejor retorno neto.
+rotación (10 puntos básicos por lado en la escalera de complejidad). Este nivel es
+conservador, porque la escalera opera una cartera por deciles equiponderada sobre el panel
+completo, con mayor rotación y sin construcción con control de costes. La Parte~II,
+restringida a un universo de gran capitalización más líquido y con una optimización que
+internaliza la rotación, asume un coste algo menor, de 8 puntos básicos por lado. Ninguna
+conclusión depende de esta diferencia. De la serie de retornos se derivan las métricas de
+rendimiento: retorno anualizado, ratio de Sharpe (con tipo libre de riesgo cero y
+desviación muestral), caída máxima, retorno total y alfa y beta frente a una aproximación
+del mercado. La advertencia metodológica, que se desarrolla en la
+sección~\ref{sec:met-loss}, es que el modelo de mejor IC no es necesariamente el de mejor
+retorno neto.
 
-\section{La complexity ladder}\label{sec:met-ladder}
+\section{La escalera de complejidad}\label{sec:met-ladder}
 
-El diseño experimental central de la Parte~I es una \textbf{escalera de complejidad}
-(\textit{complexity ladder}): una secuencia de modelos ordenados por número de parámetros
-y evaluados todos sobre el mismo panel, las mismas variables, el mismo \textit{split} y el
-mismo \textit{harness}. Solo cambia el estimador. La implementación de los peldaños de CPU
-está en \texttt{scripts/run\_cpu\_ladder.py} y la integración del Stockformer y los
-contrastes de significancia en \texttt{scripts/run\_ladder\_analysis.py}. Los niveles son:
+El diseño experimental central de la Parte~I es una escalera de complejidad: una secuencia
+de modelos ordenados por número de parámetros y evaluados todos sobre el mismo panel, las
+mismas variables, la misma partición y el mismo marco de evaluación. Solo cambia el
+estimador. Los niveles son:
 
 \begin{itemize}
-  \item \textbf{L0 — \textit{sanity}}: señales sin entrenamiento que fijan el suelo de
-        referencia. \emph{Zero} (sin posición), \emph{momentum} transversal (retorno
-        acumulado a 20 días) y \emph{reversal} de corto plazo (5 días). Permiten detectar
-        errores de canalización y situar el cero informativo.
-  \item \textbf{L1 — lineal}: regresores lineales regularizados —\emph{Lasso},
-        \emph{Ridge} y \emph{ElasticNet}— sobre las variables estandarizadas con
-        estadísticas \emph{solo} de entrenamiento. Son modelos de muy pocos grados de
-        libertad efectivos (el Lasso, por su penalización \(L_1\), retiene apenas un
-        puñado de coeficientes no nulos).
-  \item \textbf{L2 — árboles}: \textit{gradient boosting} con \emph{LightGBM} y
-        \emph{XGBoost}, con pérdida robusta (Huber/pseudo-Huber), submuestreo de filas y
-        columnas, regularización y \textit{early stopping} sobre el conjunto de
-        validación.
-  \item \textbf{Cúspide — Stockformer}: el modelo \textit{wavelet-transformer-grafo}
-        multitarea de \(\sim\!10^6\) parámetros (capítulo~\ref{cap:stockformer}),
-        evaluado con el mismo \textit{harness} a partir de su salida de inferencia guardada
-        y con las mismas fechas reales de test.
+  \item Nivel 0 (controles): señales sin entrenamiento que fijan el suelo de referencia.
+        Cartera nula (sin posición), momentum transversal (retorno acumulado a 20 días) y
+        reversión de corto plazo (5 días). Permiten detectar errores de canalización y
+        situar el cero informativo.
+  \item Nivel 1 (lineales): regresores lineales regularizados (Lasso, Ridge y red
+        elástica) sobre las variables estandarizadas con estadísticas solo de
+        entrenamiento. Son modelos de muy pocos grados de libertad efectivos (el Lasso,
+        por su penalización \(L_1\), retiene apenas un puñado de coeficientes no nulos).
+  \item Nivel 2 (árboles): potenciación de gradiente con LightGBM \autocite{ke2017lightgbm}
+        y XGBoost \autocite{chen2016xgboost}, con pérdida robusta de tipo Huber,
+        submuestreo de filas y columnas y regularización de tipo Ridge.
+  \item Cúspide (Stockformer): el modelo multitarea de wavelets, atención y grafo de
+        en torno a un millón de parámetros (capítulo~\ref{cap:stockformer}), evaluado con
+        el mismo marco a partir de su salida de inferencia guardada y con las mismas
+        fechas reales de prueba.
 \end{itemize}
 
 El reparto de cómputo sigue esta misma división. Todo el entrenamiento y la evaluación de
-Stockformer, el único modelo que requiere GPU, se ejecutaron en la estación NVIDIA DGX de la
-Universidad. El resto del trabajo (los peldaños de CPU de la escalera, la estrategia semanal y
-los análisis de robustez de la Parte~II) corre íntegramente en CPU, dada su carga
-computacional mucho menor.
+Stockformer, el único modelo que necesita GPU, se ejecutaron en la estación NVIDIA DGX de
+la Universidad. El resto del trabajo (los peldaños de CPU de la escalera, la estrategia
+semanal y los análisis de robustez de la Parte~II) corre en CPU, porque su carga
+computacional es mucho menor.
 
-La escalera materializa una hipótesis falsable, la hipótesis \textbf{\textit{simpler-is-better}}:
-\emph{si la complejidad del modelo aportara poder predictivo en un mercado eficiente como el
-S\&P~500, el IC debería crecer monótonamente al subir por la escalera}. Su negación —que el
-IC \emph{no} aumente, o incluso disminuya, con la complejidad— apuntaría a la
-no-transferibilidad de las arquitecturas complejas y, a la vez, a la ventaja
-de los modelos simples. Esta es la predicción de la literatura de
-\textit{shallow-beats-deep} en \textit{asset pricing} \cite{gu2020empirical}: los mejores
-estimadores son árboles y redes superficiales, mientras que las redes profundas tienden a
-empeorar. Los resultados de contrastar esta hipótesis —incluidos los contrastes t pareados de
-cada peldaño simple frente al Stockformer— se presentan en la Parte~I
-(capítulo~\ref{cap:parte1}). La \textit{ladder} es un diseño
-\emph{comparativo}: su valor no está en el rendimiento absoluto de ningún modelo, sino en
-la pendiente IC-vs-complejidad que dibuja el conjunto.
+La escalera responde a una hipótesis de parsimonia: si la complejidad del modelo aportara
+poder predictivo en un mercado eficiente como el S\&P 500, el IC debería crecer al subir
+por la escalera. Que el IC no aumente con la complejidad, o incluso baje, indicaría que
+las arquitecturas complejas no aportan señal en este régimen y que los modelos simples
+llevan ventaja. Esta es la predicción de la literatura de valoración de activos con
+aprendizaje automático \autocite{gu2020empirical}, donde los mejores estimadores son
+árboles y redes superficiales. La escalera es un diseño comparativo: su valor no está en
+el rendimiento absoluto de ningún modelo, sino en la pendiente entre IC y complejidad que
+dibuja el conjunto.
 
-\section{Función de pérdida de ranking}\label{sec:met-loss}
+\section{Función de pérdida de ordenación}\label{sec:met-loss}
 
-Una decisión metodológica transversal es \emph{qué} optimizan los modelos. El objetivo
-último de la estrategia no es predecir el retorno puntual de cada acción, sino
-ordenarlas correctamente en sección transversal: la cartera \textit{long-short}
-compra las mejores y vende las peores, de modo que lo único que importa es el orden
-relativo, no el valor exacto del retorno. Optimizar el error cuadrático medio (MSE)
-—la pérdida por defecto de una regresión— es, por tanto, optimizar un objetivo que no
-coincide con el de la cartera: el MSE penaliza por igual errores en acciones del centro
-del \textit{ranking} (irrelevantes para la cartera) y en los extremos (decisivos), y se
-deja arrastrar por la magnitud de los retornos en lugar de por su orden.
+Una decisión metodológica transversal es lo que optimizan los modelos. El objetivo último
+de la estrategia es ordenar bien las acciones de forma transversal, no predecir el retorno
+puntual de cada una. La cartera de posiciones largas y cortas compra las mejores y vende
+las peores, así que lo que importa es el orden relativo. Optimizar el error cuadrático
+medio, la pérdida por defecto de una regresión, optimiza un objetivo que no coincide con
+el de la cartera: penaliza por igual errores en acciones del centro de la ordenación
+(irrelevantes para la cartera) y en los extremos (decisivos), y se deja arrastrar por la
+magnitud de los retornos en lugar de por su orden.
 
-Por ello el trabajo adopta una \textbf{pérdida de \textit{ranking}} combinada, frente al MSE.
-La pérdida integra tres componentes complementarios:
-\begin{itemize}
-  \item un término \textbf{ListNet}, que trata el problema como aprendizaje de un orden
-        (\textit{learning-to-rank}) comparando la distribución de probabilidad sobre el
-        \textit{ranking} predicho con la del \textit{ranking} verdadero;
-  \item un término de \textbf{IC}, que optimiza directamente la correlación transversal que
-        se va a medir y a explotar en la cartera;
-  \item un término de \textbf{MAE}, que mantiene la predicción anclada a una escala razonable
-        de retornos y estabiliza el entrenamiento.
-\end{itemize}
-La idea —optimizar para el objetivo de cartera (el \textit{ranking} transversal) y no para
-el error puntual— está respaldada por la evidencia de que las pérdidas de \textit{ranking}
-mejoran el rendimiento económico de las carteras frente al MSE. En el Stockformer (Parte~I) este
-principio se materializa en una pérdida \emph{híbrida}: el término de regresión es la combinación
-ListNet$+$IC$+$MAE y se conserva el cabezal auxiliar de clasificación de signo (entropía cruzada). Los
-modelos tabulares —Lasso, Ridge, \textit{ElasticNet}, LightGBM, XGBoost y el \textit{ensemble} de la
-Parte~II— no admiten una pérdida \textit{listwise} de este tipo: optimizan sus objetivos estándar
-(error cuadrático con penalización $L_1/L_2$ en los lineales, Huber/pseudo-Huber en los árboles). Lo
-que comparten con el Stockformer no es la función de pérdida, sino el \emph{objetivo} último —ordenar
-bien la sección transversal— y el instrumento con que se les mide a todos: el rank IC.
+Por ello el Stockformer se entrena aquí con una pérdida de ordenación combinada, en lugar
+del error absoluto original. La pérdida integra tres componentes complementarios: un
+término ListNet, que trata el problema como aprendizaje de un orden comparando la
+distribución de probabilidad sobre la ordenación predicha con la de la verdadera; un
+término de IC, que optimiza directamente la correlación transversal que se va a medir; y
+un término de error absoluto, que mantiene la predicción anclada a una escala razonable de
+retornos y estabiliza el entrenamiento. Se añade además un cabezal auxiliar que clasifica
+el signo del retorno.
 
-\paragraph{Advertencia metodológica: mejor IC no es mejor retorno.} Conviene recordar
-una cautela que reaparece a lo largo de la memoria: \emph{el modelo de mejor IC no es
-necesariamente el de mejor retorno neto}. El IC mide la calidad del \textit{ranking}
-\emph{antes} de costes y de construcción de cartera; el retorno neto depende además del
-\textit{turnover}, de los costes de transacción, de la neutralización y del dimensionado de
-posiciones. Un modelo puede tener un IC ligeramente superior y, sin embargo, generar una
-señal más inestable —mayor \textit{turnover}— que erosione todo el margen vía costes.
-Esta disociación entre IC y Sharpe neto es la que motiva separar con claridad dos preguntas
-en la memoria: \emph{¿qué modelo predice mejor?} (la \textit{ladder}, Parte~I) y \emph{¿de
-dónde viene el retorno neto?} (la atribución de construcción de cartera, Parte~II,
-capítulo~\ref{cap:parte2}).
+Conviene ser preciso sobre lo que esta decisión implica para la comparación. Los modelos
+lineales (Lasso, Ridge, red elástica) no admiten esa pérdida y minimizan el error
+cuadrático con penalización \(L_1/L_2\). LightGBM y XGBoost admiten objetivos de
+ordenación, pero aquí se quedan en su objetivo estándar de regresión. La pérdida de
+ordenación la recibe, por tanto, solo el Stockformer. Esto significa que la comparación de
+la escalera no aísla la arquitectura de la función de pérdida: compara cada modelo simple
+con su configuración estándar frente al Stockformer con una pérdida elegida para
+favorecer su objetivo de ordenación. La comparación se diseña así de forma deliberada como
+una comparación favorable al modelo complejo: si aun con esa ventaja el Stockformer no
+muestra señal, la conclusión negativa es más sólida; si la hubiera mostrado, habría hecho
+falta separar el efecto de la arquitectura del de la pérdida antes de atribuirle el
+mérito.
 
-\section{Auditoría anti-leakage}\label{sec:met-leakage}
+\paragraph{Advertencia sobre IC y retorno.} El modelo de mejor IC no es necesariamente el
+de mejor retorno neto. El IC mide la calidad de la ordenación antes de costes y de
+construcción de cartera; el retorno neto depende además de la rotación, de los costes de
+transacción, de la neutralización y del dimensionado de posiciones. Un modelo puede tener
+un IC algo superior y, aun así, dar una señal más inestable, con mayor rotación, que
+pierda en costes todo el margen. Esta separación entre IC y Sharpe neto es la que lleva a
+distinguir dos preguntas en la memoria: qué modelo predice mejor (la escalera, Parte~I) y
+de dónde viene el retorno neto (la atribución de construcción, Parte~II).
 
-La conclusión más delicada del trabajo es \emph{negativa}: el Stockformer no genera señal
-predictiva sobre el S\&P~500 (su IC es \(\approx -0{,}003\)). Una conclusión negativa solo
-es publicable si se descarta de forma convincente que sea un artefacto —un fallo de
-alineación, una fuga de información que sesgue el resultado, un error de canalización—. Antes
-de cualquier comparación se ejecuta, por ello, una \textbf{auditoría de integridad de
-datos y de fuga de información} (\textit{leakage}), implementada en
-\texttt{scripts/audit\_alignment.py}, que comprueba seis invariantes. Los seis pasaron
-limpiamente (\textbf{6/6}):
+\section{Auditoría de fugas de información}\label{sec:met-leakage}
+
+Un resultado negativo solo es defendible si se descarta que sea un artefacto: un fallo de
+alineación, una fuga de información o un error de procesamiento. Por eso, antes de
+comparar nada, se pasa una auditoría que comprueba seis invariantes. Cinco se cumplen. La
+sexta detecta una fuga que favorece al modelo complejo y que se mantiene y documenta como
+tal:
 
 \begin{enumerate}
-  \item \textbf{Alineación de \texttt{label.csv}}: se verifica que la etiqueta de cada
-        acción y fecha es exactamente el retorno futuro \(\text{Close}_{t+1}/\text{Close}_t-1\),
-        contrastándola contra los precios OHLCV originales.
-  \item \textbf{Coherencia de \texttt{flow.npz}}: la matriz de etiquetas serializada que
-        consume el modelo coincide, valor a valor, con \texttt{label.csv}.
-  \item \textbf{Alineación de Alpha360}: la variable \(\text{CLOSE\_d1}\) preserva el orden
-        transversal del cociente bruto \(\text{Close}_t/\text{Close}_{t-1}\) (la
-        estandarización es monótona, luego el rango debe conservarse), confirmando que el
-        \textit{buffer} de retardos está bien aplicado.
-  \item \textbf{Separación temporal (\textit{seq2instance})}: en la construcción de
-        secuencias del Stockformer, la ventana de etiquetas \(Y\) es estrictamente futura
-        respecto de la ventana de entrada \(X\); no hay solapamiento de índices temporales.
-  \item \textbf{Dirección del \textit{z-score}}: la estandarización se aplicó en sección
-        transversal (a lo largo de las acciones, por fecha) y \emph{no} a lo largo del
-        tiempo —que introduciría fuga de anticipación—; se comprueba que la media por fila
-        es \(\approx 0\) y la desviación por fila \(\approx 1\).
-  \item \textbf{Grafo de relaciones}: se inspecciona si el grafo de correlación entre
-        acciones se construye con todo el histórico (incluido el periodo de test). En el
-        \textit{pipeline} del Stockformer este grafo usa todas las fechas, lo que sería
-        una ventaja informativa \emph{a favor} del modelo complejo. Aun concediéndole esa
-        ventaja, el Stockformer arroja IC negativo, lo que \emph{refuerza}
-        —en lugar de debilitar— la conclusión.
+  \item Etiqueta bien definida: la etiqueta de cada acción y fecha es el retorno del día
+        siguiente \(\text{Close}_{t+1}/\text{Close}_t-1\), comprobado contra los precios
+        originales.
+  \item Etiqueta coherente: la matriz de etiquetas que usa el modelo coincide, valor a
+        valor, con la de referencia.
+  \item Desfase de retardos bien aplicado: la primera variable de cierre rezagado mantiene
+        el orden transversal del cociente \(\text{Close}_t/\text{Close}_{t-1}\) (la
+        estandarización no altera el orden), señal de que el desfase de 60 filas está bien
+        hecho.
+  \item Pasado y futuro separados: al formar las secuencias del Stockformer, la ventana de
+        etiquetas \(Y\) es siempre posterior a la de entrada \(X\); no hay solapamiento
+        temporal.
+  \item Estandarización en la dirección correcta: la puntuación estandarizada se aplica
+        entre las acciones de una misma fecha, no a lo largo del tiempo; cada fila tiene
+        media cero y desviación uno.
+  \item Grafo de relaciones: el grafo de correlación entre acciones se construye con todo
+        el histórico, incluido el periodo de prueba. Eso da una ventaja al Stockformer.
+        Esta fuga se mantiene de forma deliberada y los resultados principales de la
+        Parte~I deben leerse con ella presente: como la ventaja juega a favor del modelo
+        cuya transferencia se evalúa, un resultado negativo no puede atribuirse a ella,
+        pero un resultado positivo habría requerido eliminarla antes de interpretarse.
 \end{enumerate}
 
-Más allá de la auditoría automatizada, se verificó por lectura de código que la rama neuronal
-(\texttt{StockDataset} en \texttt{lib/Multitask\_Stockformer\_utils.py}) y la rama tabular
-(el \texttt{LAG\_BUFFER} de los \textit{baselines}) usan el \emph{mismo} desfase de 60 días
-para alinear variables y etiquetas: no hay desalineación entre \textit{pipelines} que pudiera
-favorecer espuriamente a unos modelos sobre otros.
+Se comprobó además que la rama del Stockformer y la de los modelos tabulares usan el mismo
+desfase de 60 filas, así que no hay desalineación entre ellas que favorezca a unos modelos
+sobre otros.
 
-\paragraph{Descomposición \textit{wavelet}.} La misma lectura de código cubrió el tratamiento de la
-transformada \textit{wavelet} del Stockformer (capítulo~\ref{cap:stockformer}), señalada en el estado
-del arte como posible fuente de fuga. Se confirmó que la transformada se aplica de forma independiente
-sobre cada ventana ya segmentada, nunca sobre la serie completa: la descomposición de la \emph{entrada}
-solo reordena información estrictamente anterior al instante de predicción. La descomposición de la
-\emph{etiqueta}, $(Y_L, Y_H)$ --que sí mezclaría pasos futuros--, se computa pero \emph{no} se emplea
-como objetivo de entrenamiento (los cabezales se supervisan contra el retorno y el signo crudos), de
-modo que no introduce fuga en el optimizador ni en el IC reportado.
+\paragraph{Descomposición wavelet.} El estado del arte señala la transformada wavelet como
+posible fuente de fuga, así que también se revisó. La transformada se aplica sobre cada
+ventana ya recortada, nunca sobre la serie entera, de modo que al descomponer la entrada
+solo se reordena información anterior al instante de predicción. La descomposición de la
+etiqueta, que sí mezclaría pasos futuros, se calcula pero no se usa como objetivo: los
+cabezales se entrenan contra el retorno y el signo crudos. Por tanto no entra fuga ni en
+el entrenamiento ni en el coeficiente de información.
 
-La consecuencia metodológica es la que da credibilidad a toda la Parte~I: el IC
-\(\approx -0{,}003\) del Stockformer es un resultado genuino, no el síntoma de un
-error. La complejidad arquitectónica no aporta poder predictivo en un mercado eficiente como
-el S\&P~500 —lo que predice la hipótesis \textit{simpler-is-better}
-(sección~\ref{sec:met-ladder}) y la literatura de \textit{shallow-beats-deep}
-\cite{gu2020empirical}—, y esa afirmación se sostiene sobre una base de datos auditada y
-limpia.
+\section{Amenazas a la validez}\label{sec:met-amenazas}
+
+Las decisiones de diseño descritas en este capítulo delimitan lo que los resultados pueden
+y no pueden sostener. Antes de presentar resultados conviene dejar explícitas las cinco
+amenazas principales; el capítulo~\ref{cap:discusion} las retoma con más detalle.
+
+La primera es el universo de datos. El panel usa los componentes actuales del S\&P 500 con
+cobertura completa, descargados de una fuente gratuita, sin reconstrucción histórica del
+índice ni bajas de cotización. Esto introduce sesgo de supervivencia y aleja el panel del
+estándar de las bases de investigación \autocite{crsp2025stock}. Las conclusiones se
+formulan condicionadas a este universo.
+
+La segunda es la fuga del grafo. La única incidencia de la auditoría
+(sección~\ref{sec:met-leakage}) se mantiene de forma deliberada y favorece al modelo
+complejo. Los resultados principales de la Parte~I incluyen esa ventaja; la lectura
+correcta es que el resultado negativo se obtiene a pesar de ella.
+
+La tercera es la ausencia de un control de reproducción en el mercado de origen. No se ha
+verificado que esta implementación reproduzca el coeficiente de información que el modelo
+original reporta sobre los índices chinos. Sin ese control, la ausencia de transferencia
+observada no puede separarse del todo de un posible fallo de reimplementación, y por eso
+las conclusiones se expresan siempre como propiedades de esta implementación.
+
+La cuarta es la variabilidad no medida del Stockformer. El modelo se evalúa con una única
+semilla y con una función de pérdida adaptada respecto de la original
+(sección~\ref{sec:met-loss}). No se dispone de varianza entre ejecuciones, de modo que el
+resultado corresponde a una realización de una variante del modelo.
+
+La quinta afecta a los criterios fijados de antemano. La búsqueda de señal de la Parte~II
+usa criterios de éxito definidos antes de evaluar el tramo final (estadístico t de
+Newey-West \autocite{neweywest1987} mayor que 2 y Sharpe positivo en la muestra de
+reserva). Estos criterios no están depositados en un registro público externo; quedan
+recogidos, junto con la configuración de los experimentos, en el repositorio de código que
+acompaña a la memoria, de modo que el término exacto es criterios fijados de antemano y
+documentados, no un prerregistro formal.
+
+\begin{table}[htbp]
+\centering
+\caption{Notación y siglas empleadas en los capítulos de resultados.}
+\label{tab:notacion}
+\small
+\begin{tabular}{lp{10.2cm}}
+\toprule
+Término & Definición \\
+\midrule
+IC (rank IC) & Coeficiente de información de rangos: correlación de Spearman, por fecha,
+entre el orden predicho y el retorno realizado. \\
+ICIR & Cociente entre la media y la desviación de la serie de IC; mide estabilidad. \\
+$t_{\text{NW}}$ & Estadístico t del retorno medio con errores estándar de Newey-West,
+robustos a autocorrelación \autocite{neweywest1987}. \\
+Fuera de muestra (OOS) & Periodo no usado para entrenar ni seleccionar el modelo. \\
+Muestra de reserva & Tramo final reservado (en inglés, holdout) que no interviene en la
+selección de señales; solo confirma el signo del resultado. \\
+Avance temporal & Protocolo de evaluación (en inglés, walk-forward) con reentrenamiento
+periódico y predicción siempre posterior al entrenamiento. \\
+Sharpe bruto / neto & Ratio de Sharpe anualizado antes / después de costes de
+transacción. \\
+Caída máxima & Mayor pérdida acumulada desde un máximo de la curva de capital. \\
+Rotación & Suma de cambios absolutos de posición por rebalanceo (sobre exposición
+bruta 2). \\
+pb & Puntos básicos; el coste asumido es de 8 pb por lado en la Parte~II y 10 pb en la
+escalera. \\
+Combinación de modelos & Promedio de las predicciones de LightGBM y red elástica (en
+inglés, ensemble) usado como señal base de la Parte~II. \\
+Momentum residual & Momentum de los retornos residualizados frente al mercado
+\autocite{blitz2011residual}. \\
+\bottomrule
+\end{tabular}
+\end{table}

@@ -1,17 +1,22 @@
 \begin{table}[htbp]
 \centering
-\caption{Búsqueda de señal para RQ2 sobre la misma ventana \textit{walk-forward} de 311 semanas (2020--2026, incluye el \textit{momentum-crash} de 2021; \textit{holdout}: últimas 104 semanas). Misma construcción \textit{cost-aware} (coste 8 bps/lado) para todas las señales. El reversal pierde incluso en bruto y los fundamentales no aportan; el momentum residual es la única señal con IC e \textit{holdout} positivos, y su combinación con el \textit{ensemble} da el mejor Sharpe neto.}
+\caption{Búsqueda de señal para RQ2 sobre el protocolo de avance temporal de 311 semanas
+(2020--2026, incluye el desplome de momentum de 2021), con la misma construcción de
+control de costes (8 puntos básicos por lado) para todas las señales. La columna Reserva
+es el Sharpe neto anualizado sobre las 104 semanas finales reservadas, que no intervienen
+en la selección; $t_{\text{NW}}$ es el estadístico t de Newey-West del retorno neto sobre
+el periodo completo. Definiciones en la Tabla~\ref{tab:notacion}.}
 \label{tab:rq2-signal-search}
 \small
 \begin{tabular}{lrrrrr}
 \toprule
-Señal & Sharpe neto & $t_{\text{NW}}$ & \textit{Holdout} & Turnover & IC \\
+Señal & Sharpe neto & $t_{\text{NW}}$ & Reserva & Rotación & IC \\
 \midrule
 Ensemble ML (base) & $+0.38$ & $+0.95$ & $+0.20$ & 0.82 & $+0.0009$ \\
 Reversal 1 sem.\ (vol-esc.) & $-0.66$ & $-1.73$ & $-1.67$ & 1.15 & $+0.0138$ \\
 Calidad (fundamentales) & $-0.41$ & $-1.17$ & $-1.07$ & 0.26 & $-0.0032$ \\
 Momentum residual & $+0.50$ & $+1.35$ & $+0.46$ & 0.23 & $+0.0212$ \\
-\textbf{Ensemble + mom.\ residual} & $+0.72$ & $+1.82$ & $+0.55$ & 0.43 & $+0.0204$ \\
+Ensemble + mom.\ residual & $+0.72$ & $+1.82$ & $+0.55$ & 0.43 & $+0.0204$ \\
 \bottomrule
 \end{tabular}
 \end{table}

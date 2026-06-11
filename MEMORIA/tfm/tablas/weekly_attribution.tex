@@ -1,9 +1,17 @@
 \begin{table}[htbp]
-\caption{Atribución de construcción: aporte incremental de cada etapa al Sharpe neto.}
+\centering
+\caption{Atribución de construcción sobre las 215 semanas fuera de muestra: métricas de
+cada variante de construcción aplicada al mismo alfa de partida. Las variantes son
+acumulativas: cartera de deciles cruda; con neutralización factorial y sectorial; con
+optimización de costes y suavizado; y diseño completo (con dimensionado por volatilidad y
+ajuste por régimen). La columna IC mide la señal transformada que alimenta cada variante;
+SE es el error estándar del Sharpe neto. Definiciones en la Tabla~\ref{tab:notacion}.}
 \label{tab:weekly-attribution}
+\small
+\setlength{\tabcolsep}{4pt}
 \begin{tabular}{lrrrrrrrr}
 \toprule
-variant & n\_weeks & net\_sharpe & net\_sharpe\_se & gross\_sharpe & net\_ann & net\_maxdd & turnover & ic\_mean \\
+Variante & Sem. & Sharpe neto & SE & Sharpe bruto & Ret.\ neto & MaxDD & Turnover & IC \\
 \midrule
 raw\_decile & 215 & 0.0452 & 0.4918 & 0.8730 & -0.0048 & -0.2401 & 3.0662 & 0.0123 \\
 +neutralize & 215 & -0.3997 & 0.4922 & 0.8145 & -0.0473 & -0.2505 & 3.1181 & 0.0085 \\

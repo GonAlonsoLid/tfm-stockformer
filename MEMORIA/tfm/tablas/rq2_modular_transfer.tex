@@ -1,23 +1,32 @@
 \begin{table}[htbp]
 \centering
-\caption{B\'usqueda de se\~nal ampliada: se\~nales destiladas de la arquitectura del Stockformer (su grafo en tres formas --correlaci\'on, lead-lag direccional y sector-- y su wavelet en las dos bandas) y banco pre-registrado de factores establecidos, cada una \emph{sola} y \emph{combinada} con el \textit{ensemble} de \textit{features} (columnas $+$ens). Misma construcci\'on cost-aware y \textit{walk-forward} de 311 semanas (\textit{holdout}: 104) que la Tabla~\ref{tab:rq2-signal-search}. List\'on pre-registrado: $t_{\text{NW}}>2$ y \textit{holdout}$>0$.}
+\caption{B\'usqueda de se\~nal ampliada: se\~nales destiladas de la arquitectura del
+Stockformer (su grafo en tres formas: correlaci\'on, adelanto-retardo direccional y
+sector; y su wavelet en las dos bandas) y banco de factores establecidos fijado de
+antemano, cada una sola y combinada con la se\~nal de la combinaci\'on de modelos
+(columnas $+$ens). Misma construcci\'on de control de costes y mismo protocolo de avance
+temporal de 311 semanas (con 104 semanas de reserva) que la
+Tabla~\ref{tab:rq2-signal-search}. Las columnas Res.\ son el Sharpe neto anualizado
+restringido a las 104 semanas de reserva. Criterio de \'exito fijado de antemano:
+$t_{\text{NW}}>2$ y Sharpe positivo en la reserva. Definiciones en la
+Tabla~\ref{tab:notacion}.}
 \label{tab:rq2-modular}
 \small
 \begin{tabular}{lrrrrrr}
 \toprule
-Se\~nal & Sharpe & $t_{\text{NW}}$ & \textit{Hold.} & IC & Sharpe$_{+\text{ens}}$ & \textit{Hold.}$_{+\text{ens}}$ \\
+Se\~nal & Sharpe & $t_{\text{NW}}$ & Res. & IC & Sharpe$_{+\text{ens}}$ & Res.$_{+\text{ens}}$ \\
 \midrule
-\multicolumn{7}{l}{\emph{Predictor base}} \\
-Ensemble ML (base) & $+0.38$ & $+0.95$ & $+0.20$ & $+0.0009$ & --- & --- \\
+\multicolumn{7}{l}{Predictor base} \\
+Ensemble ML (base) & $+0.38$ & $+0.95$ & $+0.20$ & $+0.0009$ & n/a & n/a \\
 \addlinespace
-\multicolumn{7}{l}{\emph{Destiladas de la arquitectura del Stockformer}} \\
+\multicolumn{7}{l}{Destiladas de la arquitectura del Stockformer} \\
 Grafo: pares por correlaci\'on & $-0.43$ & $-1.10$ & $+0.20$ & $-0.0172$ & $-0.29$ & $+0.28$ \\
-Grafo: lead-lag direccional & $-0.97$ & $-2.68$ & $-1.27$ & $-0.0034$ & $-0.19$ & $-0.22$ \\
+Grafo: adelanto-retardo direccional & $-0.97$ & $-2.68$ & $-1.27$ & $-0.0034$ & $-0.19$ & $-0.22$ \\
 Grafo: pares por sector & $-0.62$ & $-1.38$ & $-0.97$ & $-0.0142$ & $-0.03$ & $+0.38$ \\
 Wavelet: tendencia (baja frec.) & $+0.29$ & $+0.67$ & $+0.70$ & $+0.0035$ & $+0.21$ & $+0.69$ \\
 Wavelet: reversal (alta frec.) & $-0.50$ & $-1.26$ & $-0.65$ & $+0.0163$ & $+0.10$ & $+0.20$ \\
 \addlinespace
-\multicolumn{7}{l}{\emph{Banco de factores establecidos (pre-registrado)}} \\
+\multicolumn{7}{l}{Banco de factores establecidos (fijado de antemano)} \\
 Baja vol.\ idiosincr\'atica (IVOL) & $-1.02$ & $-2.41$ & $-0.98$ & $-0.0000$ & $-1.11$ & $-1.19$ \\
 Betting-against-beta & $-0.75$ & $-1.74$ & $+0.61$ & $-0.0070$ & $-0.09$ & $+0.41$ \\
 Momentum gestionado por vol. & $+0.37$ & $+1.01$ & $+0.42$ & $+0.0188$ & $+0.68$ & $+0.63$ \\

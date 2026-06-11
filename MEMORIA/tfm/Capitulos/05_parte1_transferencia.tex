@@ -1,244 +1,229 @@
-\chapter{Parte I: ¿Transfiere Stockformer?}\label{cap:parte1}
+\chapter{Parte I: transferencia de Stockformer al S\&P 500}\label{cap:parte1}
 
-Esta parte responde a la primera pregunta de investigación: ¿transfiere Stockformer (un modelo de selección de
-acciones basado en \textit{wavelets}, \textit{transformers} y grafos de relaciones,
-calibrado sobre acciones chinas A-shares) al universo del S\&P 500? La respuesta,
-anticipada en la introducción, es negativa. La aportación está en la forma de obtenerla.
-En lugar de comparar Stockformer contra un único rival, se
-sitúa dentro de una \textit{complexity ladder} (escalera de complejidad) que ordena los
-modelos desde controles de sanidad de cero parámetros hasta la red de aproximadamente un
-millón de parámetros. La escalera permite formular el resultado central en términos
-falsables: el poder predictivo no crece con la complejidad del modelo. De hecho, en
-el panel de este trabajo el modelo más complejo es el peor.
+Esta parte responde a la primera pregunta de investigación, esto es, si Stockformer, un modelo de
+selección de acciones basado en wavelets, atención y grafos de relaciones, calibrado sobre
+acciones chinas de clase A, conserva su capacidad predictiva sobre el universo del S\&P
+500 descrito en la metodología. En vez de comparar Stockformer contra un único rival, se
+le sitúa dentro de la escalera de complejidad de la sección~\ref{sec:met-ladder}, que
+ordena los modelos desde controles sin parámetros entrenables hasta la red de en torno a
+un millón de parámetros.
 
-El capítulo se organiza en tres secciones. La Sección~\ref{sec:p1-ladder} presenta los
-resultados de la escalera de complejidad. La Sección~\ref{sec:p1-signif} examina la
-significancia estadística de las diferencias observadas. Finalmente, la
-Sección~\ref{sec:p1-fallo} mapea cada resultado a un modo de fallo documentado en la
-literatura sobre transferibilidad de modelos de \textit{deep learning} financiero.
+\section{Resultados de la escalera de complejidad}\label{sec:p1-ladder}
 
-\section{Resultados de la complexity ladder}\label{sec:p1-ladder}
-
-La escalera de complejidad evalúa, sobre un mismo panel del S\&P 500 y un mismo
-\textit{harness} de evaluación, una familia de modelos ordenada por número de parámetros y
-capacidad representacional. El protocolo es idéntico para todos: las predicciones se
-convierten en un \textit{rank} transversal diario, se calcula el coeficiente de
-información de rangos (\textit{rank IC}) sobre 250 días de evaluación y, en paralelo, se
-construye una cartera \textit{long-short} para medir el Sharpe asociado. La métrica
-central es el IC medio, que cuantifica la correlación entre la señal predicha y el retorno
-realizado. Un IC positivo y estable es condición necesaria para que un modelo aporte
-señal. La Tabla~\ref{tab:ladder} recoge los resultados.
+La escalera evalúa, sobre un mismo panel y un mismo marco de evaluación, una familia de
+modelos ordenada por número de parámetros y capacidad. El procedimiento es el mismo para
+todos. Las predicciones se convierten en una ordenación transversal diaria, se calcula el
+coeficiente de información de rangos (IC) sobre la ventana de prueba y, en paralelo, se
+construye una cartera de posiciones largas y cortas para medir el Sharpe asociado. Un IC
+positivo y estable es condición necesaria para que un modelo aporte señal. La
+Tabla~\ref{tab:ladder} recoge los resultados; como la ventana efectiva de Stockformer (236
+días) difiere de la del resto (250 días), las comparaciones directas entre modelos se
+hacen en la Sección~\ref{sec:p1-signif} sobre los días comunes.
 
 \input{tablas/ladder}
 
-La escalera se recorre de abajo arriba. En el peldaño cero (\textit{sanity checks})
-se sitúan controles sin parámetros entrenables: la cartera nula (\texttt{zero}), el
-\textit{momentum} y la \textit{reversal}. Su función es calibrar qué valor de IC es
-indistinguible del ruido en este panel. El \textit{momentum} obtiene un IC de $-0.0128$
-($t=-1.06$, $p=0.29$) y la \textit{reversal} un IC de $+0.0126$ ($t=1.06$, $p=0.29$);
-ambos son simétricos, no significativos y, a efectos prácticos, ruido. Esta simetría es
-informativa: fija una banda de $\pm 0.013$ aproximadamente como magnitud de lo que el azar
-produce sobre 250 días.
+La escalera se recorre de abajo arriba. En el peldaño cero están los controles sin
+parámetros entrenables: la cartera nula, el momentum y la reversión. Sirven para calibrar
+qué valor de IC es indistinguible del ruido en este panel. El momentum obtiene un IC de
+$-0{,}0128$ ($t=-1{,}06$, $p=0{,}29$) y la reversión un IC de $+0{,}0126$ ($t=1{,}06$,
+$p=0{,}29$); ambos son simétricos y no significativos. Esa simetría fija una banda de
+en torno a $\pm 0{,}013$ como magnitud de lo que el azar produce sobre 250 días.
 
-En el primer peldaño (modelos lineales) aparece el mejor modelo de toda la escalera. El
-Lasso, con apenas 5 parámetros efectivos tras la regularización, alcanza
-un IC de $+0.0238$ y, lo que es más relevante para la Parte II, el único Sharpe
-\textit{long-short} positivo de la tabla en este \textit{split}: $+0.91$, con un
-retorno anualizado del $+27.4\%$. Esta última cifra debe leerse con cautela: procede de un
-único \textit{split} de 250 días y es un diagnóstico de la señal, no un resultado de cartera.
-El resultado de cartera defendible es el \textit{walk-forward} de 215 semanas del
-Capítulo~\ref{cap:parte2} (Sharpe neto $0{,}58 \pm 0{,}49$), no este Sharpe puntual. El Ridge,
-con 376 parámetros, obtiene un IC de $+0.0173$ pero un
-Sharpe de $-2.85$: predice direccionalmente algo mejor que el ruido, pero su cartera no es
-rentable, lo que ilustra que IC y Sharpe no son intercambiables. El \textit{elastic net}
-queda en un IC de $+0.0157$, intermedio y consistente con el resto de lineales.
+En el primer peldaño (modelos lineales) está el mejor modelo de la escalera. El Lasso, con
+5 parámetros efectivos tras la regularización, alcanza un IC de $+0{,}0238$ y el mayor
+Sharpe de la tabla en esta partición, de $+0{,}91$ (el único otro positivo es el de
+LightGBM, $+0{,}21$), con un retorno anualizado del $27{,}4\%$. Esta última cifra sale de
+una única partición de 250 días y es un diagnóstico de la señal, no un resultado de
+cartera; el resultado de cartera defendible es el del protocolo de avance temporal del
+Capítulo~\ref{cap:parte2}. El Ridge, con 376 parámetros, obtiene un IC de $+0{,}0173$ pero
+un Sharpe de $-2{,}85$, ya que predice direccionalmente algo mejor que el ruido aunque su cartera
+no es rentable, lo que muestra que IC y Sharpe no son intercambiables. La red elástica
+queda en un IC de $+0{,}0157$, en línea con el resto de lineales.
 
-En el segundo peldaño (árboles) está LightGBM (31 parámetros nominales en
-su configuración por defecto) con un IC de $+0.0136$ y un Sharpe de $+0.21$, y
-XGBoost (9600 parámetros) con un IC de $+0.0141$ y un Sharpe de $-1.85$.
-Los árboles no mejoran a los lineales: su IC es comparable o inferior al del Lasso pese a
-disponer de mucha más capacidad. El salto de tres órdenes de magnitud en parámetros entre
-LightGBM y XGBoost no se traduce en ganancia de IC.
+En el segundo peldaño (árboles) está LightGBM, con un IC de $+0{,}0136$ y un Sharpe de
+$+0{,}21$. Su capacidad efectiva en la escalera es de solo 31 hojas, porque, aunque se le
+permitían hasta 300 iteraciones, la parada temprana sobre el conjunto de validación
+detuvo la potenciación en la primera, de modo que el modelo se reduce a un único árbol de
+31 hojas, pues el algoritmo no encuentra estructura que añadir más allá del primer árbol.
+XGBoost (9.600 hojas nominales) obtiene un IC de $+0{,}0141$ y un Sharpe de $-1{,}85$. Los
+árboles no mejoran a los lineales, pues su IC es parecido o inferior al del Lasso pese a tener
+mucha más capacidad, y el salto de tres órdenes de magnitud en parámetros entre LightGBM y
+XGBoost no da ganancia de IC.
 
-En el peldaño superior se sitúa Stockformer, con del orden de un millón de
-parámetros. Su IC es $\approx -0.003$: negativo y estadísticamente
-indistinguible de cero. El modelo más complejo de la escalera no solo no supera a
-un Lasso de cinco parámetros, sino que cae por debajo de la banda de ruido fijada
-por los controles de sanidad.
+En el peldaño superior está Stockformer, con del orden de un millón de parámetros. Su IC
+es de $-0{,}003$, negativo y estadísticamente indistinguible de cero. En esta partición,
+el modelo más complejo de la escalera no supera a un Lasso de cinco parámetros y queda por
+debajo de la banda de ruido que fijan los controles.
 
 \begin{figure}[htbp]
   \centering
   \includegraphics[width=0.85\linewidth]{complexity_vs_ic}
-  \caption{IC medio frente a número de parámetros (escala logarítmica) a lo largo de la
-  \textit{complexity ladder}. La relación es plana o decreciente: el IC no crece con la
-  complejidad y el modelo más complejo (Stockformer) es el peor.}
+  \caption{IC medio sobre la ventana de prueba frente al número de parámetros de cada
+  modelo de la escalera de complejidad, con el eje horizontal en escala logarítmica. Los
+  controles sin parámetros entrenables (momentum y reversión) se sitúan por convención en
+  $x=1$, al no ser representable el cero en escala logarítmica. El IC se calcula como
+  media de la serie diaria de correlaciones de Spearman descrita en la
+  sección~\ref{sec:met-harness}; ventana de prueba de 250 días (236 para Stockformer).}
   \label{fig:complexity-vs-ic}
 \end{figure}
 
-La Figura~\ref{fig:complexity-vs-ic} resume el hallazgo central. Si el poder
-predictivo escalara con la capacidad del modelo, cabría esperar una nube de puntos
-ascendente al desplazarse hacia la derecha en el eje de parámetros. Lo que se observa es
-lo contrario: una relación plana en la zona de los modelos simples y un descenso pronunciado
-hacia Stockformer. El resultado de esta sección es, por tanto, falsable: el IC no aumenta con
-la complejidad; en este panel, el mejor modelo es el más
-parsimonioso y el peor es el más expresivo. Este resultado replica, en el dominio de la
-selección transversal de acciones, el fenómeno \textit{shallow-beats-deep} documentado en
-el \textit{asset pricing} empírico por \textcite{gu2020empirical}.
+La Figura~\ref{fig:complexity-vs-ic} resume el resultado. Si el poder predictivo creciera
+con la capacidad del modelo, cabría esperar una nube de puntos ascendente al moverse hacia
+la derecha en el eje de parámetros. Lo que se observa es una relación plana en la zona de
+los modelos simples y un descenso hacia Stockformer. En este panel, el IC no aumenta con
+la complejidad: el mejor modelo es el más simple y el peor es el más expresivo. Este
+patrón coincide, en la selección transversal de acciones, con el que
+\textcite{gu2020empirical} documentan en la valoración de activos con aprendizaje
+automático.
 
 \section{Significancia estadística}\label{sec:p1-signif}
 
-El resultado anterior sería frágil si las diferencias de IC no fueran estables. Esta sección
-las somete a contraste estadístico, con una regla clara: no
-se afirmará que Stockformer es significativamente peor allí donde la evidencia no lo
-sostiene. La Tabla~\ref{tab:significancia} recoge, para cada modelo simple, la diferencia
-de medias de IC frente a Stockformer, el estadístico $t$ del contraste pareado por día y su
-$p$-valor, sobre $n=236$ días con predicciones emparejadas.
+Conviene separar dos preguntas con soporte estadístico distinto. La primera es si
+Stockformer muestra señal predictiva en este diseño. Su IC es de $-0{,}003$,
+indistinguible de cero, frente a los IC del orden de $0{,}06$ que las arquitecturas
+profundas reportan en su mercado de origen. En esta implementación, por tanto, el poder
+predictivo de origen no se reproduce, y eso se sostiene contra el cero e incluso
+concediéndole la ventaja del grafo (sección~\ref{sec:met-leakage}); qué parte de esa
+ausencia corresponde al modelo y qué parte a la reimplementación es una cuestión que el
+diseño no puede separar (sección~\ref{sec:met-amenazas}). El resultado de la escalera (que
+el IC no crece con la complejidad y que el modelo más complejo es el peor) es una
+afirmación sobre la forma de la relación observada en los datos. La segunda pregunta, si
+los modelos simples baten a Stockformer de forma significativa, es más exigente, y es la
+que esta sección mide con cuidado para no afirmar más de lo que la evidencia sostiene. La
+Tabla~\ref{tab:significancia} recoge, para cada modelo simple, la diferencia de IC frente
+a Stockformer, el estadístico $t$ del contraste pareado por día y su $p$-valor, sobre
+$n=236$ días emparejados.
 
 \input{tablas/significancia}
 
-La lectura honesta es la siguiente. La mayor diferencia corresponde al Lasso:
-$+0.0319$ de IC frente a Stockformer, con $t=1.86$ y un $p=0.064$. Este
-$p$-valor es marginal, no concluyente: no alcanza el umbral convencional de
-$0.05$, de modo que, en sentido estricto, no se puede rechazar la hipótesis nula de igualdad
-de IC al nivel del 5\%. Sería exagerar afirmar que el Lasso bate a
-Stockformer ``de forma estadísticamente significativa''. Lo que sí se puede afirmar es
-otra cosa: la dirección del efecto es
-consistente en toda la escalera. XGBoost supera a Stockformer en $+0.0214$
-($t=1.72$, $p=0.088$), LightGBM en $+0.0178$ ($t=1.63$, $p=0.105$) y Ridge en $+0.0187$
-($t=1.42$, $p=0.157$). Todos los modelos simples baten a Stockformer en IC, todos con el
-mismo signo, y los tres mejores con $p$-valores marginales agrupados en torno a
-$0.06$--$0.11$. El único control que no lo bate es el \textit{momentum} ($-0.0093$,
-$p=0.561$), que, por construcción, no es un modelo, sino ruido.
+La mayor diferencia corresponde al Lasso, con $+0{,}0319$ de IC frente a Stockformer,
+$t=1{,}86$ y $p=0{,}064$. Este $p$-valor no llega al umbral convencional de $0{,}05$, de
+modo que no se puede rechazar la hipótesis nula de igualdad de IC al nivel del 5\,\%: no
+cabe afirmar que el Lasso bata a Stockformer de forma estadísticamente significativa. Lo
+que sí se observa es que la dirección del efecto es la misma en toda la escalera. XGBoost
+supera a Stockformer en $+0{,}0214$ ($t=1{,}72$, $p=0{,}088$), LightGBM en $+0{,}0178$
+($t=1{,}63$, $p=0{,}105$) y Ridge en $+0{,}0187$ ($t=1{,}42$, $p=0{,}157$). Todos los
+modelos simples superan a Stockformer en IC con el mismo signo, con $p$-valores entre
+$0{,}06$ y $0{,}16$; ninguno cruza el umbral. Los contrastes más conservadores de la
+Tabla~\ref{tab:power-signtest} (prueba de signos y Wilcoxon) lo confirman, con intervalos
+de confianza que incluyen el cero en todos los casos: la superioridad es direccional, no
+significativa. El único control que no supera a Stockformer es el momentum ($-0{,}0093$,
+$p=0{,}561$), que por construcción no es un modelo sino ruido.
 
 \begin{figure}[htbp]
   \centering
   \includegraphics[width=0.85\linewidth]{ic_with_ci}
-  \caption{IC medio por modelo con intervalos de confianza \textit{bootstrap}. El intervalo
-  de Stockformer solapa el cero, lo que es coherente con la ausencia de señal; los modelos simples
-  presentan IC positivos, aunque sus intervalos también rozan el cero, coherente con la
-  significancia marginal de los contrastes.}
+  \caption{IC medio por modelo con su intervalo de confianza al 95\,\% construido por
+  remuestreo de días de negociación (2.000 réplicas), sobre la ventana de prueba de la
+  escalera de complejidad. La definición del IC y el procedimiento de remuestreo se
+  describen en la sección~\ref{sec:met-harness}.}
   \label{fig:ic-with-ci}
 \end{figure}
 
-La Figura~\ref{fig:ic-with-ci} refuerza esta lectura mediante intervalos de
-confianza \textit{bootstrap}. El intervalo de Stockformer solapa el cero, de modo
-que su señal es indistinguible de la ausencia de señal. Los modelos simples se
-sitúan en territorio positivo, pero sus intervalos también se aproximan al cero, lo que es
-coherente con los $p$-valores marginales de la tabla. La conclusión es prudente:
-ningún modelo de esta
-escalera demuestra un IC robustamente distinto de cero, pero la evidencia disponible apunta
-de forma consistente en una sola dirección (los modelos simples por delante de Stockformer)
-y sitúa la señal de Stockformer en, o por debajo de, el nivel de ruido.
+La Figura~\ref{fig:ic-with-ci} acompaña esta lectura. El intervalo de Stockformer solapa
+el cero y queda en el extremo inferior de la escalera. Los modelos simples están en
+territorio positivo, pero sus intervalos también rozan el cero, lo que es coherente con un
+mercado eficiente, donde de precio y volumen públicos no se extrae un IC transversal
+grande y estable. El punto no es que los modelos simples tengan una señal potente, que no
+la tienen, sino que el modelo de un millón de parámetros no mejora a los de unos pocos y
+es el único con IC negativo.
 
-Conviene no sobreinterpretar esa consistencia direccional. Que los cinco modelos batan a
-Stockformer con el mismo signo es sugerente, pero no son cinco evidencias independientes: los
-tres lineales son casi colineales y los dos modelos de árboles comparten familia, de modo que
-el número efectivo de enfoques independientes es del orden de dos, no de cinco. El contraste
-estadísticamente correcto, inmune a esa dependencia entre modelos, es el test de
-signos temporal: para cada modelo, en qué fracción de los días su IC supera al de
-Stockformer. La Tabla~\ref{tab:power-signtest} lo recoge, junto con el contraste de Wilcoxon,
-el intervalo de confianza de la diferencia media de IC y el efecto mínimo detectable. El mejor
-modelo, el Lasso, supera a Stockformer en 130 de 236 días ($55{,}1\%$), con un
-$p$-valor del test de signos de $0{,}134$ a dos colas y un Wilcoxon de $0{,}108$; el resto
-queda entre el $50{,}8\%$ y el $53{,}8\%$. Ningún modelo cruza el umbral del $5\%$ por la
-unidad de observación correcta.
+Esa consistencia direccional no debe sobreinterpretarse. Que los cinco modelos superen a
+Stockformer con el mismo signo llama la atención, pero no son cinco evidencias
+independientes: los tres lineales son casi colineales y los dos modelos de árboles
+comparten familia, de modo que el número efectivo de enfoques independientes es del orden
+de dos. El contraste menos afectado por esa dependencia es la prueba de signos temporal,
+que mide para cada modelo en qué fracción de los días su IC supera al de Stockformer. La
+Tabla~\ref{tab:power-signtest} la recoge, junto con el contraste de Wilcoxon, el intervalo
+de confianza de la diferencia media de IC y el efecto mínimo detectable. El mejor modelo,
+el Lasso, supera a Stockformer en 130 de 236 días ($55{,}1\%$), con un $p$-valor de la
+prueba de signos de $0{,}134$ a dos colas y un Wilcoxon de $0{,}108$; el resto queda entre
+el $50{,}8\%$ y el $53{,}8\%$. Ningún modelo cruza el umbral del 5\,\% por la unidad de
+observación correcta.
 
 \input{tablas/power_signtest}
 
-Esta no-significancia es informativa cuando se lee a
-través de la potencia estadística. Con $n=236$ días y la desviación típica observada de las
-diferencias de IC, el efecto mínimo detectable (MDE) a una potencia del $80\%$ y un nivel del
-$5\%$ se sitúa, según el modelo, entre $0{,}031$ y $0{,}048$ en escala de $\Delta$IC. Todas
-las diferencias realmente observadas (entre $0{,}018$ y $0{,}032$) caen por debajo de
-su propio MDE, y el intervalo de confianza al $95\%$ de cada una incluye el cero. Es decir, el
-estudio está, por diseño, infradimensionado para resolver efectos del tamaño que este régimen
-permite: la ausencia de significancia individual no es ausencia de efecto, sino el reflejo
-honesto de una señal débil medida sobre una muestra corta y autocorrelacionada. Esta lectura
-es coherente con el estándar de \textcite{harvey2016crosssection}, que exige estadísticos $t$
-del orden de $3$ para declarar un factor genuino bajo multiplicidad de contrastes: con valores
-$t$ en torno a $1{,}5$--$1{,}9$, lo honesto es hablar de evidencia direccional, no de un
-hallazgo demostrado.
+Esta falta de significancia se entiende mejor a través de la potencia estadística. Con
+$n=236$ días y la desviación típica observada de las diferencias de IC, el efecto mínimo
+detectable a una potencia del 80\,\% y un nivel del 5\,\% está, según el modelo, entre
+$0{,}031$ y $0{,}048$ en escala de diferencia de IC. Todas las diferencias observadas
+(entre $0{,}018$ y $0{,}032$) caen por debajo de su propio efecto mínimo detectable, y el
+intervalo de confianza al 95\,\% de cada una incluye el cero. El estudio está, por diseño,
+infradimensionado para resolver efectos del tamaño que este régimen permite; la falta de
+significancia individual refleja una señal débil medida sobre una muestra corta y
+autocorrelacionada, no necesariamente la ausencia de todo efecto. Esta lectura sigue el
+estándar de \textcite{harvey2016crosssection}, que pide estadísticos $t$ del orden de 3
+para declarar un factor genuino bajo multiplicidad de contrastes; con valores $t$ en torno
+a $1{,}5$--$1{,}9$, lo que hay es evidencia direccional, no un hallazgo demostrado.
 
-La magnitud observada es la esperable, y eso funciona como control de sanidad.
-La banda de ruido que fijan los controles ($\pm 0{,}013$) es la vara de medir: el Lasso
-($+0{,}0238$) la supera y Stockformer ($-0{,}003$) no. Un IC sostenido por encima de $0{,}05$
-en un universo \textit{large-cap} tan arbitrado como el S\&P 500 sería, más que un signo de
-talento, un indicio de fuga de datos. La auditoría anti-fuga limpia
-(Sección~\ref{sec:met-leakage}) confirma que no la hay. El fundamento del hallazgo no es, por
-tanto, un único $p$-valor ni la unanimidad entre modelos correlacionados, sino la convergencia
-de tres lecturas honestas: el IC de Stockformer indistinguible de cero, la dirección
-consistente aunque no concluyente de los modelos simples, y una potencia que sitúa todos los
-efectos dentro de lo que el régimen permite resolver.
+La magnitud observada es, además, la esperable, y eso funciona como control de
+verosimilitud. La banda de ruido que fijan los controles ($\pm 0{,}013$) sirve de
+referencia, ya que el Lasso ($+0{,}0238$) la supera y Stockformer ($-0{,}003$) no. Un IC
+sostenido por encima de $0{,}05$ en un universo tan arbitrado como el S\&P 500 sería un
+indicio de fuga de datos. La auditoría de la sección~\ref{sec:met-leakage} confirma que no
+hay fuga que perjudique a Stockformer; la única detectada juega a su favor y aun así su IC
+es negativo. El hallazgo no se apoya, por tanto, en un único $p$-valor ni en la unanimidad
+entre modelos correlacionados, sino en tres lecturas que apuntan a lo mismo: el IC de
+Stockformer indistinguible de cero, la dirección consistente aunque no concluyente de los
+modelos simples, y una potencia que sitúa todos los efectos dentro de lo que el régimen
+permite resolver.
 
 \section{Modos de fallo de la transferencia}\label{sec:p1-fallo}
 
-Los resultados de las dos secciones anteriores dejan abierta una pregunta: ¿por qué
-no transfiere Stockformer? Para responderla hay que pasar de la constatación empírica a
-mapear cada observación a un mecanismo causal documentado en la literatura. Se identifican
-cuatro modos de fallo que, actuando de forma compuesta, explican la pérdida de señal al
-cruzar de China al S\&P 500.
+Los resultados anteriores dejan abierta la pregunta de por qué no aparece la señal. Para
+responderla hay que pasar de la constatación empírica a asociar cada observación a un
+mecanismo documentado en la literatura. Hay cuatro modos de fallo que, actuando juntos,
+explican la pérdida de señal al cruzar del mercado chino al S\&P 500.
 
-\paragraph{(a) Eficiencia de mercado: US institucional frente a China retail.}
-Stockformer fue calibrado sobre los índices CSI~300/500, en un mercado dominado por
-inversores minoristas, donde existen ineficiencias persistentes y patrones de comportamiento
-explotables por un modelo no lineal. El S\&P 500 es uno de los mercados más eficientes y
-arbitrados del mundo, dominado por inversores institucionales. Una señal que captura
-ineficiencias \textit{retail} en China no tiene contrapartida que explotar en
-el S\&P 500: el arbitraje la ha eliminado. Este es el modo de fallo más fundamental, y es
-coherente con que ningún modelo de la escalera, ni simple ni profundo, supere un IC de
-$0.025$.
+\paragraph{(a) Eficiencia de mercado.} Stockformer fue calibrado sobre los índices
+CSI~300/500, en un mercado dominado por inversores minoristas, con ineficiencias
+persistentes y patrones de comportamiento que un modelo no lineal puede explotar
+\autocite{liu2019size}. El S\&P 500 es uno de los mercados más eficientes y arbitrados del
+mundo, dominado por inversores institucionales. Una señal que captura ineficiencias
+minoristas en China encuentra poco que explotar en el S\&P 500, donde el arbitraje la ha
+eliminado. Este es el modo de fallo más básico, y es coherente con que ningún modelo de la
+escalera, ni simple ni profundo, supere un IC de $0{,}025$.
 
-\paragraph{(b) Insuficiencia de la señal OHLCV precio-volumen.}
-Las \textit{features} de Stockformer son esencialmente precio-volumen (Alpha360 es OHLCV con
-\textit{lags}). En un mercado eficiente, la información contenida en
-el historial de precio y volumen está, en gran medida, ya incorporada al precio. La propia
-escalera lo confirma: todos los modelos —lineales y de árboles— ven el mismo panel de
-\(\sim\!375\) variables (Alpha360 más los indicadores técnicos de Alpha158), y los árboles
-(LightGBM, XGBoost), pese a su mayor capacidad, no superan a los lineales sobre esos mismos
-insumos; enriquecer las \textit{features} dentro de la misma familia precio-volumen no rescata el IC. El problema no es la cantidad de
-\textit{features}, sino que la clase de información (OHLCV) es insuficiente a este
-horizonte en este mercado.
+\paragraph{(b) Insuficiencia de la señal de precio y volumen.} Las variables de
+Stockformer son esencialmente de precio y volumen (Alpha360 es ese tipo de información con
+retardos). En un mercado eficiente, la información del historial de precio y volumen está,
+en buena medida, ya incorporada al precio. La propia escalera lo confirma, ya que todos los
+modelos ven el mismo panel de 375 variables, y los árboles, pese a su mayor capacidad, no
+superan a los lineales sobre esos mismos insumos. El problema no está en la cantidad de
+variables, sino en que esa clase de información no basta a este horizonte en este mercado.
 
-\paragraph{(c) Microestructura: límites de precio que inflan el IC en China.}
-El mercado chino impone límites diarios de fluctuación de precio (\textit{price limits},
-típicamente $\pm 10\%$). Estos límites introducen una autocorrelación mecánica en los
-retornos (una acción que toca el límite tiende a continuar al día siguiente) que infla
-artificialmente el IC alcanzable por un modelo de precio-volumen. El S\&P 500 carece de
-estos límites, de modo que parte del IC reportado por Stockformer en su mercado de origen no
-proviene de poder predictivo genuino, sino de un artefacto de microestructura que no existe
-en el mercado de destino.
+\paragraph{(c) Microestructura.} El mercado chino impone límites diarios de fluctuación de
+precio. Estos límites introducen una autocorrelación mecánica en los retornos (una acción
+que toca el límite tiende a continuar al día siguiente) que infla el IC alcanzable por un
+modelo de precio y volumen. El S\&P 500 no tiene estos límites, de modo que parte del IC
+que Stockformer reporta en su mercado de origen no procede de poder predictivo genuino,
+sino de un artefacto de microestructura que no existe en el mercado de destino.
 
-\paragraph{(d) Dimensionalidad efectiva: ~400 observaciones transversales frente a
-$10^6$ parámetros.}
-En cada corte temporal, el panel ofrece del orden de 400 observaciones transversales
-efectivas (acciones del universo). Ajustar un modelo de aproximadamente un millón de
-parámetros sobre una sección transversal tan estrecha es una receta de sobreajuste: el
-modelo dispone de capacidad para memorizar ruido idiosincrático en lugar de aprender señal
-generalizable. Esto explica directamente por qué el modelo más complejo es el peor
-(Sección~\ref{sec:p1-ladder}) y por qué un Lasso de cinco parámetros, con su fuerte sesgo
-regularizador, generaliza mejor: la parsimonia es una virtud cuando los datos son escasos
-en la dimensión que importa.
+\paragraph{(d) Dimensionalidad efectiva.} En cada corte temporal, el panel ofrece del
+orden de 400 observaciones transversales efectivas frente a los del orden de un millón de
+parámetros del modelo. Ajustar un modelo de ese tamaño sobre una sección transversal tan
+estrecha tiende al sobreajuste, porque el modelo tiene capacidad para memorizar ruido
+idiosincrático en vez de aprender señal generalizable. Esto explica por qué el modelo más
+complejo es el peor (Sección~\ref{sec:p1-ladder}) y por qué un Lasso de cinco parámetros,
+con su fuerte sesgo regularizador, generaliza mejor.
 
-\paragraph{Contraste con los benchmarks reportados.}
-La literatura reciente reporta IC notablemente superiores para arquitecturas profundas,
-pero siempre sobre mercados distintos del S\&P 500.
-\textcite{fan2024stockmixer} reportan para StockMixer un IC del orden de $0.041$ sobre
-NASDAQ, y \textcite{li2024master} un IC del orden de $0.064$ para MASTER sobre CSI~300.
-Estas cifras, muy por encima de cualquier valor de la escalera de este trabajo, no contradicen el
-hallazgo: lo confirman. Son resultados \textit{in-market} (China u otros universos) que
-no transfieren al S\&P 500, tal como predicen los cuatro modos de fallo
-anteriores. La transferibilidad cross-market de los modelos de \textit{deep learning}
-financiero no puede presuponerse a partir de su desempeño en el mercado de calibración;
-debe demostrarse empíricamente, y en el caso de Stockformer sobre el S\&P 500 la evidencia
-es que no se produce.
+\paragraph{Contraste con los resultados reportados en la literatura.} La literatura
+reciente reporta IC bastante más altos para arquitecturas profundas, pero siempre sobre
+mercados distintos del S\&P 500. \textcite{fan2024stockmixer} reportan para StockMixer un
+IC del orden de $0{,}041$ sobre NASDAQ, y \textcite{li2024master} un IC del orden de
+$0{,}064$ para MASTER sobre CSI~300. Estas cifras, muy por encima de cualquier valor de la
+escalera de este trabajo, no contradicen el hallazgo, pues son resultados obtenidos en sus
+mercados de evaluación, que no tienen por qué trasladarse al S\&P 500, tal como sugieren
+los cuatro modos de fallo anteriores. La transferibilidad entre mercados de los modelos de
+aprendizaje profundo financiero no puede darse por hecha a partir de su desempeño en el
+mercado de calibración; debe demostrarse empíricamente, y en el caso de esta
+implementación de Stockformer sobre el S\&P 500 la evidencia disponible no la muestra.
 
-En conjunto, los cuatro modos de fallo no son alternativas excluyentes, sino mecanismos que
-se componen: un mercado más eficiente (a) reduce la señal explotable; la señal residual es
-de tipo OHLCV insuficiente a este horizonte (b); parte del IC de origen era un artefacto
-de microestructura inexistente en el destino (c); y la escasez de observaciones
-transversales frente a la capacidad del modelo (d) convierte cualquier señal débil en
-sobreajuste. El resultado neto es un IC $\approx -0.003$. Este diagnóstico cierra la
-Parte I y motiva la pregunta siguiente: si las redes complejas no transfieren, ¿qué
-sí genera retorno? El Capítulo~\ref{cap:parte2} muestra que la respuesta no está en
-una arquitectura más sofisticada, sino en una construcción de cartera cost-aware sobre una
-señal simple.
+En conjunto, los cuatro modos de fallo no son alternativas excluyentes, sino mecanismos
+que se suman: un mercado más eficiente (a) reduce la señal explotable; la señal que queda
+es de una clase de información insuficiente a este horizonte (b); parte del IC de origen
+era un artefacto de microestructura inexistente en el destino (c); y la escasez de
+observaciones transversales frente a la capacidad del modelo (d) convierte cualquier señal
+débil en sobreajuste. El resultado neto es un IC de $-0{,}003$. Este diagnóstico cierra la
+Parte~I y abre la pregunta del Capítulo~\ref{cap:parte2}. Si las redes complejas no
+aportan señal en este régimen, de dónde sale el retorno neto que sí se observa.

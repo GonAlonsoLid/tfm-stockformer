@@ -251,7 +251,7 @@ def main():
     ax.plot(full_bt.index, (1 + full_bt["gross"]).cumprod(), color="#7f8c8d", lw=1.2, label="Bruto")
     ax.plot(full_bt.index, (1 + full_bt["net"]).cumprod(), color="#c0392b", lw=2, label="Neto (8 bps/lado)")
     ax.axhline(1.0, color="black", lw=0.8, ls=":")
-    ax.set_title(f"Walk-forward OOS — Sharpe neto {full_sharpe:+.2f} ({summary['oos_weeks']} semanas)", fontsize=13)
+    ax.set_title(f"Walk-forward OOS: retorno acumulado bruto y neto ({summary['oos_weeks']} semanas)", fontsize=13)
     ax.set_xlabel("Fecha"); ax.set_ylabel("Retorno acumulado")
     ax.legend(fontsize=10); ax.grid(True, ls="--", alpha=0.4)
     fig.tight_layout(); fig.savefig(os.path.join(FIGURES_DIR, "weekly_oos_equity.png"), dpi=300); plt.close(fig)

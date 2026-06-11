@@ -81,10 +81,10 @@ def main():
         r"\caption{Búsqueda de señal para RQ2 sobre la misma ventana \textit{walk-forward} "
         r"de 311 semanas (2020--2026, incluye el \textit{momentum-crash} de 2021; "
         r"\textit{holdout}: últimas 104 semanas). Misma construcción \textit{cost-aware} "
-        r"(coste 8 bps/lado) para todas las señales. El reversal pierde incluso en bruto y "
-        r"los fundamentales no aportan; el momentum residual es la única señal con IC e "
+        r"(coste 8 bps/lado) para todas las señales. El reversal no aporta ni en bruto "
+        r"(Sharpe bruto prácticamente nulo) y los fundamentales no aportan; el momentum residual es la única señal con IC e "
         r"\textit{holdout} positivos, y su combinación con el \textit{ensemble} da el mejor "
-        r"Sharpe neto.}",
+        r"Sharpe neto. La columna \textit{Holdout} es el Sharpe neto anualizado sobre las 104 semanas reservadas.}",
         r"\label{tab:rq2-signal-search}", r"\small",
         r"\begin{tabular}{lrrrrr}", r"\toprule",
         r"Señal & Sharpe neto & $t_{\text{NW}}$ & \textit{Holdout} & Turnover & IC \\",
