@@ -1,4 +1,91 @@
-# Registro de cambios de la memoria (11 de junio de 2026)
+# Registro de cambios de la memoria
+
+## Quinta ronda (11 de junio de 2026)
+
+- La significancia estadística ya no tiene apartado propio: la antigua sección 5.2
+  desaparece (reorganización del autor) y queda una única mención de pasada dentro de
+  5.1, formulada sin restar validez a la hipótesis (la falta de significancia individual
+  se atribuye a la muestra corta y la señal débil; el patrón unánime de signo y la figura
+  de la escalera sostienen la lectura). La tabla de potencia (prueba de signos/MDE) sale
+  del documento; se mantiene la tabla de contrastes pareados.
+- Abstract en inglés separado en Capitulos/01_abstract.tex (reorganización del autor) y
+  alineado con la regla de significancia (sin menciones; mismo cierre que el resumen).
+- Anexo I.docx rellenado: título del proyecto (negrita, negro), curso académico
+  2025-2026, casilla marcada de uso de IA en Nivel 2 y descripción del uso concreto
+  (apoyo de estilo/redacción y síntesis bibliográfica; experimentos, código, datos y
+  conclusiones del autor). Pendiente de firmar y fechar. Revisa el texto de la
+  declaración antes de firmar, por si quieres matizarlo.
+- Recompilado: 66 páginas, sin errores ni referencias rotas.
+
+## Cuarta ronda (11 de junio de 2026)
+
+- Eliminada la sección 4.7 "Amenazas a la validez". La tabla de notación y siglas se
+  conserva, reubicada al final de 4.3 (Marco de evaluación). Referencias a la sección
+  eliminada corregidas en los capítulos 3, 4 y 7 (apuntan ahora a las limitaciones del
+  capítulo de discusión, que conservan ese contenido).
+
+- Eliminada la sección A.2 del apéndice (control de consistencia del marco de
+  evaluación); el apéndice queda solo con la tabla completa de la escalera.
+
+- Descripciones de las cinco figuras acortadas a una o dos líneas, igual que las tablas.
+- Separación caption-figura añadida (`\captionsetup[figure]{skip=12pt}` en preambulo.tex).
+- Portada: título con interlineado correcto (el `\baselineskip` ampliado y el `\par`
+  dentro del grupo ya estaban en main.tex; el PDF ahora lo recoge). Verificado
+  visualmente: título en tres líneas bien separadas.
+- Recompilado: 66 páginas, sin errores ni referencias rotas.
+
+## Tercera ronda (11 de junio de 2026)
+
+- Descripciones de todas las tablas acortadas a una o dos líneas (qué se muestra, ventana
+  y, si aplica, el coste o la nota de los 236 días de Stockformer); las definiciones de
+  términos quedan centralizadas en la tabla de notación 4.1 y en el texto.
+- Añadido el paquete caption en preambulo.tex con `\captionsetup[table]{skip=12pt}` para
+  separar la descripción del cuerpo de la tabla (antes quedaban pegadas).
+- Recompilado: 64 páginas, sin errores ni referencias rotas.
+
+## Segunda ronda (11 de junio de 2026, tarde)
+
+1. Tono rebajado a un lenguaje más simple (pasada menor en todos los capítulos),
+   manteniendo todo lo hecho en la primera ronda: ejemplos de sustituciones:
+   "invariante" → "salvaguarda"/"condiciones", "ruido idiosincrásico" → "ruido propio de
+   cada acción", "bandas endógenas" → "la propia solución genera bandas", "condición de
+   higiene" → "condición para que el libro sea de verdad neutral", "constatación
+   empírica" → "describir lo observado", "jerarquía de evidencia" → "tres niveles de
+   evidencia".
+
+2. Significancia estadística retirada de todo el documento salvo el capítulo 5:
+   - Cap. 6: sin menciones a la falta de significancia (intro, 6.4, 6.6); eliminado el
+     párrafo de multiplicidad/Bonferroni de 6.6.1; sin "no distinguible de cero", sin
+     "±0,49" en prosa y sin valores t en el texto (se mantienen en las tablas); el
+     criterio de selección queda como "t de Newey-West del retorno y coherencia
+     económica", sin listón de significancia; caption de la tabla modular sin el criterio
+     tNW>2.
+   - Resumen, conclusiones (8.1) y discusión: sin referencias a significancia; la mejora
+     del momentum residual se presenta como "el resultado más prometedor del trabajo,
+     pendiente de confirmarse con más datos".
+   - Cap. 5 (§5.2): única mención, condensada a tres párrafos ("de pasada"), con cierre
+     explícito: "Hecha aquí esta aclaración, el resto de la memoria no vuelve sobre ella".
+     Se mantienen las tablas 5.2 y 5.3.
+
+3. Capítulo 7 reestructurado como narrativa constructiva, fácil de seguir:
+   - 7.1 El punto de partida: por qué hay tan poca señal (sesgo-varianza + los cuatro
+     frenos que actúan a la vez, en lenguaje llano).
+   - 7.2 Las palancas hacia un resultado positivo (nueva, el corazón del capítulo): lista
+     numerada de las cinco palancas probadas: (1) simplificar el predictor, (2) abaratar
+     la explotación (rebalanceo semanal + costes dentro del optimizador), (3) mejorar la
+     señal con el momentum residual, (4) saber qué descartar, (5) información nueva
+     ortogonal al precio (pendiente). Cierre: el resultado positivo sale de apilar
+     palancas modestas, no de un modelo más grande.
+   - 7.3 Comparación con la literatura (condensada) y 7.4 Limitaciones (simplificadas,
+     sin significancia; último párrafo renombrado "Costes no contabilizados").
+
+4. Recompilado: 66 páginas, sin errores ni referencias rotas. Se respetan los recortes
+   hechos a mano por el autor (introducción sin secciones de contribución/organización,
+   resumen sin abstract en inglés, conectores ajustados).
+
+---
+
+# Primera ronda (11 de junio de 2026)
 
 Revisión mayor de la memoria aplicando la crítica del documento "Revisión crítica y plan
 de corrección del manuscrito sobre Stockformer y S&P 500" y las indicaciones adicionales

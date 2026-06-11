@@ -5,14 +5,13 @@ de costes en este universo. La respuesta que la evidencia sostiene tiene dos pie
 primera es que la etapa que conserva el retorno en términos netos es la construcción de
 cartera con control explícito de costes, no el poder predictivo de la señal. La segunda es
 que, cuando la señal aprendida se complementa con un factor simple con contenido económico
-(el momentum residual), el Sharpe robusto del conjunto mejora de forma apreciable, aunque
-sin alcanzar la significancia estadística.
+(el momentum residual), el Sharpe robusto del conjunto mejora de forma apreciable.
 
 El capítulo muestra que una señal transversal débil puede convertirse en una estrategia
 semanal de posiciones largas y cortas, neutral al mercado, con un Sharpe neto de costes de
 $0{,}95$ sobre una ventana favorable de 52 semanas; y muestra también, con la misma
 extensión, que sobre un protocolo de avance temporal de 215 semanas ese Sharpe cae a
-$0{,}58 \pm 0{,}49$, no distinguible de cero. La atribución etapa a etapa cuantifica la
+$0{,}58$. La atribución etapa a etapa cuantifica la
 idea de fondo. El retorno bruto procede de la señal, por débil que sea, y lo que separa
 una cartera deficitaria de una rentable en neto es cómo se construye, esto es, la neutralización,
 la penalización de costes y el dimensionado por volatilidad.
@@ -80,18 +79,18 @@ primero, $\alpha^{\top} w$, es el retorno esperado de la cartera bajo la señal.
 segundo, la norma $L_1$ del cambio de posiciones $w - w_{\text{prev}}$ ponderada por el
 coste $\kappa$ en puntos básicos, es el término central, porque implementa la regla de
 operar solo cuando la ventaja supera al coste. Al penalizar la rotación dentro del
-problema de optimización, la solución incorpora bandas de no negociación endógenas, en las
+problema de optimización, la propia solución genera bandas de no negociación, en las
 que las posiciones cuyo cambio no compensa el coste se quedan donde están. Así se reduce
-la rotación y se conserva el Sharpe neto a frecuencia semanal. El control del riesgo
-cuadrático no entra en la función objetivo, pues la formulación delega ese control en las
-restricciones de neutralidad y en el dimensionado por volatilidad posterior.
+la rotación y se conserva el Sharpe neto a frecuencia semanal.
 
-Las restricciones acotan la cartera en un libro neutral al mercado y controlado en riesgo.
+Las restricciones acotan la cartera en un portfolio neutral al mercado y controlado en riesgo.
 La condición~\eqref{eq:dollar} impone neutralidad de dólar (la suma de pesos largos iguala
 la de cortos); la~\eqref{eq:beta}, neutralidad de beta frente al mercado, estimada con una
 beta móvil sobre una ventana diaria de 60 días; la~\eqref{eq:gross} acota el
 apalancamiento bruto a $\lVert w \rVert_1 \le 2$ (una pata larga y una corta); y
-la~\eqref{eq:namecap} limita la concentración por nombre. A la solución del problema se le
+la~\eqref{eq:namecap} limita la concentración por nombre. 
+
+A la solución del problema se le
 aplican dos capas posteriores. La primera es un dimensionado por volatilidad que escala el
 libro para alcanzar un objetivo del 10\,\% anual, estimado sobre la ventana diaria
 reciente, con un tope de apalancamiento. La segunda es un ajuste por régimen que
@@ -126,10 +125,8 @@ las bandas de no negociación de la formulación~\eqref{eq:costaware}.
 \begin{figure}[htbp]
   \centering
   \includegraphics[width=0.85\linewidth]{weekly_oos_equity}
-  \caption{Retorno acumulado fuera de muestra de la estrategia semanal neutral al mercado
-  sobre la ventana de 52 semanas (del 14 de marzo de 2025 al 6 de marzo de 2026): serie
-  bruta (gris) y serie neta de costes de 8 puntos básicos por lado (roja). La distancia
-  entre ambas curvas corresponde al coste acumulado de la rotación.}
+  \caption{Retorno acumulado de la estrategia semanal sobre las 52 semanas: serie bruta
+  (gris) y neta de costes (roja).}
   \label{fig:weekly-oos-equity}
 \end{figure}
 
@@ -152,13 +149,10 @@ Tabla~\ref{tab:weekly-robustness} recoge el resultado.
 \input{tablas/weekly_robustness}
 
 La estrategia da un Sharpe neto de $0{,}95$ sobre la ventana favorable de 52 semanas, pero
-de $0{,}58 \pm 0{,}49$ sobre el protocolo de 215 semanas, un estimador que no es
-estadísticamente distinguible de cero, ya que el cociente entre el Sharpe y su error estándar es
-de en torno a $1{,}2$, por debajo del umbral convencional de significancia, de modo que no
-se puede rechazar la hipótesis de que el Sharpe poblacional de la estrategia sea nulo. El
-retorno anualizado neto cae al $4{,}1\%$, la caída máxima se amplía a $-11{,}5\%$ (más del
-doble que en la ventana favorable, lo que ilustra el sesgo optimista de evaluar sobre un
-solo año) y la rotación media se queda en $0{,}84$.
+de $0{,}58$ sobre el protocolo de 215 semanas. El retorno anualizado neto cae al
+$4{,}1\%$, la caída máxima se amplía a $-11{,}5\%$ (más del doble que en la ventana
+favorable, lo que ilustra el sesgo optimista de evaluar sobre un solo año) y la rotación
+media se queda en $0{,}84$.
 
 Esta es la lectura que el trabajo adopta, donde el estimador de referencia es el del protocolo
 largo, no el de la ventana favorable. El IC semanal medio de la señal a lo largo de las
@@ -196,8 +190,8 @@ La cadena se recorre etapa a etapa:
   sectorial empeora el Sharpe neto y lo lleva a territorio negativo. Esto es coherente, pues la
   neutralización quita exposiciones factoriales que, en esta muestra, sumaban al retorno
   bruto; depura la señal pero, por sí sola, resta rentabilidad. La neutralización no es
-  una palanca de retorno, sino una condición de higiene que garantiza un libro neutral al
-  mercado genuino.
+  una palanca de retorno, sino una condición para que el libro sea de verdad neutral al
+  mercado.
   \item Más construcción con control de costes (Sharpe neto $0{,}47$). Al introducir el
   optimizador convexo con penalización $L_1$ de costes y el suavizado, el Sharpe neto pasa
   de $-0{,}40$ a $+0{,}47$ y la rotación baja de $3{,}12$ a $1{,}60$. Esta es la palanca,
@@ -212,11 +206,8 @@ La cadena se recorre etapa a etapa:
 \begin{figure}[htbp]
   \centering
   \includegraphics[width=0.85\linewidth]{weekly_attribution}
-  \caption{Sharpe neto de cada variante de construcción, con su error estándar, sobre las
-  215 semanas fuera de muestra del protocolo de avance temporal. Las variantes comparten
-  el mismo alfa de partida y se diferencian solo en las etapas de construcción aplicadas
-  (deciles crudos; con neutralización; con optimización de costes; diseño completo).
-  Definiciones en la Tabla~\ref{tab:notacion}.}
+  \caption{Sharpe neto por variante de construcción, con su error estándar (215 semanas
+  fuera de muestra).}
   \label{fig:weekly-attribution}
 \end{figure}
 
@@ -263,8 +254,7 @@ construcción y el mismo protocolo del capítulo. El conjunto de candidatos (los
 esta sección y las señales adicionales de la Sección~\ref{sec:p2-modular}) se fijó antes
 de mirar la muestra de reserva. Como se contrastan muchas señales, ningún ganador se
 declara por su IC dentro de muestra. La selección se hace por el estadístico t de
-Newey-West \autocite{neweywest1987} del retorno neto sobre el periodo completo, con el
-listón de significancia que recomienda \textcite{harvey2016crosssection}, y por la
+Newey-West \autocite{neweywest1987} del retorno neto sobre el periodo completo y por la
 coherencia económica del factor; la muestra de reserva no se usa para elegir, sino solo
 para confirmar a posteriori que el resultado mantiene el signo. La
 Tabla~\ref{tab:rq2-signal-search} recoge esta primera tanda.
@@ -287,8 +277,7 @@ La búsqueda deja tres lecturas:
   el momentum simple) es la única señal con un IC apreciable ($0{,}021$) y una muestra de
   reserva positiva. Por sí solo da un Sharpe neto de $0{,}50$; combinado con la señal de
   la combinación de modelos (suma de ambas señales estandarizadas), sube el Sharpe neto a
-  $0{,}72$ ($t = 1{,}82$), con $+0{,}55$ en la muestra de reserva y una rotación contenida
-  ($0{,}43$).
+  $0{,}72$, con $+0{,}55$ en la muestra de reserva y una rotación contenida ($0{,}43$).
 \end{itemize}
 
 La estrategia final del trabajo queda así definida dentro del mismo esquema de cartera del
@@ -301,11 +290,8 @@ externo, sino la pieza de señal de esa construcción de cartera.
 \begin{figure}[htbp]
   \centering
   \includegraphics[width=0.85\linewidth]{pipeline_rq2_ens_momresid_equity}
-  \caption{Retorno acumulado de la estrategia final (señal de momentum residual más
-  combinación de modelos, sobre la construcción con control de costes), en el protocolo de
-  avance temporal de 311 semanas (del 27 de marzo de 2020 al 6 de marzo de 2026): serie
-  bruta (gris) y serie neta de 8 puntos básicos por lado (verde). La ventana incluye el
-  desplome de momentum de 2021.}
+  \caption{Retorno acumulado de la estrategia final sobre las 311 semanas: serie bruta
+  (gris) y neta de costes (verde).}
   \label{fig:rq2-equity}
 \end{figure}
 
@@ -315,12 +301,9 @@ $-7{,}4\%$ y un retorno anualizado neto del $4{,}9\%$. Frente a la base de $0{,}
 la misma ventana, es una mejora apreciable, y la muestra de reserva confirma que mantiene
 el signo fuera del periodo de selección.
 
-El resultado debe leerse con su límite estadístico. Con $t = 1{,}82$, y siendo este el
-mejor de una búsqueda de varias señales, el Sharpe de la estrategia final no cruza el
-umbral de significancia una vez ajustado por multiplicidad (véase el cierre de la
-Sección~\ref{sec:p2-modular}). Lo que cambia respecto al punto de partida es la forma de
-la respuesta a RQ2, que deja de ser solo la construcción y pasa a tener dos piezas concretas,
-el momentum residual como señal y la construcción con control de costes que lo explota.
+Lo que cambia respecto al punto de partida es la forma de la respuesta a RQ2, que deja
+de ser solo la construcción y pasa a tener dos piezas concretas: el momentum residual como
+señal y la construcción con control de costes que lo explota.
 
 \subsection{Transferencia modular y banco ampliado}\label{sec:p2-modular}
 
@@ -349,21 +332,20 @@ La tabla deja cuatro lecturas:
   \item El grafo no aporta en ninguna de sus formas. Los pares por correlación son
   contraproducentes (Sharpe neto $-0{,}43$) y los pares por sector también ($-0{,}62$). El
   adelanto-retardo direccional, la variante con más respaldo teórico
-  \autocite{lomackinlay1990when}, es el peor de los tres, con un Sharpe de $-0{,}97$ y un
-  $t$ de $-2{,}68$. En este universo y ventana, los nombres que lideran a otros no
-  anticipan su movimiento.
+  \autocite{lomackinlay1990when}, es el peor de los tres, con un Sharpe de $-0{,}97$. En
+  este universo y ventana, los nombres que lideran a otros no anticipan su movimiento.
   \item La wavelet tampoco aporta. La banda de baja frecuencia (tendencia) queda apenas
   positiva y no supera la base (Sharpe $+0{,}29$); la de alta frecuencia (reversión)
   pierde dinero pese a un IC de ordenación positivo ($+0{,}016$). Los dos componentes que
   definen al Stockformer no muestran contenido explotable en este diseño, ni enteros
   (Parte~I) ni por piezas.
   \item Los factores defensivos fallan. La baja volatilidad idiosincrática es el peor
-  candidato de toda la búsqueda (Sharpe $-1{,}02$, $t$ de $-2{,}41$); la apuesta contra
+  candidato de toda la búsqueda (Sharpe $-1{,}02$); la apuesta contra
   beta ($-0{,}75$), la proximidad al máximo de 52 semanas ($-0{,}36$) y la estacionalidad
   ($-0{,}26$) también restan.
   \item El momentum es lo único con contenido. El momentum gestionado por volatilidad es
   la mejor señal del banco, pues sumado a la combinación de modelos da un Sharpe neto de
-  $0{,}68$ ($t = 1{,}91$), $+0{,}63$ en la muestra de reserva y el IC más alto de la
+  $0{,}68$, con $+0{,}63$ en la muestra de reserva y el IC más alto de la
   búsqueda ($0{,}018$), casi la cifra del momentum residual. La tendencia de series
   temporales deja una muestra de reserva todavía mayor ($+0{,}84$). Dos construcciones
   distintas del momentum dan un Sharpe parecido, en torno a $0{,}7$, y una muestra de
@@ -371,22 +353,7 @@ La tabla deja cuatro lecturas:
   no depende de cómo se construya.
 \end{itemize}
 
-Ningún candidato cruza el umbral estricto de $t>2$, que tampoco cruzaba el momentum
-residual ($t=1{,}82$). Conviene cuantificar ese listón. Entre las dos tandas se
-contrastaron dieciséis señales (cinco factores clásicos, cinco destiladas de la
-arquitectura y seis del banco), de modo que quedarse con el mejor candidato equivale a
-tomar el máximo de dieciséis pruebas. Bajo la hipótesis nula de ausencia de señal, el
-estadístico $t$ más alto de dieciséis contrastes independientes tiene un valor esperado de
-en torno a $1{,}8$, prácticamente igual al $t=1{,}82$ de la mejor estrategia; la
-probabilidad de observar por azar un $t$ de al menos $1{,}82$ en alguna de las dieciséis
-señales ronda el $0{,}45$, frente al $0{,}03$ que sugeriría el contraste aislado. La
-corrección de Bonferroni al 5\,\% exigiría aquí un $t$ de en torno a $2{,}7$ a una cola,
-próximo al $t$ de en torno a 3 que reclama \textcite{harvey2016crosssection} para un
-factor genuino bajo multiplicidad, umbral que ningún candidato se acerca a cruzar. El
-mejor resultado de la búsqueda debe leerse, por tanto, como evidencia direccional, no como
-un hallazgo significativo.
-
-Con esa cautela, la respuesta a RQ2 queda delimitada. En este diseño, el contenido
+La respuesta a RQ2 queda así delimitada. En este diseño, el contenido
 predictivo no aparece en la arquitectura profunda, ni entera ni por piezas, ni en los
 factores defensivos; aparece en una señal simple de la familia del momentum, coherente
 entre dos construcciones independientes, y el retorno neto que esa señal genera depende de

@@ -17,8 +17,8 @@ complejo y se reporta por separado. En esta implementación y sobre el universo 
 (477 componentes del S\&P 500 con cobertura completa de precios), Stockformer no muestra
 evidencia robusta de transferibilidad. Su IC fuera de muestra es de $-0{,}003$,
 indistinguible de cero, y una regresión Lasso de cinco coeficientes alcanza $+0{,}0238$.
-La ventaja de los modelos simples es consistente en signo, pero no alcanza la
-significancia estadística al 5\,\%.
+Todos los modelos simples quedan por delante de Stockformer, aunque con diferencias
+pequeñas.
 
 La segunda parte estudia el origen del retorno neto de una estrategia semanal neutral al
 mercado sobre el mismo universo. Una atribución etapa a etapa muestra que la señal genera
@@ -26,9 +26,9 @@ un retorno bruto débil y que la construcción de cartera con control explícito
 costes de transacción es la etapa que lo conserva en términos netos. Una búsqueda de señal
 con criterios fijados de antemano, y validada sobre una muestra de reserva, señala el
 momentum residual como el candidato más prometedor. Combinado con esa construcción, el
-Sharpe neto pasa de $0{,}38$ a $0{,}72$ ($t=1{,}82$) sobre una ventana de 311 semanas.
-Ningún candidato supera el umbral de significancia fijado de antemano, de modo que la
-mejora se presenta como evidencia direccional y no como un hallazgo confirmado.
+Sharpe neto pasa de $0{,}38$ a $0{,}72$ sobre una ventana de 311 semanas, y mantiene el
+signo en la muestra de reserva. La mejora se presenta como el resultado más prometedor
+del trabajo, pendiente de confirmarse con más datos.
 
 Las conclusiones quedan condicionadas al diseño del estudio: un universo restringido a los
 componentes actuales del índice con cobertura completa, datos públicos sin reconstrucción

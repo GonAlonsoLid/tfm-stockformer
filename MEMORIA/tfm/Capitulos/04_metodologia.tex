@@ -9,9 +9,8 @@ pasos usan una misma infraestructura de datos, variables, evaluación y control 
 información. Describirla una sola vez, antes de los resultados, hace homogénea la
 comparación entre modelos, porque todos ven los mismos datos, la misma alineación temporal
 y el mismo instrumento de medida, y lo único que cambia de un modelo a otro es el modelo. El
-capítulo se cierra con dos elementos que condicionan la lectura de todo lo que sigue, una
-tabla de notación y siglas (Tabla~\ref{tab:notacion}) y una sección de amenazas a la
-validez (Sección~\ref{sec:met-amenazas}).
+capítulo incluye además una tabla de notación y siglas (Tabla~\ref{tab:notacion}) con los
+términos que usan los capítulos de resultados.
 
 \section{El universo de datos del S\&P 500 con cobertura completa}\label{sec:met-datos}
 
@@ -32,8 +31,8 @@ actuales con cobertura completa no se reconstruye la composición histórica del
 los valores excluidos durante el periodo. Una base de investigación como CRSP, que
 documenta valores activos e inactivos, bajas de cotización e historial libre de sesgo de
 supervivencia \autocite{crsp2025stock}, evitaría este problema; al no estar disponible
-para este trabajo, el sesgo se asume y se discute como amenaza a la validez en la
-Sección~\ref{sec:met-amenazas}. La segunda consecuencia es la elección del mercado de
+para este trabajo, el sesgo se asume y se discute en las limitaciones
+(Sección~\ref{sec:d-limitaciones}). La segunda consecuencia es la elección del mercado de
 destino. El Stockformer se calibró sobre acciones chinas de clase A (índices CSI~300 y
 CSI~500), un mercado cuya microestructura (límites diarios de precio, presencia minorista
 alta, restricciones a la venta en corto) es muy distinta de la del segmento de gran
@@ -51,7 +50,7 @@ información y en la cartera es la del último paso, alineada con esta etiqueta 
 panel se carga en una estructura inmutable con las variables, las etiquetas, el
 calendario, la lista de valores y los índices de corte de la partición temporal.
 
-\paragraph{Alineación variable-etiqueta.} El invariante central contra fugas de
+\paragraph{Alineación variable-etiqueta.} La salvaguarda central contra fugas de
 información del panel es el desfase de 60 filas entre la rejilla bruta de precios y el
 panel emparejado. Las variables Alpha360 necesitan 60 retardos para estar definidas, así
 que las primeras 60 filas del panel bruto se descartan, y la primera fila de variables
@@ -98,13 +97,6 @@ de 2020 al 6 de marzo de 2026), que incluye el desplome de momentum de 2021; de 
 seleccionar señales sino solo para confirmar el signo del resultado. En ambos casos la
 ventana inicial más las semanas fuera de muestra suman la longitud del panel.
 
-El protocolo es purgado, porque entre el final del tramo de entrenamiento y el inicio del
-de predicción media siempre el horizonte de la etiqueta, así que ninguna observación de
-entrenamiento solapa con el periodo evaluado. Y es embargado porque el modelo nunca ve
-información posterior al instante de la decisión. Tratar así el solapamiento temporal de
-etiquetas es práctica estándar en aprendizaje automático financiero
-\autocite{deprado2018advances}.
-
 \paragraph{Por qué la complejidad admisible está acotada.} Hay un dato cuantitativo que
 condiciona toda la estrategia de modelado. Aunque el panel tiene 477 acciones y centenares
 de fechas (decenas de miles de pares fecha-acción), las observaciones transversales
@@ -112,7 +104,7 @@ efectivas son muchas menos. Las acciones de un mismo día comparten un factor de
 dominante y comovimientos sectoriales, y están muy correlacionadas dentro de cada fecha;
 el número de fechas independientes es, en la práctica, del orden de unos pocos cientos,
 y los grados de libertad efectivos quedan muy por debajo de lo que sugiere la entrada al
-modelo. Un modelo con muchos parámetros sobreajusta el ruido idiosincrásico antes de
+modelo. Un modelo con muchos parámetros se ajusta al ruido propio de cada acción antes de
 capturar señal real. Este límite motiva la hipótesis de parsimonia de la
 sección~\ref{sec:met-ladder} y la consigna de consolidar variables en lugar de
 acumularlas de la sección~\ref{sec:met-variables}, y es coherente con la literatura de
@@ -178,8 +170,7 @@ centenares.
 
 \section{Marco de evaluación}\label{sec:met-harness}
 
-Todos los modelos se miden con un único instrumento de evaluación (un marco común, en
-inglés harness), compartido por los modelos lineales, los de árboles y el Stockformer. Que
+Todos los modelos se miden con un único instrumento de evaluación, compartido por los modelos lineales, los de árboles y el Stockformer. Que
 la medida sea idéntica para todos hace la comparación consistente. El marco recibe dos
 paneles alineados (la predicción y la etiqueta realizada, ambos en el formato fechas por
 valores) y devuelve el conjunto completo de métricas que usa la memoria. La metodología
@@ -222,6 +213,43 @@ desviación muestral), caída máxima, retorno total y alfa y beta frente a una 
 del mercado. La advertencia metodológica, que se desarrolla en la
 sección~\ref{sec:met-loss}, es que el modelo de mejor IC no es necesariamente el de mejor
 retorno neto.
+
+La Tabla~\ref{tab:notacion} resume la notación y las siglas que se usan en los
+capítulos de resultados.
+
+\begin{table}[htbp]
+\centering
+\caption{Notación y siglas empleadas en los capítulos de resultados.}
+\label{tab:notacion}
+\small
+\begin{tabular}{lp{10.2cm}}
+\toprule
+Término & Definición \\
+\midrule
+IC (rank IC) & Coeficiente de información de rangos: correlación de Spearman, por fecha,
+entre el orden predicho y el retorno realizado. \\
+ICIR & Cociente entre la media y la desviación de la serie de IC; mide estabilidad. \\
+$t_{\text{NW}}$ & Estadístico t del retorno medio con errores estándar de Newey-West,
+robustos a autocorrelación \autocite{neweywest1987}. \\
+Fuera de muestra (OOS) & Periodo no usado para entrenar ni seleccionar el modelo. \\
+Muestra de reserva & Tramo final reservado (en inglés, holdout) que no interviene en la
+selección de señales; solo confirma el signo del resultado. \\
+Avance temporal & Protocolo de evaluación (en inglés, walk-forward) con reentrenamiento
+periódico y predicción siempre posterior al entrenamiento. \\
+Sharpe bruto / neto & Ratio de Sharpe anualizado antes / después de costes de
+transacción. \\
+Caída máxima & Mayor pérdida acumulada desde un máximo de la curva de capital. \\
+Rotación & Suma de cambios absolutos de posición por rebalanceo (sobre exposición
+bruta 2). \\
+pb & Puntos básicos; el coste asumido es de 8 pb por lado en la Parte~II y 10 pb en la
+escalera. \\
+Combinación de modelos & Promedio de las predicciones de LightGBM y red elástica (en
+inglés, ensemble) usado como señal base de la Parte~II. \\
+Momentum residual & Momentum de los retornos residualizados frente al mercado
+\autocite{blitz2011residual}. \\
+\bottomrule
+\end{tabular}
+\end{table}
 
 \section{La escalera de complejidad}\label{sec:met-ladder}
 
@@ -310,7 +338,7 @@ de dónde viene el retorno neto (la atribución de construcción, Parte~II).
 
 Un resultado negativo solo es defendible si se descarta que sea un artefacto: un fallo de
 alineación, una fuga de información o un error de procesamiento. Por eso, antes de
-comparar nada, se pasa una auditoría que comprueba seis invariantes. Cinco se cumplen. La
+comparar nada, se pasa una auditoría que comprueba seis condiciones. Cinco se cumplen. La
 sexta detecta una fuga que favorece al modelo complejo y que se mantiene y documenta como
 tal:
 
@@ -349,73 +377,3 @@ solo se reordena información anterior al instante de predicción. La descomposi
 etiqueta, que sí mezclaría pasos futuros, se calcula pero no se usa como objetivo: los
 cabezales se entrenan contra el retorno y el signo crudos. Por tanto no entra fuga ni en
 el entrenamiento ni en el coeficiente de información.
-
-\section{Amenazas a la validez}\label{sec:met-amenazas}
-
-Las decisiones de diseño descritas en este capítulo delimitan lo que los resultados pueden
-y no pueden sostener. Antes de presentar resultados conviene dejar explícitas las cinco
-amenazas principales; el capítulo~\ref{cap:discusion} las retoma con más detalle.
-
-La primera es el universo de datos. El panel usa los componentes actuales del S\&P 500 con
-cobertura completa, descargados de una fuente gratuita, sin reconstrucción histórica del
-índice ni bajas de cotización. Esto introduce sesgo de supervivencia y aleja el panel del
-estándar de las bases de investigación \autocite{crsp2025stock}. Las conclusiones se
-formulan condicionadas a este universo.
-
-La segunda es la fuga del grafo. La única incidencia de la auditoría
-(sección~\ref{sec:met-leakage}) se mantiene de forma deliberada y favorece al modelo
-complejo. Los resultados principales de la Parte~I incluyen esa ventaja; la lectura
-correcta es que el resultado negativo se obtiene a pesar de ella.
-
-La tercera es la ausencia de un control de reproducción en el mercado de origen. No se ha
-verificado que esta implementación reproduzca el coeficiente de información que el modelo
-original reporta sobre los índices chinos. Sin ese control, la ausencia de transferencia
-observada no puede separarse del todo de un posible fallo de reimplementación, y por eso
-las conclusiones se expresan siempre como propiedades de esta implementación.
-
-La cuarta es la variabilidad no medida del Stockformer. El modelo se evalúa con una única
-semilla y con una función de pérdida adaptada respecto de la original
-(sección~\ref{sec:met-loss}). No se dispone de varianza entre ejecuciones, de modo que el
-resultado corresponde a una realización de una variante del modelo.
-
-La quinta afecta a los criterios fijados de antemano. La búsqueda de señal de la Parte~II
-usa criterios de éxito definidos antes de evaluar el tramo final (estadístico t de
-Newey-West \autocite{neweywest1987} mayor que 2 y Sharpe positivo en la muestra de
-reserva). Estos criterios no están depositados en un registro público externo; quedan
-recogidos, junto con la configuración de los experimentos, en el repositorio de código que
-acompaña a la memoria, de modo que el término exacto es criterios fijados de antemano y
-documentados, no un prerregistro formal.
-
-\begin{table}[htbp]
-\centering
-\caption{Notación y siglas empleadas en los capítulos de resultados.}
-\label{tab:notacion}
-\small
-\begin{tabular}{lp{10.2cm}}
-\toprule
-Término & Definición \\
-\midrule
-IC (rank IC) & Coeficiente de información de rangos: correlación de Spearman, por fecha,
-entre el orden predicho y el retorno realizado. \\
-ICIR & Cociente entre la media y la desviación de la serie de IC; mide estabilidad. \\
-$t_{\text{NW}}$ & Estadístico t del retorno medio con errores estándar de Newey-West,
-robustos a autocorrelación \autocite{neweywest1987}. \\
-Fuera de muestra (OOS) & Periodo no usado para entrenar ni seleccionar el modelo. \\
-Muestra de reserva & Tramo final reservado (en inglés, holdout) que no interviene en la
-selección de señales; solo confirma el signo del resultado. \\
-Avance temporal & Protocolo de evaluación (en inglés, walk-forward) con reentrenamiento
-periódico y predicción siempre posterior al entrenamiento. \\
-Sharpe bruto / neto & Ratio de Sharpe anualizado antes / después de costes de
-transacción. \\
-Caída máxima & Mayor pérdida acumulada desde un máximo de la curva de capital. \\
-Rotación & Suma de cambios absolutos de posición por rebalanceo (sobre exposición
-bruta 2). \\
-pb & Puntos básicos; el coste asumido es de 8 pb por lado en la Parte~II y 10 pb en la
-escalera. \\
-Combinación de modelos & Promedio de las predicciones de LightGBM y red elástica (en
-inglés, ensemble) usado como señal base de la Parte~II. \\
-Momentum residual & Momentum de los retornos residualizados frente al mercado
-\autocite{blitz2011residual}. \\
-\bottomrule
-\end{tabular}
-\end{table}

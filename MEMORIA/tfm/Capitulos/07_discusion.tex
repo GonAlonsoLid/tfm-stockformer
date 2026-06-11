@@ -1,79 +1,80 @@
 \chapter{Discusión}\label{cap:discusion}
 
-Las dos partes del cuerpo empírico (la ausencia de evidencia de transferencia en el
-Capítulo~\ref{cap:parte1} y la atribución del retorno neto en el
-Capítulo~\ref{cap:parte2}) admiten una lectura conjunta sobre dónde está, y dónde no, el
-retorno en la selección transversal de acciones de gran capitalización a horizonte
-semanal. La discusión se organiza en cuatro secciones. La Sección~\ref{sec:d-simples}
-explica por qué los modelos simples rinden mejor en este régimen. La
-Sección~\ref{sec:d-compuesto} explica por qué no es plausible que una mejora aislada
-recupere el coeficiente de información. La Sección~\ref{sec:d-benchmarks} compara las
-cifras del trabajo con las reportadas en la literatura. La
-Sección~\ref{sec:d-limitaciones} acota el alcance de las conclusiones.
+Este capítulo ordena la lectura de los resultados. El punto de partida es el hallazgo de
+la Parte~I: en este universo hay muy poca señal explotable, y un predictor más grande no
+la encuentra. A partir de ahí, el trabajo no se queda en el resultado negativo, sino que
+explora sobre qué palancas se puede apoyar la búsqueda de un resultado positivo.
 
-\section{Por qué los modelos simples rinden mejor}\label{sec:d-simples}
+\section{El punto de partida: por qué hay tan poca señal}\label{sec:d-simples}
 
 El resultado central de la Parte~I es que el IC no crece con la complejidad del modelo. Un
 Lasso de cinco parámetros alcanza un IC de $+0{,}0238$, LightGBM se queda en $+0{,}0136$ y
 Stockformer, con del orden de un millón de parámetros, cae a $-0{,}003$. Que el modelo más
-expresivo sea el peor no es una anomalía de este panel; es, en el dominio de la selección
-transversal de acciones, un fenómeno documentado por \textcite{gu2020empirical} y
-confirmado en datos recientes por \textcite{rahimikia2025machine}, ya que la ganancia del
-aprendizaje automático en valoración de activos procede sobre todo de no linealidades
-suaves y de la regularización, no de la profundidad arquitectónica.
+expresivo sea el peor no es una rareza de este panel; es un patrón documentado en la
+selección transversal de acciones \autocite{gu2020empirical,rahimikia2025machine}: la
+ganancia del aprendizaje automático en este dominio viene de la regularización, no de la
+profundidad.
 
-La explicación es un argumento clásico de sesgo y varianza, aplicado a la geometría del
-problema. La unidad de información estadística no es la observación diaria, sino la
-sección transversal. En cada corte temporal, el modelo tiene del orden de 400
-observaciones efectivas de las que extraer una ordenación, y esas secciones están además
-muy correlacionadas en el tiempo, así que el número de muestras independientes es todavía
-menor. Ajustar un modelo de en torno a un millón de parámetros sobre una dimensión
-efectiva tan estrecha es situarse en el régimen de alta varianza, donde el modelo tiene
-capacidad de sobra para memorizar el ruido idiosincrático de cada sección transversal, y
-eso es compatible con un IC fuera de muestra nulo o negativo. El Lasso está en el extremo
-opuesto, ya que su penalización $L_1$ impone un sesgo fuerte que selecciona apenas cinco
-coeficientes; sacrifica capacidad expresiva a cambio de una varianza muy baja, y en un
-régimen con pocos datos en la dimensión que importa, ese canje sale a favor.
+La explicación es sencilla. La unidad de información relevante no es la observación
+diaria, sino la sección transversal: en cada fecha el modelo dispone de unas 400 acciones
+de las que extraer una ordenación, y esas secciones se parecen mucho de un día al
+siguiente, así que el número de muestras realmente independientes es pequeño. Un modelo de
+un millón de parámetros ajustado sobre tan pocos datos útiles acaba memorizando ruido, y
+eso es compatible con un IC fuera de muestra nulo o negativo. El Lasso hace lo contrario:
+acepta quedarse con cinco coeficientes a cambio de no perseguir el ruido, y en un mercado
+con poca señal ese intercambio sale a cuenta.
 
-Este argumento es específico del régimen, no una condena universal de las redes profundas.
-Stockformer se calibró sobre un mercado con ineficiencias minoristas persistentes, no
-linealidades explotables y artefactos de microestructura que elevan el IC alcanzable
-(Sección~\ref{sec:d-benchmarks}); en ese entorno, la capacidad adicional encuentra señal
-que ajustar. El segmento de gran capitalización estadounidense es el régimen inverso, un
-mercado eficiente y arbitrado donde la señal explotable es tenue y la sección transversal
-estrecha. La profundidad rinde donde hay señal abundante que aprender, y penaliza donde la
-señal es tenue.
+A esto se suma que el problema no tiene un único origen, sino cuatro que actúan a la vez:
+el mercado de destino es más eficiente y deja menos señal que explotar; la información de
+precio y volumen está en buena parte ya incorporada al precio a este horizonte; parte del
+IC del mercado de origen era un artefacto de sus límites diarios de precio, que no existen
+en el S\&P 500; y la sección transversal es estrecha frente a la capacidad del modelo. Por
+eso ningún arreglo aislado (otra pérdida, un grafo dinámico, más variables, otro protocolo
+de validación) recupera la señal: cada arreglo toca uno de los cuatro frenos y deja
+puestos los otros tres. Esto no es una condena de las redes profundas en general; en el
+mercado chino, con ineficiencias persistentes, la capacidad adicional sí encuentra señal
+que ajustar. Aquí no la hay.
 
-\section{El efecto compuesto de los modos de fallo}\label{sec:d-compuesto}
+\section{Las palancas hacia un resultado positivo}\label{sec:d-palancas}
 
-Un lector escéptico podría objetar que el resultado de Stockformer se debe a un único
-factor corregible (una pérdida mal elegida, un grafo estático, unas variables pobres o un
-protocolo de validación optimista) y que la corrección adecuada recuperaría el IC. El
-análisis de la Parte~I responde en parte a esa objeción, porque la escalera muestra que ni
-más variables ni más capacidad llevan la señal a territorio positivo robusto. Esta sección
-explica por qué, dado que los modos de fallo no actúan en paralelo, sino en serie.
+Aceptado ese punto de partida, la pregunta práctica es qué se puede hacer con tan poca
+señal. El trabajo prueba cinco palancas, y conviene enumerarlas con claridad porque juntas
+forman la respuesta constructiva de la memoria.
 
-La idea de fondo es una cadena de cuellos de botella multiplicativos. Cada arreglo ataca
-un modo de fallo distinto. La pérdida de ordenación alinea la función objetivo con la
-métrica transversal; el grafo dinámico relaja el supuesto de relaciones estáticas; las
-variables enriquecidas amplían la información de entrada; el protocolo de avance temporal
-quita el sesgo de una partición fija. Pero cada arreglo solo libera el cuello de botella
-que aborda y deja intactos los demás. Si la señal explotable es escasa porque el mercado
-es eficiente (modo a), de poco sirve alinear la pérdida con la ordenación, porque no hay
-orden genuino que ordenar mejor. Si la clase de información de precio y volumen no basta a
-este horizonte (modo b), enriquecer las variables dentro de esa misma clase no añade
-señal, como muestra la escalera. Si parte del IC del mercado de origen era un artefacto de
-microestructura inexistente en el destino (modo c), ningún cambio arquitectónico puede
-recuperar una señal que nunca fue transferible. Y si la dimensión transversal efectiva es
-de unos 400 nombres frente a un millón de parámetros (modo d), todo lo anterior se ve
-amplificado por el sobreajuste.
+\begin{enumerate}
+  \item Simplificar el predictor. Si la complejidad no compra IC, lo razonable es un
+  modelo pequeño y regularizado. La escalera de la Parte~I lo confirma, y la Parte~II lo
+  aplica usando como señal base una combinación de dos modelos simples (LightGBM y red
+  elástica). Esta palanca no produce una señal fuerte, pero sí una señal utilizable y
+  barata de mantener.
+  \item Abaratar la explotación de la señal. Es la palanca que más resultado neto aporta.
+  Tiene dos piezas: rebalancear cada semana en lugar de cada día, lo que divide la
+  rotación (y con ella los costes) por un factor de en torno a cinco, y meter el coste de
+  transacción dentro del optimizador de cartera, que solo opera cuando la ganancia
+  esperada compensa el coste. La atribución de la Sección~\ref{sec:p2-atribucion} lo
+  cuantifica: con la misma señal, la cartera ingenua de deciles no gana nada en neto, y la
+  construcción con control de costes lleva el Sharpe a $0{,}58$.
+  \item Mejorar la señal con un factor simple. Fijada la construcción, la búsqueda de la
+  Sección~\ref{sec:p2-signal} prueba una lista cerrada de factores con sentido económico.
+  El momentum residual es el que aporta: sumado a la señal base sube el Sharpe neto de
+  $0{,}38$ a $0{,}72$ sobre 311 semanas y mantiene el signo en la muestra de reserva. Que
+  dos construcciones distintas del momentum den un resultado parecido refuerza que el
+  contenido está en el factor, no en su implementación concreta.
+  \item Saber qué descartar. Parte del valor de la búsqueda está en lo que queda fuera.
+  Las piezas del Stockformer reducidas a señales simples (grafo y wavelet), los factores
+  defensivos (baja volatilidad, apuesta contra beta), la estacionalidad y la reversión de
+  corto plazo no aportan en este universo (Sección~\ref{sec:p2-modular}). Descartarlas con
+  un protocolo común evita gastar esfuerzo donde no hay nada.
+  \item Buscar información nueva. La señal de precio y volumen da lo que da; las palancas
+  anteriores la aprovechan, pero no la amplían. La siguiente palanca razonable es añadir
+  fuentes ortogonales al precio (sentimiento de noticias, volatilidad implícita por
+  acción), y queda planteada como trabajo futuro en el
+  Capítulo~\ref{cap:conclusiones}.
+\end{enumerate}
 
-El producto de varios factores, cada uno cercano a cero, es cercano a cero. Esta es la
-razón estructural por la que no es plausible que una mejora aislada recupere el IC, pues
-corregir un solo factor de un producto de factores próximos a cero no cambia el resultado.
-Bajo este diseño, la ausencia de señal del modelo no parece deberse a un defecto puntual
-de configuración, sino a que varios mecanismos de pérdida de señal actúan a la vez, y cada
-uno bastaría por sí solo para acercar el IC a cero.
+La lectura conjunta es simple: el resultado positivo del trabajo no sale de un modelo más
+grande, sino de apilar palancas modestas que se refuerzan, esto es, un predictor simple, una
+explotación barata de la señal y un factor con contenido económico encima de esa base.
 
 \section{Comparación con los resultados de la literatura}\label{sec:d-benchmarks}
 
@@ -81,34 +82,24 @@ Las cifras de IC de la escalera (un máximo de $+0{,}0238$ para el Lasso) son mo
 frente a las que la literatura reciente reporta para arquitecturas profundas.
 \textcite{fan2024stockmixer} comunican para StockMixer un IC del orden de $0{,}041$ sobre
 NASDAQ, y \textcite{li2024master} un IC del orden de $0{,}064$ para MASTER sobre CSI~300.
-A primera vista, esta brecha podría leerse como prueba de que los modelos, o el marco de
-evaluación, son deficientes. Hay dos consideraciones que apuntan a otra lectura, ya que esas
-cifras proceden de regímenes distintos y no son directamente comparables.
+Esa brecha no indica que los modelos o el marco de evaluación de este trabajo sean
+deficientes; indica que las cifras proceden de mercados distintos y no son directamente
+comparables.
 
-La primera es de eficiencia de mercado. El IC de MASTER se obtiene sobre el CSI~300, un
-mercado dominado por inversores minoristas con ineficiencias persistentes; el de
-StockMixer, sobre el NASDAQ, un universo más amplio que el de las mayores
-capitalizaciones del S\&P 500. La señal explotable en esos entornos es mayor que en el
-segmento de gran capitalización estadounidense. Esperar que un IC obtenido en China se
-reproduzca en el S\&P 500 es dar por supuesta la transferibilidad entre mercados, que es
-justo el supuesto que la Parte~I somete a prueba.
-
-La segunda afecta a la ejecutabilidad del IC reportado. El mercado chino impone límites
-diarios de fluctuación de precio. Una acción que toca su límite introduce una
-autocorrelación mecánica en los retornos que infla el IC alcanzable por un modelo de
-precio y volumen sin que ese IC sea necesariamente operable, porque cuando la señal querría
-operar al límite, el mercado está bloqueado y la operación no se ejecuta. Una parte del IC
-de los resultados de mercados con límites de precio puede ser, por tanto, un artefacto no
-ejecutable. El S\&P 500 no tiene esos límites, así que un IC medido en él, aunque más
-bajo, es más representativo de lo que un sistema real podría obtener. La comparación de IC
-entre mercados con microestructuras distintas es una comparación entre regímenes, no una
-comparación de calidad de modelos en igualdad de condiciones.
+Hay dos razones. La primera es la eficiencia del mercado: el CSI~300 está dominado por
+inversores minoristas y tiene ineficiencias persistentes, y el NASDAQ es un universo más
+amplio que el de las mayores capitalizaciones del S\&P 500; en ambos hay más señal
+explotable que aquí. La segunda es la ejecutabilidad: los límites diarios de precio del
+mercado chino introducen una autocorrelación mecánica que infla el IC medible, pero esa
+parte del IC no siempre se puede operar, porque cuando la señal querría comprar, la acción
+está bloqueada en el límite. Un IC medido en el S\&P 500, aunque más bajo, se parece más a
+lo que un sistema real podría capturar. Comparar IC entre mercados con microestructuras
+distintas es comparar regímenes, no calidad de modelos.
 
 \section{Limitaciones}\label{sec:d-limitaciones}
 
 Las limitaciones siguientes no son un descargo, sino las condiciones de validez de los
-hallazgos, y la mayoría se adelantaron en la Sección~\ref{sec:met-amenazas}. Aquí se
-desarrollan y se ordenan.
+hallazgos. Se desarrollan y se ordenan a continuación.
 
 \paragraph{Universo de datos y sesgo de supervivencia.} El universo lo forman los
 componentes actuales del S\&P 500 con cobertura completa de precios, descargados de Yahoo
@@ -116,27 +107,26 @@ Finance \autocite{yahoofinance}; no se reconstruye la composición histórica de
 se incluyen los valores excluidos durante el periodo (bajas de cotización, fusiones,
 quiebras). Esto introduce un sesgo de supervivencia que afecta sobre todo a la pata corta
 de la estrategia, porque las peores acciones de cada momento quedan infrarrepresentadas.
-Una base de investigación con historial libre de ese sesgo, como CRSP
-\autocite{crsp2025stock}, evitaría el problema; con los datos disponibles, los resultados
-de cartera deben leerse como condicionados a este universo. Es la limitación de datos más
-importante del trabajo.
+Una base de investigación sin ese sesgo, como CRSP \autocite{crsp2025stock}, evitaría el
+problema; con los datos disponibles, los resultados de cartera deben leerse como
+condicionados a este universo. Es la limitación de datos más importante del trabajo.
 
 \paragraph{Sin control de reproducción en el mercado de origen.} La ausencia de
 transferencia se establece evaluando esta implementación del Stockformer en el S\&P 500,
-pero no se ha reproducido el IC que el modelo original reporta en los índices chinos con
-la misma implementación. Sin ese control, la ausencia de señal observada no puede
-separarse del todo de un posible fallo de reimplementación, aunque la auditoría de fugas y
-la consistencia del marco de evaluación acotan ese riesgo. Por esta razón las conclusiones
-se formulan sobre esta implementación y este diseño, no sobre el modelo en abstracto.
-Reproducir el IC en el mercado chino es el control más directo que queda pendiente.
+pero no se ha comprobado que esta misma implementación reproduzca el IC que el modelo
+original reporta en los índices chinos. Sin ese control, la ausencia de señal observada no
+puede separarse del todo de un posible fallo de reimplementación, aunque la auditoría de
+fugas y la consistencia del marco de evaluación acotan ese riesgo. Por esta razón las
+conclusiones se formulan sobre esta implementación y este diseño, no sobre el modelo en
+abstracto.
 
 \paragraph{Una sola semilla y pérdida adaptada.} El Stockformer evaluado corresponde a una
 única ejecución, sin varianza por semilla, y a una pérdida adaptada (la combinación de
 ordenación descrita en la Sección~\ref{sec:met-loss} en lugar del error absoluto
-original). El resultado se apoya, por tanto, en una variante y una realización del modelo;
-una ablación con la pérdida original y varias semillas acotaría la incertidumbre, aunque
-la magnitud del resultado (IC en torno a cero) y su sobredeterminación hacen poco probable
-que una semilla distinta lo revierta.
+original). El resultado se apoya, por tanto, en una variante y una realización del modelo.
+Una ablación con la pérdida original y varias semillas acotaría la incertidumbre, aunque
+con un IC en torno a cero parece poco probable que una semilla distinta cambie la
+conclusión.
 
 \paragraph{Datos públicos y gratuitos.} Todo el trabajo se apoya en fuentes de datos
 públicas y sin coste: precios y volumen, fundamentales fechados por publicación de la SEC
@@ -154,10 +144,9 @@ mantengan en capitalizaciones medianas o pequeñas, en mercados emergentes o a h
 intradía, donde la señal explotable y la estructura del problema son distintas.
 
 \paragraph{Profundidad temporal y un solo país.} La evidencia cubre del orden de ocho años
-y un único mercado nacional. Ocho años contienen pocos regímenes independientes (de ahí la
-incertidumbre de $\pm 0{,}49$ en el Sharpe del protocolo de avance temporal), y un solo
-país impide separar lo que es propio del S\&P 500 de lo que sería un fenómeno general de
-los mercados eficientes.
+y un único mercado nacional. Ocho años contienen pocos regímenes de mercado distintos, y
+un solo país impide separar lo que es propio del S\&P 500 de lo que sería un fenómeno
+general de los mercados eficientes.
 
 \paragraph{Huecos en la escalera de complejidad.} La escalera salta de los árboles
 potenciados (del orden de diez mil parámetros) al Stockformer (del orden de un millón) sin
@@ -168,15 +157,11 @@ evidencia muestra que este modelo no aporta señal y que el IC no crece en el tr
 modelos simples, pero no permite confirmar qué haría una red superficial de capacidad
 intermedia. Añadir ese peldaño es el contraste pendiente más informativo de la Parte~I.
 
-\paragraph{Costes no contabilizados y significancia económica.} La simulación contabiliza
-diferencial, impacto y comisiones, pero no el coste de préstamo de títulos de la pata
-corta, que con una exposición bruta de 2 no es despreciable para los nombres más difíciles
-de tomar prestados; incluirlo bajaría algo el Sharpe neto, en una magnitud acotada por
-tratarse de grandes capitalizaciones líquidas. Además, la significancia económica de la
-estrategia final es límite, pues un Sharpe neto de $0{,}72$ con $t=1{,}82$, mejor candidato de
-una búsqueda múltiple, no se distingue con confianza de cero una vez ajustado por
-multiplicidad (Sección~\ref{sec:p2-modular}). El valor del trabajo no está en haber
-encontrado una estrategia rentable más allá de toda duda, sino en haber cuantificado, bajo
-un protocolo controlado, dónde está la palanca del retorno: en una señal-factor simple y
-en la construcción de cartera, no en la arquitectura del predictor ni en más datos de la
-misma clase.
+\paragraph{Costes no contabilizados.} La simulación contabiliza diferencial, impacto y
+comisiones, pero no el coste de préstamo de títulos de la pata corta, que con una
+exposición bruta de 2 no es despreciable para los nombres más difíciles de tomar
+prestados. Incluirlo bajaría algo el Sharpe neto, en una magnitud acotada por tratarse de
+grandes capitalizaciones líquidas. Con todo, el valor del trabajo no depende de una cifra
+concreta: está en haber medido, con un protocolo controlado, dónde están las palancas del
+retorno (en una señal simple y en la construcción de cartera) y dónde no están (en la
+arquitectura del predictor y en más datos de la misma clase).

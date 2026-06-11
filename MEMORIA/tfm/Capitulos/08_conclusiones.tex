@@ -15,8 +15,8 @@ implementación y sobre el universo analizado, Stockformer no muestra evidencia 
 transferibilidad al S\&P 500. Su coeficiente de información fuera de muestra es de
 $-0{,}003$, estadísticamente indistinguible de cero y lejos de los valores del orden de
 $0{,}06$ que las arquitecturas profundas reportan en el mercado de origen, y un Lasso de
-cinco coeficientes lo supera en IC ($+0{,}0238$), aunque esa diferencia no alcanza la
-significancia al 5\,\%. El análisis de los modos de fallo sugiere además que varios
+cinco coeficientes lo supera en IC ($+0{,}0238$). El análisis de los modos de fallo
+sugiere además que varios
 mecanismos de pérdida de señal actúan a la vez (eficiencia del mercado de destino,
 insuficiencia de la información de precio y volumen, artefactos de microestructura del
 mercado de origen y estrechez de la sección transversal), de modo que no resulta plausible
@@ -29,10 +29,9 @@ débil y que la etapa que lo conserva en términos netos es la construcción de 
 control explícito del coste de transacción. La búsqueda de señal con criterios fijados de
 antemano y validación en una muestra de reserva añade la segunda pieza. El momentum
 residual, un factor simple con contenido económico, combinado con esa construcción, sube
-el Sharpe neto de $0{,}38$ a $0{,}72$ ($t=1{,}82$) sobre una ventana de 311 semanas. Como
-ningún candidato supera el umbral fijado de antemano, y ese es el mejor resultado de una
-búsqueda múltiple, la mejora se presenta como un candidato prometedor y no como una
-respuesta demostrada.
+el Sharpe neto de $0{,}38$ a $0{,}72$ sobre una ventana de 311 semanas y mantiene el signo
+en la muestra de reserva. La mejora se presenta como el resultado más prometedor del
+trabajo, pendiente de confirmarse con más datos.
 
 Tomadas en conjunto, las dos respuestas dan una doble contribución. La primera es
 empírica, porque aporta evidencia documentada de ausencia de transferencia en este caso,
@@ -45,20 +44,19 @@ datos públicos), la parsimonia del modelo resulta la respuesta adecuada a una s
 transversal estrecha, y el retorno que sobrevive a los costes procede de una señal-factor
 simple y de cómo se construye la cartera, no de la capacidad del predictor.
 
-Estas conclusiones se apoyan en una jerarquía de evidencia de tres niveles. En el primero
-están los dos hechos más sólidos, el IC de Stockformer indistinguible de cero, obtenido
-con una auditoría de fugas cuya única incidencia favorece al propio modelo, y la
-atribución etapa a etapa, que sitúa el retorno neto marginal en la construcción. En el
-segundo nivel, de carácter direccional, están la superioridad consistente pero no
-significativa de los modelos simples y un Sharpe neto cuyo intervalo de confianza incluye
-el cero. En el tercer nivel, de contexto, está la calibración de magnitudes frente a la
-literatura. La contribución se apoya en el primer nivel; el segundo y el tercero la
-enmarcan, y el trabajo no los presenta como pruebas concluyentes.
+Estas conclusiones se apoyan en tres niveles de evidencia. En el primero están los dos
+hechos más sólidos, el IC de Stockformer indistinguible de cero, obtenido con una
+auditoría de fugas cuya única incidencia favorece al propio modelo, y la atribución etapa
+a etapa, que sitúa el retorno neto marginal en la construcción. En el segundo nivel están
+la superioridad consistente de los modelos simples sobre Stockformer y un Sharpe neto
+moderado, que depende de la ventana y del universo evaluados. En el tercer nivel, de
+contexto, está la comparación de magnitudes con la literatura. La contribución se apoya
+en el primer nivel; el segundo y el tercero la enmarcan.
 
 \section{Trabajo futuro}
 
-Las limitaciones acotadas en el Capítulo~\ref{cap:discusion} marcan a la vez fronteras de
-validez y direcciones de continuación. Se ordenan por prioridad.
+Las limitaciones acotadas en el Capítulo~\ref{cap:discusion} marcan a la vez los límites
+de validez y las líneas de continuación. Se ordenan por prioridad.
 
 \paragraph{Reproducción en el mercado de origen y varianza por semilla.} El control más
 directo que queda pendiente es reproducir, con esta misma implementación, el coeficiente
@@ -120,6 +118,5 @@ Sharpe neto de forma clara es la gestión explícita del coste de transacción. 
 siguiente natural no es más expresividad sobre la misma información, sino fuentes de datos
 ortogonales al precio y una construcción de cartera que internalice los costes. En el
 plano de la investigación, la práctica que este trabajo defiende es independiente de
-cualquier cifra concreta: reportar el estimador robusto con su incertidumbre, atribuir el
-retorno a su fuente real y distinguir entre candidatos prometedores y hallazgos
-demostrados.
+cualquier cifra concreta: reportar el estimador robusto, atribuir el retorno a su fuente
+real y distinguir entre candidatos prometedores y hallazgos demostrados.

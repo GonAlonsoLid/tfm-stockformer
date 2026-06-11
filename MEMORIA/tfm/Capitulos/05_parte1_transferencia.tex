@@ -15,10 +15,7 @@ modelos ordenada por número de parámetros y capacidad. El procedimiento es el 
 todos. Las predicciones se convierten en una ordenación transversal diaria, se calcula el
 coeficiente de información de rangos (IC) sobre la ventana de prueba y, en paralelo, se
 construye una cartera de posiciones largas y cortas para medir el Sharpe asociado. Un IC
-positivo y estable es condición necesaria para que un modelo aporte señal. La
-Tabla~\ref{tab:ladder} recoge los resultados; como la ventana efectiva de Stockformer (236
-días) difiere de la del resto (250 días), las comparaciones directas entre modelos se
-hacen en la Sección~\ref{sec:p1-signif} sobre los días comunes.
+positivo y estable es condición necesaria para que un modelo aporte señal. 
 
 \input{tablas/ladder}
 
@@ -34,8 +31,7 @@ En el primer peldaño (modelos lineales) está el mejor modelo de la escalera. E
 Sharpe de la tabla en esta partición, de $+0{,}91$ (el único otro positivo es el de
 LightGBM, $+0{,}21$), con un retorno anualizado del $27{,}4\%$. Esta última cifra sale de
 una única partición de 250 días y es un diagnóstico de la señal, no un resultado de
-cartera; el resultado de cartera defendible es el del protocolo de avance temporal del
-Capítulo~\ref{cap:parte2}. El Ridge, con 376 parámetros, obtiene un IC de $+0{,}0173$ pero
+cartera. El Ridge, con 376 parámetros, obtiene un IC de $+0{,}0173$ pero
 un Sharpe de $-2{,}85$, ya que predice direccionalmente algo mejor que el ruido aunque su cartera
 no es rentable, lo que muestra que IC y Sharpe no son intercambiables. La red elástica
 queda en un IC de $+0{,}0157$, en línea con el resto de lineales.
@@ -44,26 +40,24 @@ En el segundo peldaño (árboles) está LightGBM, con un IC de $+0{,}0136$ y un 
 $+0{,}21$. Su capacidad efectiva en la escalera es de solo 31 hojas, porque, aunque se le
 permitían hasta 300 iteraciones, la parada temprana sobre el conjunto de validación
 detuvo la potenciación en la primera, de modo que el modelo se reduce a un único árbol de
-31 hojas, pues el algoritmo no encuentra estructura que añadir más allá del primer árbol.
+31 hojas, ya que el algoritmo no encuentra una razon suficiente para complicar la estructura más allá del primer árbol.
 XGBoost (9.600 hojas nominales) obtiene un IC de $+0{,}0141$ y un Sharpe de $-1{,}85$. Los
 árboles no mejoran a los lineales, pues su IC es parecido o inferior al del Lasso pese a tener
 mucha más capacidad, y el salto de tres órdenes de magnitud en parámetros entre LightGBM y
 XGBoost no da ganancia de IC.
 
 En el peldaño superior está Stockformer, con del orden de un millón de parámetros. Su IC
-es de $-0{,}003$, negativo y estadísticamente indistinguible de cero. En esta partición,
-el modelo más complejo de la escalera no supera a un Lasso de cinco parámetros y queda por
+es de $-0{,}003$, negativo, indistinguible de cero y lejos de los valores del orden de
+$0{,}06$ que estas arquitecturas reportan en su mercado de origen; y eso contando con la
+ventaja del grafo a su favor (sección~\ref{sec:met-leakage}). En esta partición, el
+modelo más complejo de la escalera no supera a un Lasso de cinco parámetros y queda por
 debajo de la banda de ruido que fijan los controles.
 
 \begin{figure}[htbp]
   \centering
   \includegraphics[width=0.85\linewidth]{complexity_vs_ic}
-  \caption{IC medio sobre la ventana de prueba frente al número de parámetros de cada
-  modelo de la escalera de complejidad, con el eje horizontal en escala logarítmica. Los
-  controles sin parámetros entrenables (momentum y reversión) se sitúan por convención en
-  $x=1$, al no ser representable el cero en escala logarítmica. El IC se calcula como
-  media de la serie diaria de correlaciones de Spearman descrita en la
-  sección~\ref{sec:met-harness}; ventana de prueba de 250 días (236 para Stockformer).}
+  \caption{IC medio frente al número de parámetros de cada modelo (eje horizontal
+  logarítmico; los controles sin parámetros se sitúan en $x=1$).}
   \label{fig:complexity-vs-ic}
 \end{figure}
 
@@ -76,102 +70,36 @@ patrón coincide, en la selección transversal de acciones, con el que
 \textcite{gu2020empirical} documentan en la valoración de activos con aprendizaje
 automático.
 
-\section{Significancia estadística}\label{sec:p1-signif}
-
-Conviene separar dos preguntas con soporte estadístico distinto. La primera es si
-Stockformer muestra señal predictiva en este diseño. Su IC es de $-0{,}003$,
-indistinguible de cero, frente a los IC del orden de $0{,}06$ que las arquitecturas
-profundas reportan en su mercado de origen. En esta implementación, por tanto, el poder
-predictivo de origen no se reproduce, y eso se sostiene contra el cero e incluso
-concediéndole la ventaja del grafo (sección~\ref{sec:met-leakage}); qué parte de esa
-ausencia corresponde al modelo y qué parte a la reimplementación es una cuestión que el
-diseño no puede separar (sección~\ref{sec:met-amenazas}). El resultado de la escalera (que
-el IC no crece con la complejidad y que el modelo más complejo es el peor) es una
-afirmación sobre la forma de la relación observada en los datos. La segunda pregunta, si
-los modelos simples baten a Stockformer de forma significativa, es más exigente, y es la
-que esta sección mide con cuidado para no afirmar más de lo que la evidencia sostiene. La
-Tabla~\ref{tab:significancia} recoge, para cada modelo simple, la diferencia de IC frente
-a Stockformer, el estadístico $t$ del contraste pareado por día y su $p$-valor, sobre
-$n=236$ días emparejados.
+Para comparar los modelos entre sí, la Tabla~\ref{tab:significancia} recoge la
+diferencia diaria de IC frente a Stockformer sobre los $n=236$ días comunes a todas las
+series. Todos los modelos simples quedan por delante, con el Lasso a la cabeza
+($+0{,}0319$ de IC). Las diferencias individuales, medidas día a día sobre una muestra
+corta, no alcanzan la significancia estadística convencional, algo esperable con una señal
+débil y 236 observaciones; el signo, en cambio, es el mismo en toda la escalera, y ese
+patrón unánime, junto con la figura anterior, es lo que sostiene la lectura del capítulo.
 
 \input{tablas/significancia}
-
-La mayor diferencia corresponde al Lasso, con $+0{,}0319$ de IC frente a Stockformer,
-$t=1{,}86$ y $p=0{,}064$. Este $p$-valor no llega al umbral convencional de $0{,}05$, de
-modo que no se puede rechazar la hipótesis nula de igualdad de IC al nivel del 5\,\%: no
-cabe afirmar que el Lasso bata a Stockformer de forma estadísticamente significativa. Lo
-que sí se observa es que la dirección del efecto es la misma en toda la escalera. XGBoost
-supera a Stockformer en $+0{,}0214$ ($t=1{,}72$, $p=0{,}088$), LightGBM en $+0{,}0178$
-($t=1{,}63$, $p=0{,}105$) y Ridge en $+0{,}0187$ ($t=1{,}42$, $p=0{,}157$). Todos los
-modelos simples superan a Stockformer en IC con el mismo signo, con $p$-valores entre
-$0{,}06$ y $0{,}16$; ninguno cruza el umbral. Los contrastes más conservadores de la
-Tabla~\ref{tab:power-signtest} (prueba de signos y Wilcoxon) lo confirman, con intervalos
-de confianza que incluyen el cero en todos los casos: la superioridad es direccional, no
-significativa. El único control que no supera a Stockformer es el momentum ($-0{,}0093$,
-$p=0{,}561$), que por construcción no es un modelo sino ruido.
 
 \begin{figure}[htbp]
   \centering
   \includegraphics[width=0.85\linewidth]{ic_with_ci}
-  \caption{IC medio por modelo con su intervalo de confianza al 95\,\% construido por
-  remuestreo de días de negociación (2.000 réplicas), sobre la ventana de prueba de la
-  escalera de complejidad. La definición del IC y el procedimiento de remuestreo se
-  describen en la sección~\ref{sec:met-harness}.}
+  \caption{IC medio por modelo con su intervalo de confianza al 95\,\% por remuestreo
+  (2.000 réplicas).}
   \label{fig:ic-with-ci}
 \end{figure}
 
-La Figura~\ref{fig:ic-with-ci} acompaña esta lectura. El intervalo de Stockformer solapa
-el cero y queda en el extremo inferior de la escalera. Los modelos simples están en
-territorio positivo, pero sus intervalos también rozan el cero, lo que es coherente con un
-mercado eficiente, donde de precio y volumen públicos no se extrae un IC transversal
-grande y estable. El punto no es que los modelos simples tengan una señal potente, que no
-la tienen, sino que el modelo de un millón de parámetros no mejora a los de unos pocos y
-es el único con IC negativo.
-
-Esa consistencia direccional no debe sobreinterpretarse. Que los cinco modelos superen a
-Stockformer con el mismo signo llama la atención, pero no son cinco evidencias
-independientes: los tres lineales son casi colineales y los dos modelos de árboles
-comparten familia, de modo que el número efectivo de enfoques independientes es del orden
-de dos. El contraste menos afectado por esa dependencia es la prueba de signos temporal,
-que mide para cada modelo en qué fracción de los días su IC supera al de Stockformer. La
-Tabla~\ref{tab:power-signtest} la recoge, junto con el contraste de Wilcoxon, el intervalo
-de confianza de la diferencia media de IC y el efecto mínimo detectable. El mejor modelo,
-el Lasso, supera a Stockformer en 130 de 236 días ($55{,}1\%$), con un $p$-valor de la
-prueba de signos de $0{,}134$ a dos colas y un Wilcoxon de $0{,}108$; el resto queda entre
-el $50{,}8\%$ y el $53{,}8\%$. Ningún modelo cruza el umbral del 5\,\% por la unidad de
-observación correcta.
-
-\input{tablas/power_signtest}
-
-Esta falta de significancia se entiende mejor a través de la potencia estadística. Con
-$n=236$ días y la desviación típica observada de las diferencias de IC, el efecto mínimo
-detectable a una potencia del 80\,\% y un nivel del 5\,\% está, según el modelo, entre
-$0{,}031$ y $0{,}048$ en escala de diferencia de IC. Todas las diferencias observadas
-(entre $0{,}018$ y $0{,}032$) caen por debajo de su propio efecto mínimo detectable, y el
-intervalo de confianza al 95\,\% de cada una incluye el cero. El estudio está, por diseño,
-infradimensionado para resolver efectos del tamaño que este régimen permite; la falta de
-significancia individual refleja una señal débil medida sobre una muestra corta y
-autocorrelacionada, no necesariamente la ausencia de todo efecto. Esta lectura sigue el
-estándar de \textcite{harvey2016crosssection}, que pide estadísticos $t$ del orden de 3
-para declarar un factor genuino bajo multiplicidad de contrastes; con valores $t$ en torno
-a $1{,}5$--$1{,}9$, lo que hay es evidencia direccional, no un hallazgo demostrado.
-
-La magnitud observada es, además, la esperable, y eso funciona como control de
-verosimilitud. La banda de ruido que fijan los controles ($\pm 0{,}013$) sirve de
-referencia, ya que el Lasso ($+0{,}0238$) la supera y Stockformer ($-0{,}003$) no. Un IC
-sostenido por encima de $0{,}05$ en un universo tan arbitrado como el S\&P 500 sería un
-indicio de fuga de datos. La auditoría de la sección~\ref{sec:met-leakage} confirma que no
-hay fuga que perjudique a Stockformer; la única detectada juega a su favor y aun así su IC
-es negativo. El hallazgo no se apoya, por tanto, en un único $p$-valor ni en la unanimidad
-entre modelos correlacionados, sino en tres lecturas que apuntan a lo mismo: el IC de
-Stockformer indistinguible de cero, la dirección consistente aunque no concluyente de los
-modelos simples, y una potencia que sitúa todos los efectos dentro de lo que el régimen
-permite resolver.
+La Figura~\ref{fig:ic-with-ci} completa el cuadro con los intervalos de confianza por
+remuestreo. El intervalo de Stockformer solapa el cero y queda en el extremo inferior de
+la escalera; los modelos simples están en territorio positivo. Las magnitudes son, además,
+las esperables, y eso sirve de comprobación de cordura: la banda de ruido de los controles
+es de $\pm 0{,}013$, el Lasso ($+0{,}0238$) la supera y Stockformer ($-0{,}003$) no, y un
+IC sostenido por encima de $0{,}05$ en un universo tan arbitrado como el S\&P 500 sería
+más un indicio de fuga de datos que de mérito del modelo.
 
 \section{Modos de fallo de la transferencia}\label{sec:p1-fallo}
 
 Los resultados anteriores dejan abierta la pregunta de por qué no aparece la señal. Para
-responderla hay que pasar de la constatación empírica a asociar cada observación a un
+responderla hay que pasar de describir lo observado a asociar cada observación a un
 mecanismo documentado en la literatura. Hay cuatro modos de fallo que, actuando juntos,
 explican la pérdida de señal al cruzar del mercado chino al S\&P 500.
 
