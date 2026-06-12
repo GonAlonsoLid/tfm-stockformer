@@ -1,5 +1,64 @@
 # Registro de cambios de la memoria
 
+## Novena ronda (12 de junio de 2026): revisión crítica de hilo y lenguaje
+
+Lectura completa de la memoria. Veredicto: hilo conductor claro y consistente tras las
+rondas 7-8; lenguaje llano sin pomposidades; único punto de confusión potencial, las
+tres ventanas de evaluación de la Parte II. Cambios aplicados (aprobados por el autor
+bloque a bloque):
+
+- Erratas: "seccion"→"capítulo" y tildes en cap. 3 ("días") y cap. 5 ("razón");
+  "microsoft"→"Microsoft" (cap. 2); notación Alpha360 del cap. 4 corregida de
+  CLOSE\_d d a CLOSE_d (igual que cap. 3); "portfolio" eliminado en §6.2; decimales
+  con punto en el abstract inglés (0.003, 0.0238, 0.38, 0.72).
+- Costura cap. 4: la apertura incorpora el vocabulario del nuevo hilo (banco de
+  pruebas, evaluar el potencial, conservar capacidad predictiva).
+- Conector "esto es,": sustituido por dos puntos en 5 de 9 apariciones (caps. 2, 3,
+  6×2, 7); se conservan las de la introducción, apertura del cap. 5 y §6.6.
+- Frase-mapa nueva al final de la intro del cap. 6 anclando las tres ventanas
+  (52/215/311 semanas) y sus Sharpe (0,95 / 0,58 / 0,38→0,72) para el lector en
+  diagonal.
+- Verificación: los 7 capítulos tocados compilan sin errores en harness con stubs;
+  compilación completa pendiente de build.sh en local.
+
+## Octava ronda (12 de junio de 2026): peso visible de la Parte I
+
+La Parte II duplicaba a la Parte I en extensión y secciones, en contradicción con el
+nuevo hilo (la Parte I como núcleo). Refuerzo sin texto sustantivo nuevo:
+
+- §5.1 estructurada en tres subsecciones: "Los peldaños simples", "Stockformer en la
+  escalera" y "Lectura conjunta: el IC no crece con la complejidad". Títulos enfocados
+  al resultado; ninguno alude a la significancia estadística (decisión del autor,
+  coherente con la quinta ronda).
+- Frases puente en la introducción y en la apertura del cap. 5: los caps. 3 y 4
+  construyen el banco de pruebas de la evaluación (arco 3+4+5 como eje de la memoria).
+- Verificación: intro + cap. 5 completos compilan sin errores en harness con stubs;
+  compilación completa pendiente de build.sh en local.
+
+## Séptima ronda (12 de junio de 2026): reenfoque del hilo conductor (feedback del director)
+
+Cambios pedidos por el director sobre el resumen, propagados a introducción y
+conclusiones. El título y los títulos de capítulos no se tocan (decisión del autor).
+
+- Resumen P1 reescrito: abre con lo que se construye (modelos para evaluar el potencial
+  de Stockformer + sistema de optimización de cartera con control de costes); la
+  transferencia China→S&P 500 pasa a contexto.
+- Resumen P2 reescrito en clave de evaluación y decisión: comparación contra modelos
+  simples como núcleo del trabajo (referencia explícita al Capítulo 5, Parte I), cuál
+  funciona mejor y por qué se rechaza Stockformer. Cifras sin cambios.
+- Resumen P3: solo conector inicial ("pone a trabajar el sistema de optimización de
+  cartera"). P4 intacto.
+- Abstract inglés: espejo exacto de los cambios del resumen.
+- Introducción: tercer párrafo de Motivación reescrito (las dos piezas que se
+  construyen); RQ1 formulada como decisión de aceptación/rechazo; la Parte I señalada
+  como el peso empírico de la memoria.
+- Conclusiones: respuesta a RQ1 con el rechazo explícito del modelo y una frase sobre
+  que la complejidad no justifica la adopción. Resto intacto.
+- Capítulo 5: una frase en la apertura anclando la decisión de aceptación/rechazo.
+- Verificación: sintaxis LaTeX comprobada por fichero; la compilación completa
+  (build.sh) queda pendiente de ejecutarse en local (el entorno de edición no tiene
+  biber ni babel-spanish).
+
 ## Sexta ronda (11 de junio de 2026): auditoría de la bibliografía
 
 Verificadas contra la fuente original las 30 referencias citadas (autores, revista,

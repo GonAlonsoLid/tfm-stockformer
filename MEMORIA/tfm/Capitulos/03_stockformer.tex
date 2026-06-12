@@ -5,7 +5,7 @@ acciones chinas de clase A, reúne en una sola red neuronal varios componentes q
 literatura suelen aparecer por separado: una representación densa de precio y volumen, una
 descomposición de la señal en frecuencias, un codificador espacio-temporal basado en
 atención, un grafo estático de relaciones entre acciones y un cabezal de predicción
-multitarea. En esta seccion se describe esa arquitectura tal y como está implementada, sin
+multitarea. En este capítulo se describe esa arquitectura tal y como está implementada, sin
 entrar todavía en la cuestión de su transferibilidad, que se aborda en el
 capítulo~\ref{cap:parte1}. El objetivo es distinguir qué se adapta y qué se conserva en la
 Parte~I, para que la discusión de resultados posterior pueda atribuirse a decisiones
@@ -84,7 +84,7 @@ El núcleo del modelo es un codificador que procesa en paralelo las dos bandas d
 frecuencia y que, en cada bloque, combina dos ejes de información: el temporal (la
 dinámica de cada acción a lo largo de la ventana de entrada) y el espacial (las relaciones
 de cada acción con las demás del universo). En la configuración base, la ventana de
-entrada cubre $T_1=20$ dias y se apilan $L=2$ bloques codificadores de dimensión
+entrada cubre $T_1=20$ días y se apilan $L=2$ bloques codificadores de dimensión
 interna 128.
 
 Antes de entrar al codificador, las dos bandas se proyectan a la dimensión interna del
@@ -251,6 +251,6 @@ Estos tres rasgos hacen del mercado chino un entorno favorable para un modelo co
 Stockformer. El S\&P~500, en cambio, es uno de los mercados más líquidos y eficientes del
 mundo, sin límites diarios de precio y con costes de transacción y arbitraje que erosionan
 deprisa cualquier señal técnica. Ninguno de los supuestos anteriores se sostiene en él.
-Esta asimetría motiva la pregunta central del capítulo~\ref{cap:parte1}, esto es, si el
+Esta asimetría motiva la pregunta central del capítulo~\ref{cap:parte1}: si el
 Stockformer mantiene su desempeño cuando se le quita el régimen de mercado en el que fue
 calibrado y, de no hacerlo, cuánta de su arquitectura resulta necesaria.

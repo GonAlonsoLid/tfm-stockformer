@@ -11,10 +11,17 @@ El capítulo muestra que una señal transversal débil puede convertirse en una 
 semanal de posiciones largas y cortas, neutral al mercado, con un Sharpe neto de costes de
 $0{,}95$ sobre una ventana favorable de 52 semanas; y muestra también, con la misma
 extensión, que sobre un protocolo de avance temporal de 215 semanas ese Sharpe cae a
-$0{,}58$. La atribución etapa a etapa cuantifica la
-idea de fondo. El retorno bruto procede de la señal, por débil que sea, y lo que separa
-una cartera deficitaria de una rentable en neto es cómo se construye, esto es, la neutralización,
+$0{,}58$. La atribución etapa a etapa lo desglosa. El retorno bruto procede de la señal, por débil
+que sea, y lo que separa
+una cartera deficitaria de una rentable en neto es cómo se construye: la neutralización,
 la penalización de costes y el dimensionado por volatilidad.
+
+El capítulo maneja tres ventanas de evaluación: las 52 semanas posteriores al último
+reentrenamiento (la más favorable, Sharpe neto $0{,}95$), las 215 semanas del protocolo
+de avance temporal (el estimador de referencia, $0{,}58$) y las 311 semanas de la
+búsqueda de señal, más larga y con muestra de reserva (donde la base cae a $0{,}38$ y la
+estrategia final alcanza $0{,}72$). Las cifras difieren porque las ventanas miden cosas
+distintas; cada sección indica cuál usa.
 
 \section{De la señal a las posiciones}\label{sec:p2-pipeline}
 
@@ -29,8 +36,8 @@ un libro de posiciones operable y evaluado neto de costes. El flujo es el siguie
   \item La señal se obtiene de una combinación de modelos simples entrenada sobre el panel
   semanal: LightGBM y red elástica, promediados. Recoge el hallazgo de la Parte~I, que la
   señal explotable es la que capturan modelos simples; se combinan un aprendiz lineal
-  regularizado y uno de árboles, en lugar de un único Lasso, para no depender de una sola
-  familia (la tarea semanal se reentrena sobre datos distintos de la escalera diaria, de
+  regularizado y uno de árboles, en lugar de un único Lasso, porque cada familia capta
+  estructuras distintas (la tarea semanal se reentrena sobre datos distintos de la escalera diaria, de
   modo que el orden de IC por modelo de la Parte~I no es directamente trasladable).
   \item La neutralización residualiza la señal de cada semana por mínimos cuadrados frente
   a la beta de mercado (y, en el diseño completo, frente a los factores de
@@ -45,14 +52,13 @@ un libro de posiciones operable y evaluado neto de costes. El flujo es el siguie
   bruta según la volatilidad realizada reciente del mercado.
 \end{enumerate}
 
-La decisión de diseño que más pesa es la primera, rebalancear semanalmente en lugar de a
-diario. Pasar de diario a semanal recorta la rotación en un factor aproximado de cinco y,
+La decisión de diseño con más peso es la frecuencia de rebalanceo, semanal en lugar de
+diaria. Pasar de diario a semanal recorta la rotación en un factor aproximado de cinco y,
 como el coste de transacción es lineal en la rotación, ese recorte se traslada casi punto
 por punto al Sharpe neto. En los experimentos previos de este trabajo, la cartera diaria
 de posiciones largas y cortas perdía dinero una vez descontados los costes; la frecuencia
 semanal pone la estrategia en territorio neto positivo antes incluso de optimizar la
-construcción. Esta etapa no añade poder predictivo ni mejora el IC; reduce el coste de
-explotar la señal que ya existe.
+construcción. El rebalanceo semanal reduce el coste de explotar la señal sin añadir poder predictivo.
 
 \section{Construcción de cartera con control de costes}\label{sec:p2-construccion}
 
@@ -76,14 +82,14 @@ sujeto a las restricciones
 
 Cada término de la función objetivo~\eqref{eq:costaware} cumple una función precisa. El
 primero, $\alpha^{\top} w$, es el retorno esperado de la cartera bajo la señal. El
-segundo, la norma $L_1$ del cambio de posiciones $w - w_{\text{prev}}$ ponderada por el
-coste $\kappa$ en puntos básicos, es el término central, porque implementa la regla de
-operar solo cuando la ventaja supera al coste. Al penalizar la rotación dentro del
+segundo es el término central. Penaliza el cambio de posiciones $w - w_{\text{prev}}$
+mediante su norma $L_1$, ponderada por el coste $\kappa$ en puntos básicos, e implementa la
+regla de operar solo cuando la ventaja supera al coste. Al penalizar la rotación dentro del
 problema de optimización, la propia solución genera bandas de no negociación, en las
 que las posiciones cuyo cambio no compensa el coste se quedan donde están. Así se reduce
 la rotación y se conserva el Sharpe neto a frecuencia semanal.
 
-Las restricciones acotan la cartera en un portfolio neutral al mercado y controlado en riesgo.
+Las restricciones dejan la cartera neutral al mercado y controlada en riesgo.
 La condición~\eqref{eq:dollar} impone neutralidad de dólar (la suma de pesos largos iguala
 la de cortos); la~\eqref{eq:beta}, neutralidad de beta frente al mercado, estimada con una
 beta móvil sobre una ventana diaria de 60 días; la~\eqref{eq:gross} acota el
@@ -131,10 +137,9 @@ las bandas de no negociación de la formulación~\eqref{eq:costaware}.
 \end{figure}
 
 La Figura~\ref{fig:weekly-oos-equity} muestra la curva de retorno acumulado, con la serie
-bruta y la neta superpuestas. Esta cifra aislada no debe sobreinterpretarse. Un Sharpe
-neto de $0{,}95$ sobre 52 semanas es un resultado favorable, pero una sola ventana anual
-es una muestra estrecha, y no permite distinguir entre habilidad y suerte. La sección
-siguiente somete este número a una prueba más exigente.
+bruta y la neta superpuestas. Un Sharpe neto de $0{,}95$ sobre 52 semanas es favorable, pero una sola ventana anual no
+basta para distinguir habilidad de suerte. La sección siguiente somete este número a una
+prueba más exigente.
 
 \section{Robustez con avance temporal}\label{sec:p2-robustez}
 
@@ -163,8 +168,7 @@ dónde sale el retorno.
 
 \section{Atribución de construcción}\label{sec:p2-atribucion}
 
-Esta sección presenta el resultado principal del capítulo. Para aislar de dónde sale el
-Sharpe neto, se fija el alfa del protocolo de avance temporal (la salida de la combinación
+Para aislar de dónde sale el Sharpe neto, se fija el alfa del protocolo de avance temporal (la salida de la combinación
 de modelos, generada una sola vez y sin reentrenar) y se pasa por cuatro variantes de
 construcción. Como el predictor no cambia entre variantes, cualquier diferencia en el
 Sharpe neto se debe a las decisiones de cartera. Conviene precisar que cada variante
@@ -189,9 +193,8 @@ La cadena se recorre etapa a etapa:
   \item Más neutralización (Sharpe neto $-0{,}40$). Añadir la neutralización factorial y
   sectorial empeora el Sharpe neto y lo lleva a territorio negativo. Esto es coherente, pues la
   neutralización quita exposiciones factoriales que, en esta muestra, sumaban al retorno
-  bruto; depura la señal pero, por sí sola, resta rentabilidad. La neutralización no es
-  una palanca de retorno, sino una condición para que el libro sea de verdad neutral al
-  mercado.
+  bruto; depura la señal pero, por sí sola, resta rentabilidad. La neutralización asegura que el libro quede de verdad neutral al
+  mercado, sin aportar retorno por sí misma.
   \item Más construcción con control de costes (Sharpe neto $0{,}47$). Al introducir el
   optimizador convexo con penalización $L_1$ de costes y el suavizado, el Sharpe neto pasa
   de $-0{,}40$ a $+0{,}47$ y la rotación baja de $3{,}12$ a $1{,}60$. Esta es la palanca,
@@ -213,13 +216,11 @@ La cadena se recorre etapa a etapa:
 
 La Figura~\ref{fig:weekly-attribution} muestra esta cadena. La columna de IC de la
 Tabla~\ref{tab:weekly-attribution} cae de $0{,}0123$ a $0{,}0033$ a medida que la
-neutralización y el suavizado depuran la señal. La conclusión de la atribución es que la
-palanca del Sharpe neto es la construcción de cartera, no el poder predictivo, pues la señal
-aporta un IC de en torno a $0{,}003$, y lo que separa una cartera deficitaria de una
-rentable es la neutralización seguida de la gestión explícita de costes. Este resultado
-enlaza con la Parte~I, pues si la complejidad del modelo no compra IC, y el IC apenas mueve el
-retorno, el esfuerzo de ingeniería rinde más en la construcción de cartera que en la
-arquitectura del predictor.
+neutralización y el suavizado depuran la señal. Con un IC de la señal en torno a $0{,}003$, la palanca del Sharpe neto es la construcción
+de cartera. Lo que separa una cartera deficitaria de una rentable es la neutralización
+seguida de la gestión explícita de costes. Este resultado enlaza con la Parte~I, pues si
+la complejidad del modelo no compra IC, y el IC apenas mueve el retorno, el esfuerzo de
+ingeniería rinde más en la construcción de cartera que en el predictor.
 
 \section{El momentum residual como señal de la estrategia final}\label{sec:p2-signal}
 
@@ -308,7 +309,7 @@ señal y la construcción con control de costes que lo explota.
 \subsection{Transferencia modular y banco ampliado}\label{sec:p2-modular}
 
 La Parte~I mostró que esta implementación de Stockformer no aporta señal como un todo.
-Queda la pregunta inversa, esto es, si alguna de sus ideas concretas, el grafo de relaciones o la
+Queda la pregunta inversa: si alguna de sus ideas concretas, el grafo de relaciones o la
 descomposición frecuencial, reducida a una señal simple y causal, aporta algo sobre el
 predictor simple. La causalidad importa aquí, pues el grafo se reconstruye con una ventana
 móvil de solo pasado, sin la fuga sobre todo el histórico que describe la

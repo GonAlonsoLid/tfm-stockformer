@@ -3,10 +3,15 @@
 Esta parte responde a la primera pregunta de investigación, esto es, si Stockformer, un modelo de
 selección de acciones basado en wavelets, atención y grafos de relaciones, calibrado sobre
 acciones chinas de clase A, conserva su capacidad predictiva sobre el universo del S\&P
-500 descrito en la metodología. En vez de comparar Stockformer contra un único rival, se
+500 descrito en la metodología. De la respuesta depende la decisión central del trabajo:
+aceptar o rechazar el modelo para este universo frente a alternativas más simples. Los dos
+capítulos anteriores construyen el banco de pruebas de esta evaluación: el
+Capítulo~\ref{cap:stockformer} describe el modelo y el Capítulo~\ref{cap:metodologia}, el
+panel de datos, el marco de evaluación y la auditoría de fugas; este capítulo lo pone en
+marcha. En vez de comparar Stockformer contra un único rival, se
 le sitúa dentro de la escalera de complejidad de la sección~\ref{sec:met-ladder}, que
-ordena los modelos desde controles sin parámetros entrenables hasta la red de en torno a
-un millón de parámetros.
+ordena los modelos desde controles sin parámetros entrenables hasta Stockformer, con del
+orden de un millón de parámetros.
 
 \section{Resultados de la escalera de complejidad}\label{sec:p1-ladder}
 
@@ -18,6 +23,8 @@ construye una cartera de posiciones largas y cortas para medir el Sharpe asociad
 positivo y estable es condición necesaria para que un modelo aporte señal. 
 
 \input{tablas/ladder}
+
+\subsection{Los peldaños simples: controles, lineales y árboles}\label{sec:p1-simples}
 
 La escalera se recorre de abajo arriba. En el peldaño cero están los controles sin
 parámetros entrenables: la cartera nula, el momentum y la reversión. Sirven para calibrar
@@ -40,11 +47,13 @@ En el segundo peldaño (árboles) está LightGBM, con un IC de $+0{,}0136$ y un 
 $+0{,}21$. Su capacidad efectiva en la escalera es de solo 31 hojas, porque, aunque se le
 permitían hasta 300 iteraciones, la parada temprana sobre el conjunto de validación
 detuvo la potenciación en la primera, de modo que el modelo se reduce a un único árbol de
-31 hojas, ya que el algoritmo no encuentra una razon suficiente para complicar la estructura más allá del primer árbol.
+31 hojas, ya que el algoritmo no encuentra una razón suficiente para complicar la estructura más allá del primer árbol.
 XGBoost (9.600 hojas nominales) obtiene un IC de $+0{,}0141$ y un Sharpe de $-1{,}85$. Los
 árboles no mejoran a los lineales, pues su IC es parecido o inferior al del Lasso pese a tener
 mucha más capacidad, y el salto de tres órdenes de magnitud en parámetros entre LightGBM y
 XGBoost no da ganancia de IC.
+
+\subsection{Stockformer en la escalera}\label{sec:p1-stockformer}
 
 En el peldaño superior está Stockformer, con del orden de un millón de parámetros. Su IC
 es de $-0{,}003$, negativo, indistinguible de cero y lejos de los valores del orden de
@@ -52,6 +61,8 @@ $0{,}06$ que estas arquitecturas reportan en su mercado de origen; y eso contand
 ventaja del grafo a su favor (sección~\ref{sec:met-leakage}). En esta partición, el
 modelo más complejo de la escalera no supera a un Lasso de cinco parámetros y queda por
 debajo de la banda de ruido que fijan los controles.
+
+\subsection{Lectura conjunta: el IC no crece con la complejidad}\label{sec:p1-lectura}
 
 \begin{figure}[htbp]
   \centering

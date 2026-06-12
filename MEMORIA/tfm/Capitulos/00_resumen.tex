@@ -1,39 +1,42 @@
-La predicción bursátil con aprendizaje profundo se ha desarrollado, en su mayor parte,
-sobre los mercados en los que cada arquitectura fue diseñada, y casi nunca se comprueba si
-la capacidad predictiva se mantiene al trasladar el modelo a un mercado distinto. Este
-trabajo estudia esa transferencia entre mercados en un caso concreto. El modelo es
-Stockformer, una red de en torno a un millón de parámetros que combina una descomposición
-wavelet, atención y un grafo de relaciones entre acciones, calibrada sobre acciones chinas
-de clase A. La pregunta es doble: si el modelo conserva su capacidad predictiva al
-reentrenarse sobre el S\&P 500 y, en caso de que no la conserve, de dónde sale el retorno
-neto que sí se observa en ese mercado.
+Este trabajo construye dos piezas complementarias: un conjunto de modelos de predicción
+bursátil destinado a evaluar el potencial de Stockformer, y un sistema de optimización de
+cartera con control explícito de los costes de transacción. Stockformer, el modelo objeto
+de evaluación, es una red de en torno a un millón de parámetros que combina una
+descomposición wavelet, atención y un grafo de relaciones entre acciones; fue calibrado
+sobre acciones chinas de clase A y aquí se reentrena sobre el S\&P 500, un mercado
+estructuralmente distinto de aquel para el que fue diseñado. La evaluación responde a dos
+preguntas encadenadas: si el modelo aporta capacidad predictiva en ese mercado y, en caso
+de que no la aporte, de dónde sale el retorno neto que sí se observa.
 
-La primera parte compara Stockformer con modelos más simples (regresiones regularizadas y
-árboles potenciados) mediante un mismo marco de evaluación, sobre un mismo panel de datos y
-a horizonte diario. La métrica principal es el coeficiente de información de rangos (IC),
-que mide la correlación entre el orden de retornos predicho y el realizado. Se revisa
-además la posible fuga de información; la única incidencia detectada favorece al modelo
-complejo y se reporta por separado. En esta implementación y sobre el universo analizado
-(477 componentes del S\&P 500 con cobertura completa de precios), Stockformer no muestra
-evidencia robusta de transferibilidad. Su IC fuera de muestra es de $-0{,}003$,
-indistinguible de cero, y una regresión Lasso de cinco coeficientes alcanza $+0{,}0238$.
-Todos los modelos simples quedan por delante de Stockformer, aunque con diferencias
-pequeñas.
+La primera parte, que concentra el peso del trabajo (Capítulo~\ref{cap:parte1}), evalúa
+el potencial de Stockformer comparándolo con modelos más simples (regresiones
+regularizadas y árboles potenciados) sobre un mismo panel de datos, con un mismo marco de
+evaluación y a horizonte diario. La métrica principal es el coeficiente de información de
+rangos (IC), que mide la correlación entre el orden de retornos predicho y el realizado.
+Se revisa además la posible fuga de información; la única incidencia detectada favorece
+al modelo complejo y se reporta por separado. La comparación resulta desfavorable a
+Stockformer: su IC fuera de muestra es de $-0{,}003$, indistinguible de cero, mientras
+que una regresión Lasso de cinco coeficientes alcanza $+0{,}0238$, y todos los modelos
+simples quedan por delante, aunque con diferencias pequeñas. Con esa evidencia, el modelo
+se rechaza para el universo analizado (477 componentes del S\&P 500 con cobertura
+completa de precios): su complejidad no se traduce en una capacidad predictiva que
+justifique adoptarlo frente a alternativas mucho más simples.
 
-La segunda parte estudia el origen del retorno neto de una estrategia semanal neutral al
-mercado sobre el mismo universo. Una atribución etapa a etapa muestra que la señal genera
+Dado que Stockformer no aporta capacidad predictiva, la segunda parte pone a trabajar el
+sistema de optimización de cartera y estudia el origen del retorno neto de una estrategia
+semanal neutral al mercado sobre el mismo universo. Una atribución etapa a etapa muestra que la señal genera
 un retorno bruto débil y que la construcción de cartera con control explícito de los
 costes de transacción es la etapa que lo conserva en términos netos. Una búsqueda de señal
 con criterios fijados de antemano, y validada sobre una muestra de reserva, señala el
 momentum residual como el candidato más prometedor. Combinado con esa construcción, el
 Sharpe neto pasa de $0{,}38$ a $0{,}72$ sobre una ventana de 311 semanas, y mantiene el
-signo en la muestra de reserva. La mejora se presenta como el resultado más prometedor
-del trabajo, pendiente de confirmarse con más datos.
+signo en la muestra de reserva. La mejora es el resultado más favorable que arroja el trabajo, aunque pendiente de
+confirmar con más datos.
 
 Las conclusiones quedan condicionadas al diseño del estudio: un universo restringido a los
 componentes actuales del índice con cobertura completa, datos públicos sin reconstrucción
-histórica, una única ejecución del modelo y una función de pérdida adaptada respecto de la
-original. Bajo esas condiciones, la contribución es doble. Por un lado, evidencia empírica
+histórica, una única ejecución del modelo Stockformer (una sola semilla, sin reentrenamiento
+temporal) y una función de pérdida adaptada respecto de la original. Bajo esas condiciones, la contribución es doble. Por un lado, evidencia empírica
 de ausencia de transferencia en este caso; por otro, un procedimiento de evaluación y
 atribución reproducible que sitúa el origen del retorno neto en una señal simple y en la
 construcción de la cartera, no en la complejidad del predictor.

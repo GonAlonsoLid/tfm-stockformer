@@ -10,12 +10,15 @@ adaptada) y los protocolos de evaluación descritos en la metodología.
 
 La primera pregunta (si un modelo de aprendizaje profundo calibrado en un mercado conserva
 su capacidad predictiva en otro estructuralmente distinto) tiene en el
-Capítulo~\ref{cap:parte1} una respuesta negativa dentro de ese alcance. En esta
+Capítulo~\ref{cap:parte1} una respuesta negativa dentro de ese alcance: la evaluación se
+resuelve con el rechazo del modelo. En esta
 implementación y sobre el universo analizado, Stockformer no muestra evidencia robusta de
 transferibilidad al S\&P 500. Su coeficiente de información fuera de muestra es de
 $-0{,}003$, estadísticamente indistinguible de cero y lejos de los valores del orden de
 $0{,}06$ que las arquitecturas profundas reportan en el mercado de origen, y un Lasso de
-cinco coeficientes lo supera en IC ($+0{,}0238$). El análisis de los modos de fallo
+cinco coeficientes lo supera en IC ($+0{,}0238$), con todos los modelos simples de la
+comparación por delante. La complejidad del modelo no se traduce en una capacidad
+predictiva que justifique adoptarlo frente a esas alternativas. El análisis de los modos de fallo
 sugiere además que varios
 mecanismos de pérdida de señal actúan a la vez (eficiencia del mercado de destino,
 insuficiencia de la información de precio y volumen, artefactos de microestructura del

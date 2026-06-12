@@ -1,30 +1,33 @@
-Deep-learning models for stock-return prediction have mostly been developed on the markets
-they were designed for, and their predictive power is seldom checked when the model is
-moved to a different market. This thesis studies that cross-market transfer in one
-concrete case. The model is Stockformer, a network of roughly one million parameters that
-combines a wavelet decomposition, attention and a graph of stock relations, calibrated on
-Chinese A-share stocks. The question is twofold: whether the model keeps its predictive
-power when retrained on the S\&P 500 and, if it does not, where the net return observed in
-that market comes from.
+This thesis builds two complementary pieces: a set of stock-return prediction models
+designed to assess the potential of Stockformer, and a portfolio optimisation system with
+explicit transaction-cost control. Stockformer, the model under evaluation, is a network
+of roughly one million parameters that combines a wavelet decomposition, attention and a
+graph of stock relations; it was calibrated on Chinese A-share stocks and is retrained
+here on the S\&P 500, a market structurally different from the one it was designed for.
+The evaluation addresses two chained questions: whether the model provides predictive
+power in that market and, if it does not, where the net return observed there comes from.
 
-The first part compares Stockformer with simpler models (regularised regressions and
-boosted trees) under a common evaluation framework, on a common data panel and at a daily
-horizon. The main metric is the rank information coefficient (IC), which measures the
-correlation between the predicted and the realised ordering of returns. Possible
-information leakage is also audited; the only incident found favours the complex model and
-is reported separately. In this implementation and on the universe analysed (477 S\&P 500
-constituents with complete price coverage), Stockformer shows no robust evidence of
-transferability. Its out-of-sample IC is $-0{,}003$, indistinguishable from zero, while a
-five-coefficient Lasso regression reaches $+0{,}0238$. All the simple models come out
-ahead of Stockformer, although by small margins.
+The first part, which carries the main weight of the thesis
+(Chapter~\ref{cap:parte1}), assesses the potential of Stockformer by comparing it with
+simpler models (regularised regressions and boosted trees) on a common data panel, under
+a common evaluation framework and at a daily horizon. The main metric is the rank
+information coefficient (IC), which measures the correlation between the predicted and
+the realised ordering of returns. Possible information leakage is also audited; the only
+incident found favours the complex model and is reported separately. The comparison comes
+out against Stockformer: its out-of-sample IC is $-0.003$, indistinguishable from zero,
+while a five-coefficient Lasso regression reaches $+0.0238$, and all the simple models
+come out ahead, although by small margins. On that evidence the model is rejected for the
+universe analysed (477 S\&P 500 constituents with complete price coverage): its
+complexity does not translate into predictive power that would justify adopting it over
+much simpler alternatives.
 
-The second part studies the origin of the net return of a weekly market-neutral strategy
-on the same universe. A stage-by-stage attribution shows that the signal produces a weak
+The second part puts the portfolio optimisation system to work and studies the origin of
+the net return of a weekly market-neutral strategy on the same universe. A stage-by-stage attribution shows that the signal produces a weak
 gross return and that portfolio construction with explicit transaction-cost control is the
 stage that preserves it in net terms. A signal search with criteria fixed in advance, and
 validated on a reserved sample, points to residual momentum as the most promising
-candidate. Combined with that construction, the net Sharpe ratio rises from $0{,}38$ to
-$0{,}72$ over a 311-week window and keeps its sign on the reserved sample. The improvement
+candidate. Combined with that construction, the net Sharpe ratio rises from $0.38$ to
+$0.72$ over a 311-week window and keeps its sign on the reserved sample. The improvement
 is presented as the most promising result of the thesis, pending confirmation with more
 data.
 

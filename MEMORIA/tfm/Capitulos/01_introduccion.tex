@@ -26,9 +26,15 @@ minorista, fricciones de negociación y patrones marcados de momentum y reversi�
 en un régimen estadístico muy distinto del de las grandes capitalizaciones
 estadounidenses, que están entre los segmentos más líquidos y eficientes del mundo.
 
-Este trabajo aborda la trasposición de un modelo probado a otro entorno completamente distinto. Toma una arquitectura del estado del
-arte validada en un mercado, y evalúa si transfiere a otro estructuralmente
-distinto. El alcance del ejercicio se limita al segmento de gran capitalización
+Este trabajo somete esa promesa a prueba, y para ello construye dos piezas
+complementarias. La primera es un conjunto de modelos de predicción, ordenados por
+complejidad, que permite evaluar el potencial de Stockformer frente a alternativas
+sustancialmente más simples sobre un mismo panel de datos y con un mismo marco de
+evaluación. La segunda es un sistema de optimización de cartera con control explícito de
+los costes de transacción, que traduce las señales predictivas en retorno neto. Con esas
+dos piezas se evalúa si una arquitectura del estado del arte validada en un mercado
+transfiere a otro estructuralmente distinto, y qué genera el retorno que se observa. El
+alcance del ejercicio se limita al segmento de gran capitalización
 representado por el S\&P 500 \autocite{spdji2025methodology} dentro de la totalidad del mercado estadounidense, y en su interior, un
 subconjunto de componentes con cobertura completa de datos en la ventana estudiada. Las
 conclusiones del trabajo se formulan, por tanto, condicionadas a esta implementación y a
@@ -42,11 +48,12 @@ el cuerpo empírico de la memoria y a las que el Capítulo~\ref{cap:conclusiones
 de forma explícita.
 
 \paragraph{RQ1.} ¿Conserva Stockformer, un modelo de aprendizaje profundo calibrado sobre
-acciones chinas de clase A, su capacidad predictiva al reentrenarse sobre el S\&P 500? Es
-decir, ¿produce, sobre el universo analizado y a horizonte diario, un coeficiente de
-información de rangos (rank IC, la correlación transversal entre el orden predicho y el
-realizado) positivo y estable fuera de muestra, comparable o superior al de modelos
-sustancialmente más simples?
+acciones chinas de clase A, su capacidad predictiva al reentrenarse sobre el S\&P 500? La
+pregunta se resuelve como una decisión de aceptación o rechazo. El modelo se acepta si
+produce, sobre el universo analizado y a horizonte diario, un coeficiente de información
+de rangos (rank IC, la correlación transversal entre el orden predicho y el realizado)
+positivo y estable fuera de muestra, comparable o superior al de modelos sustancialmente
+más simples; se rechaza en caso contrario.
 
 \paragraph{RQ2.} Si la capacidad del modelo no es la fuente del retorno, ¿qué genera el
 retorno neto de costes en este universo? La cuestión tiene dos caras. La primera es de
@@ -57,5 +64,8 @@ disciplinada de señales simples con contenido económico propio, incluidas las 
 del propio Stockformer? 
 
 La segunda pregunta solo tiene sentido una vez respondida la primera, y por eso ambas se
-abordan de forma secuencial. La Parte~I (Capítulo~\ref{cap:parte1}) responde a RQ1; la
-Parte~II (Capítulo~\ref{cap:parte2}) responde a RQ2.
+abordan de forma secuencial. La Parte~I (Capítulo~\ref{cap:parte1}), que concentra el
+peso empírico de la memoria, responde a RQ1; a su servicio trabajan también los
+Capítulos~\ref{cap:stockformer} y~\ref{cap:metodologia}, que construyen el banco de
+pruebas de la evaluación (el modelo, el panel de datos, el marco de evaluación y la
+escalera de complejidad). La Parte~II (Capítulo~\ref{cap:parte2}) responde a RQ2.

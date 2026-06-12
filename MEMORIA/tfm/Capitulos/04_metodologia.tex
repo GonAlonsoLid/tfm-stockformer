@@ -1,8 +1,10 @@
 \chapter{Metodología}\label{cap:metodologia}
 
 Este capítulo describe la metodología que comparten las dos partes empíricas de la
-memoria. El trabajo tiene dos pasos: primero se evalúa la transferencia del modelo
-Stockformer (capítulo~\ref{cap:stockformer}) al universo del S\&P 500 (Parte~I,
+memoria y completa, junto con el capítulo anterior, el banco de pruebas sobre el que se
+evalúa el potencial de Stockformer. El trabajo tiene dos pasos: primero se evalúa si el
+modelo (capítulo~\ref{cap:stockformer}) conserva su capacidad predictiva en el universo
+del S\&P 500 (Parte~I,
 capítulo~\ref{cap:parte1}) y después se estudia el origen del retorno neto de una
 estrategia semanal sobre ese mismo universo (Parte~II, capítulo~\ref{cap:parte2}). Los dos
 pasos usan una misma infraestructura de datos, variables, evaluación y control de fugas de
@@ -124,12 +126,12 @@ volumen y cada retardo \(d \in \{1,\dots,60\}\), un cociente que normaliza el ca
 por el cierre (o el volumen) de \(d\) días atrás. Concretamente, con
 \(\text{VWAP}=(\text{High}+\text{Low}+\text{Close})/3\):
 \begin{itemize}
-  \item \(\text{CLOSE\_d}d = \text{Close}_t / \text{Close}_{t-d}\),
-  \item \(\text{OPEN\_d}d = \text{Open}_t / \text{Close}_{t-d}\),
-        \(\text{HIGH\_d}d = \text{High}_t / \text{Close}_{t-d}\),
-        \(\text{LOW\_d}d = \text{Low}_t / \text{Close}_{t-d}\),
-  \item \(\text{VWAP\_d}d = \text{VWAP}_t / \text{Close}_{t-d}\),
-  \item \(\text{VOL\_d}d = \text{Volume}_t / \text{Volume}_{t-d}\).
+  \item \(\text{CLOSE}_d = \text{Close}_t / \text{Close}_{t-d}\),
+  \item \(\text{OPEN}_d = \text{Open}_t / \text{Close}_{t-d}\),
+        \(\text{HIGH}_d = \text{High}_t / \text{Close}_{t-d}\),
+        \(\text{LOW}_d = \text{Low}_t / \text{Close}_{t-d}\),
+  \item \(\text{VWAP}_d = \text{VWAP}_t / \text{Close}_{t-d}\),
+  \item \(\text{VOL}_d = \text{Volume}_t / \text{Volume}_{t-d}\).
 \end{itemize}
 Estos cocientes codifican de forma compacta momentum, reversión y dinámica de volumen a
 distintos horizontes. El cálculo usa división segura ante denominadores nulos, sustituye
