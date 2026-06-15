@@ -1,0 +1,134 @@
+\chapter{Código fuente seleccionado}\label{ap:codigo}
+
+Este apéndice reproduce los fragmentos de código más relevantes para comprender y
+reproducir el trabajo. Se han seleccionado las piezas que materializan las
+contribuciones de la memoria: la arquitectura del modelo \emph{Stockformer}
+multitarea, las funciones de pérdida empleadas en el entrenamiento conjunto de
+clasificación y regresión, las métricas de evaluación basadas en el coeficiente de
+información (IC), la construcción de ventanas deslizantes a partir de los datos del
+S\&P~500, el bucle de entrenamiento, la validación \emph{walk-forward} y la
+construcción de cartera neta de costes, los modelos de referencia de la escalera de
+complejidad y la construcción del grafo de relaciones entre activos. El resto del
+código (scripts de descarga de datos y generación de figuras) se encuentra en el
+repositorio asociado.
+
+Todos los listados se reproducen literalmente del repositorio, conservando los
+comentarios y la numeración de líneas original de cada fragmento, de modo que las
+cifras y resultados de la memoria quedan ligados de forma trazable al código que los
+produce.
+
+\section{Arquitectura del modelo}\label{sec:cod-modelo}
+
+El núcleo del trabajo es la red \emph{Stockformer}, que combina una descomposición de
+la serie en componentes de baja y alta frecuencia con un codificador dual que alterna
+atención temporal causal, convoluciones temporales dilatadas y atención espacial
+dispersa sobre el grafo de correlaciones entre activos. La fusión adaptativa integra
+ambas ramas y dos cabezas de salida producen simultáneamente la predicción de
+regresión (retorno) y de clasificación (signo). El Listado~\ref{lst:modelo} reproduce
+el módulo completo.
+
+\lstinputlisting[language=Python, caption={Definición de la arquitectura
+\emph{Stockformer} multitarea (\texttt{Multitask\_Stockformer\_models.py}).},
+label={lst:modelo}]{codigo/modelo.py}
+
+\section{Funciones de pérdida multitarea}\label{sec:cod-loss}
+
+El entrenamiento combina una pérdida de regresión orientada al \emph{ranking}
+transversal con una pérdida de clasificación del signo. La pérdida de regresión es a
+su vez una combinación convexa de tres términos: una pérdida \emph{ListNet} sobre el
+orden de los activos, una penalización directa del coeficiente de información (IC) y
+un error absoluto medio enmascarado. El Listado~\ref{lst:loss} reproduce estas
+funciones tal como se definen en el módulo de utilidades.
+
+\lstinputlisting[language=Python, firstline=47, lastline=168,
+caption={Funciones de pérdida: clasificación, MAE enmascarado, \emph{ListNet}, IC y
+pérdida combinada de \emph{ranking} (\texttt{Multitask\_Stockformer\_utils.py}).},
+label={lst:loss}]{codigo/utils.py}
+
+\section{Métricas de evaluación}\label{sec:cod-metric}
+
+La evaluación de cada predicción diaria se resume en la función \texttt{metric}, que
+calcula el coeficiente de información de Pearson y de \emph{ranking}, la exactitud de
+la clasificación del signo y los estadísticos asociados. El Listado~\ref{lst:metric}
+muestra su implementación.
+
+\lstinputlisting[language=Python, firstline=16, lastline=45,
+caption={Cálculo de las métricas de evaluación a partir de las predicciones de
+regresión y clasificación (\texttt{Multitask\_Stockformer\_utils.py}).},
+label={lst:metric}]{codigo/utils.py}
+
+\section{Dataset y ventanas deslizantes}\label{sec:cod-dataset}
+
+La preparación de los datos transforma los tensores de flujo, indicador y atributos en
+instancias de ventana deslizante \texttt{(T1, T2)} listas para alimentar al modelo,
+incluyendo la separación en componentes de baja y alta frecuencia mediante la
+transformada \emph{wavelet} discreta. El Listado~\ref{lst:dataset} reproduce la clase
+\texttt{StockDataset} y sus métodos auxiliares.
+
+\lstinputlisting[language=Python, firstline=240, lastline=379,
+caption={Clase \texttt{StockDataset}: carga, descomposición \emph{wavelet} y
+construcción de ventanas deslizantes (\texttt{Multitask\_Stockformer\_utils.py}).},
+label={lst:dataset}]{codigo/utils.py}
+
+\section{Bucle de entrenamiento}\label{sec:cod-train}
+
+El entrenamiento itera sobre mini-lotes aplicando inyección de ruido gaussiano como
+regularización implícita, recorte de gradiente y la pérdida multitarea descrita en la
+Sección~\ref{sec:cod-loss}. El Listado~\ref{lst:train} reproduce la rutina principal
+de entrenamiento.
+
+\lstinputlisting[language=Python, firstline=218, lastline=290,
+caption={Bucle de entrenamiento multitarea con regularización y recorte de gradiente
+(\texttt{MultiTask\_Stockformer\_train.py}).},
+label={lst:train}]{codigo/train.py}
+
+\section{Validación walk-forward}\label{sec:cod-wf}
+
+Para evaluar la transferencia y la estabilidad temporal del modelo se emplea un
+esquema de validación \emph{walk-forward} que reentrena el modelo sobre ventanas
+sucesivas y mide el IC fuera de muestra en cada tramo. El Listado~\ref{lst:wf}
+reproduce las funciones centrales de este procedimiento.
+
+\lstinputlisting[language=Python, firstline=78, lastline=290,
+caption={Preparación de ventanas, entrenamiento por tramo y cálculo del IC fuera de
+muestra en la validación \emph{walk-forward} (\texttt{run\_walkforward.py}).},
+label={lst:wf}]{codigo/walkforward.py}
+
+\section{Construcción de cartera y backtest}\label{sec:cod-backtest}
+
+Las predicciones se traducen en una cartera \emph{long-short} mediante la selección de
+los $k$ activos con mayor y menor puntuación, y se calculan las métricas de
+rendimiento (ratio de Sharpe, retorno anualizado, caída máxima, beta y rotación)
+empleadas en la Parte~II de la memoria. El Listado~\ref{lst:backtest} reproduce la
+lógica de construcción de cartera y cálculo de métricas.
+
+\lstinputlisting[language=Python, firstline=39, lastline=203,
+caption={Selección de activos, ponderación \emph{long-short} y métricas de rendimiento
+de la cartera (\texttt{run\_backtest.py}).},
+label={lst:backtest}]{codigo/backtest.py}
+
+\section{Escalera de complejidad: modelos de referencia}\label{sec:cod-ladder}
+
+El diseño experimental central de la Parte~I es la escalera de complejidad descrita en
+la Sección~\ref{sec:met-ladder}: una secuencia de modelos de complejidad creciente, desde
+señales triviales (momentum y reversión a corto plazo) en el nivel L0, modelos lineales
+regularizados (\emph{ridge}, \emph{lasso} y \emph{elastic-net}) en el nivel L1 y
+árboles de decisión potenciados (LightGBM y XGBoost) en el nivel L2, hasta el
+\emph{Stockformer} en la cúspide. El Listado~\ref{lst:ladder} reproduce la
+implementación de estos modelos de referencia y su evaluación homogénea.
+
+\lstinputlisting[language=Python, caption={Modelos de referencia de la escalera de
+complejidad y su evaluación (\texttt{run\_cpu\_ladder.py}).},
+label={lst:ladder}]{codigo/ladder.py}
+
+\section{Construcción del grafo de activos}\label{sec:cod-graph}
+
+El \emph{Stockformer} opera sobre un grafo de relaciones entre activos cuyas
+incrustaciones se obtienen con \emph{struc2vec}, que captura la similitud estructural
+entre los nodos del grafo de correlaciones. El Listado~\ref{lst:graph} reproduce la
+generación de dichas incrustaciones, empleadas como codificación posicional espacial en
+la atención del modelo.
+
+\lstinputlisting[language=Python, caption={Generación de incrustaciones de grafo con
+\emph{struc2vec} (\texttt{graph\_embedding.py}).},
+label={lst:graph}]{codigo/graph.py}

@@ -1,0 +1,59 @@
+\chapter{Relación con los Objetivos de Desarrollo Sostenible}\label{ap:ods}
+
+\section{ODS 9: Industria, innovación e infraestructura}\label{sec:ods9}
+
+El ODS~9 persigue construir infraestructuras resilientes, promover la industrialización
+inclusiva y sostenible y fomentar la innovación. Este es el objetivo con el que el
+trabajo guarda una relación más directa.
+
+La memoria desarrolla y evalúa una arquitectura de aprendizaje profundo
+(\emph{Stockformer}) y estudia su transferibilidad a un mercado distinto del original,
+el S\&P~500. La aportación principal es de carácter metodológico.
+Se proponen y comparan variantes del modelo, funciones de pérdida orientadas al
+\emph{ranking} transversal y esquemas de validación \emph{walk-forward} que permiten
+medir la estabilidad temporal del modelo.
+
+Además, el trabajo se acompaña de una infraestructura de investigación reproducible:
+un repositorio organizado, configuraciones versionadas de cada experimento, scripts de
+construcción de datos y de evaluación, y una batería de pruebas automáticas. Esta
+infraestructura es también una contribución alineada con el ODS~9, porque reduce
+la barrera para que otros investigadores repliquen, auditen y extiendan los resultados.
+
+\section{ODS 8: Trabajo decente y crecimiento económico}\label{sec:ods8}
+
+El ODS~8 promueve el crecimiento económico sostenido e inclusivo y el buen
+funcionamiento de los sistemas económicos. La relación del trabajo con este objetivo se
+articula a través de la \emph{transparencia} en la evaluación del rendimiento.
+
+Una parte sustancial de la memoria se dedica a la atribución del retorno \emph{neto}: a
+descomponer el rendimiento de la estrategia descontando costes de transacción,
+rotación y exposición a factores de riesgo. Este énfasis en medir el resultado real,
+y no únicamente el bruto, contribuye a una cultura de evaluación más honesta y prudente
+en el ámbito de la inversión cuantitativa, donde es frecuente sobreestimar el
+rendimiento al ignorar fricciones de mercado.
+
+La contribución al ODS~8 no consiste en garantizar rentabilidades ni en proponer un
+producto de inversión. De hecho, el trabajo evita ese tipo de afirmaciones: sus
+conclusiones son metodológicas y sus resultados se presentan con intervalos de
+confianza y contrastes de significación estadística que delimitan lo que puede y no
+puede afirmarse. Esta prudencia es importante en un contexto financiero.
+
+\section{ODS 12: Producción y consumo responsables}\label{sec:ods12}
+
+El ODS~12 aboga por modelos de producción y consumo responsables, lo que en el contexto
+del aprendizaje profundo se traduce en un uso eficiente de los recursos
+computacionales.
+
+El modelo estudiado emplea mecanismos de atención espacial dispersa y convoluciones
+temporales que reducen el coste de cómputo respecto a una atención densa sobre todos
+los pares de activos. La memoria, además, incorpora explícitamente el tiempo de cómputo
+como una de las métricas de comparación entre modelos (véase la escalera de complejidad
+del Apéndice~\ref{ap:tablas}), lo que permite valorar cada mejora de precisión frente a
+su coste energético y computacional.
+
+Esta perspectiva fomenta decisiones de diseño responsables. En igualdad de
+condiciones, se prefieren los modelos más simples y eficientes, y el gasto computacional
+adicional se justifica únicamente cuando aporta una mejora medible y estadísticamente
+significativa.
+La contribución al ODS~12 es, por tanto, la de promover una práctica investigadora
+consciente del coste de los recursos, más que la de un impacto material directo.

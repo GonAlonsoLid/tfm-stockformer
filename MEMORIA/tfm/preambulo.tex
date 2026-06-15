@@ -16,6 +16,47 @@
 \usepackage{multirow}
 \usepackage{siunitx}
 \usepackage{xcolor}
+% ── Listados de código (apéndices) ─────────────────────────────────────────
+\usepackage{listings}
+\definecolor{codegreen}{rgb}{0.0,0.5,0.0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.55,0.0,0.35}
+\definecolor{codeblue}{rgb}{0.10,0.10,0.60}
+\definecolor{backcolour}{rgb}{0.975,0.975,0.96}
+\lstdefinestyle{tfmcode}{
+  backgroundcolor=\color{backcolour},
+  commentstyle=\color{codegreen}\itshape,
+  keywordstyle=\color{codeblue}\bfseries,
+  numberstyle=\tiny\color{codegray},
+  stringstyle=\color{codepurple},
+  basicstyle=\ttfamily\footnotesize,
+  breakatwhitespace=false,
+  breaklines=true,
+  captionpos=b,
+  keepspaces=true,
+  numbers=left,
+  numbersep=6pt,
+  showspaces=false,
+  showstringspaces=false,
+  showtabs=false,
+  tabsize=2,
+  frame=tb,
+  xleftmargin=14pt,
+  extendedchars=true,
+  literate=%
+    {á}{{\'a}}1 {é}{{\'e}}1 {í}{{\'i}}1 {ó}{{\'o}}1 {ú}{{\'u}}1 {ñ}{{\~n}}1
+    {Á}{{\'A}}1 {É}{{\'E}}1 {Í}{{\'I}}1 {Ó}{{\'O}}1 {Ú}{{\'U}}1 {Ñ}{{\~N}}1
+    {±}{{$\pm$}}1 {–}{{--}}1 {’}{{'}}1 {‘}{{'}}1 {“}{{``}}1 {”}{{''}}1
+    {—}{{---}}1 {─}{{-}}1 {×}{{$\times$}}1 {→}{{$\rightarrow$}}1
+    {≈}{{$\approx$}}1 {≡}{{$\equiv$}}1 {≠}{{$\neq$}}1 {·}{{$\cdot$}}1
+}
+\lstset{style=tfmcode}
+\lstdefinelanguage{conf}{
+  morecomment=[l]{\#},
+  morestring=[b]",
+  keywords={DEFAULT,file,data,train,loss,regularization,param},
+  sensitive=true,
+}
 \usepackage{csquotes}
 \usepackage{hyperref}
 \hypersetup{colorlinks=true, linkcolor=black, citecolor=blue, urlcolor=blue}
